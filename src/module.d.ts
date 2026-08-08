@@ -9,19 +9,6 @@ declare module "__patches__" {
     export default never;
 }
 
-declare module "mellowtel-electron" {
-    // No official type declarations are shipped as of writing, hence the loose typing.
-    export default class Mellowtel {
-        constructor(configurationKey: string);
-        init(): Promise<void>;
-        optIn(): Promise<void>;
-        optOut(): Promise<void>;
-        start(): Promise<void>;
-        getOptInStatus(): Promise<boolean>;
-        requestConsent(window: unknown, rewardMessage?: string): Promise<boolean>;
-    }
-}
-
 declare module "@vencord/venmic" {
     export interface Node {
         [key: string]: string;

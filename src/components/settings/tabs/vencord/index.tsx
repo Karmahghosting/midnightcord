@@ -7,48 +7,45 @@
 import "./VencordTab.css";
 
 import { isCompactModeEnabled, isStealthModeEnabled, toggleCompactMode, toggleStealthMode } from "@api/HeaderBar";
+import { t } from "@api/i18n";
 import { openNotificationLogModal } from "@api/Notifications/notificationLog";
 import { plugins } from "@api/PluginManager";
 import { useSettings } from "@api/Settings";
-import { t } from "@api/i18n";
-
 import { Button } from "@components/Button";
 import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
 import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
-import { HeartIcon, GithubIcon, LogIcon, OwnerCrownIcon, PaintbrushIcon, PlanetIcon, RestartIcon } from "@components/Icons";
+import { GithubIcon, HeartIcon, OwnerCrownIcon, PaintbrushIcon, PlanetIcon, RestartIcon } from "@components/Icons";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
 import { openPluginModal, SettingsTab, wrapTab } from "@components/settings";
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
+import { copyToClipboard } from "@utils/clipboard";
 import { IS_MAC, IS_WINDOWS } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
 import { identity } from "@utils/misc";
 import { openModal } from "@utils/modal";
 import { relaunch } from "@utils/native";
-import { Avatar, OAuth2AuthorizeModal, React, Select, UserStore, showToast, Toasts } from "@webpack/common";
-
-import { MELLOWTEL_ONBOARDING_VERSION } from "@components/MellowtelConsentModal";
+import { Avatar, React, Select, showToast, Toasts,UserStore } from "@webpack/common";
 
 import { ContributeModal } from "../../../../midnightcord/renderer/components/ContributeModal";
-import { copyToClipboard } from "@utils/clipboard";
 import { openNotificationSettingsModal } from "./NotificationSettings";
 
 const cl = classNameFactory("vc-vencord-tab-");
 
 const DEV_TEAM_IDS = [
-    { 
-        id: "1209621342639493201", 
-        role: "Creator", 
-        description: "Manager of app, site visuals, communication & ads" 
+    {
+        id: "1209621342639493201",
+        role: "Creator",
+        description: "Manager of app, site visuals, communication & ads"
     },
-    { 
-        id: "171356978310938624", 
-        role: "Admin", 
-        description: "Manager of infrastructure, API, bot & network hosting" 
+    {
+        id: "171356978310938624",
+        role: "Admin",
+        description: "Manager of infrastructure, API, bot & network hosting"
     }
 ];
 
@@ -75,7 +72,7 @@ function useDiscordUser(userId: string) {
                     ? `https://cdn.discordapp.com/avatars/${userId}/${u.avatar}.webp?size=128`
                     : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`
             }))
-            .catch(() => setUser({ name: userId, pfp: `https://cdn.discordapp.com/embed/avatars/0.png` }));
+            .catch(() => setUser({ name: userId, pfp: "https://cdn.discordapp.com/embed/avatars/0.png" }));
     }, [userId]);
     return user;
 }
@@ -100,7 +97,7 @@ function DevCard({ id, role, description }: { id: string; role: string; descript
         <Card variant="primary" outline style={{ padding: "12px" }}>
             <Flex align={Flex.Align.CENTER} gap="12px">
                 <Avatar
-                    src={user?.pfp ?? `https://cdn.discordapp.com/embed/avatars/0.png`}
+                    src={user?.pfp ?? "https://cdn.discordapp.com/embed/avatars/0.png"}
                     size="SIZE_48"
                 />
                 <Flex direction={Flex.Direction.VERTICAL} style={{ flex: 1, gap: "2px" }}>
@@ -109,13 +106,13 @@ function DevCard({ id, role, description }: { id: string; role: string; descript
                         <Heading tag="h4" style={{ color: "var(--brand-experiment)", fontWeight: "bold", fontSize: "12px" }}>{role}</Heading>
                     </Flex>
 
-                    <div 
+                    <div
                         onClick={handleCopy}
                         title="Cliquer pour copier l'ID"
-                        style={{ 
-                            display: "inline-flex", 
-                            alignItems: "center", 
-                            gap: "6px", 
+                        style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
                             cursor: "pointer",
                             fontSize: "11px",
                             color: "var(--text-muted)",
@@ -262,34 +259,6 @@ function StealthModeButton() {
     );
 }
 
-
-
-function MellowtelSupportSwitch() {
-    const [consent, setConsentState] = React.useState<{ consent: "accepted" | "declined"; version: string; } | null>(
-        () => (IS_WEB || typeof VencordNative === "undefined" || !VencordNative?.mellowtel) ? null : VencordNative.mellowtel.getConsent()
-    );
-
-    if (IS_WEB || typeof VencordNative === "undefined" || !VencordNative?.mellowtel) return null;
-
-    return (
-        <FormSwitch
-            value={consent?.consent === "accepted"}
-            onChange={accepted => {
-                const version = consent?.version ?? MELLOWTEL_ONBOARDING_VERSION;
-                VencordNative.mellowtel?.setConsent?.(accepted, version);
-                setConsentState({ consent: accepted ? "accepted" : "declined", version });
-            }}
-            title={t("Share bandwidth to support Midnightcord (Mellowtel)")}
-            description={
-                consent
-                    ? undefined
-                    : t("You haven't been asked yet - this will opt you in immediately if enabled here.")
-            }
-            hideBorder
-        />
-    );
-}
-
 function EquicordSettings() {
     const settings = useSettings();
     const stealthActive = useStealthActive();
@@ -421,8 +390,6 @@ function EquicordSettings() {
                     </a>.
                 </Notice.Info>
 
-
-
                 {Switches.filter((s): s is Exclude<typeof s, false> => !!s).map(
                     s => (
                         <FormSwitch
@@ -451,8 +418,6 @@ function EquicordSettings() {
                         />
                     ),
                 )}
-
-                <MellowtelSupportSwitch />
 
                 {needsVibrancySettings && (
                     <>
@@ -571,6 +536,3 @@ function EquicordSettings() {
 }
 
 export default wrapTab(EquicordSettings, "Midnightcord Settings");
-
-
-

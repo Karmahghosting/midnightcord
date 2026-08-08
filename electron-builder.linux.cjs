@@ -19,7 +19,7 @@ module.exports = {
     extraMetadata: {
         version: rootPackage.version,
         main: "dist/js/main.js",
-        homepage: "https://source.nightcord.st/nightcord/nightcord"
+        homepage: "https://github.com/Karmahghosting/midnightcord"
     },
     files: [
         "package.json",
@@ -55,6 +55,6 @@ module.exports = {
         maintainer: "Midnightcord contributors",
         vendor: "Midnightcord",
         synopsis: "Optimized Discord desktop client",
-        description: "Midnightcord is a Linux-first Discord desktop client based on Nightcord, Equicord and Vencord."
+        description: "Midnightcord is a cross-platform Discord client mod based on Nightcord, Equicord and Vencord."
     }
 };

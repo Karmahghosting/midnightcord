@@ -1,97 +1,72 @@
 # Midnightcord sous Linux
 
+## Mode natif recommandé
+
+Le mode natif conserve le moteur vocal officiel de Discord. Il évite le blocage de négociation DTLS rencontré avec le client Electron autonome sur certains serveurs.
+
+Depuis une archive de release :
+
+1. fermez complètement Discord ;
+2. extrayez Midnightcord-Native pour votre architecture ;
+3. lancez ./install-midnightcord.sh ;
+4. relancez Discord normalement.
+
+Depuis les sources :
+
+    corepack pnpm install --frozen-lockfile
+    corepack pnpm run buildDesktop
+    corepack pnpm run inject:linux
+
+L’injecteur détecte Discord Stable, PTB, Canary et Development, notamment les versions utilisateur dans ~/.config/discord/app-*/resources.
+
+Pour restaurer Discord :
+
+    corepack pnpm run uninject:linux
+
 ## Paquets produits
 
-La commande `corepack pnpm package:linux:x64` crée trois formats dans `release/` :
+La commande corepack pnpm package:linux:x64 crée trois formats autonomes dans release/ :
 
-- `Midnightcord-<version>-linux-x86_64.AppImage` : portable, compatible avec la plupart des distributions ;
-- `Midnightcord-<version>-linux-amd64.deb` : Debian, Ubuntu et distributions dérivées ;
-- `Midnightcord-<version>-linux-x64.tar.gz` : archive portable sans intégration système.
+- AppImage ;
+- paquet Debian ;
+- archive tar.gz.
 
-L’équivalent ARM64 est produit avec `corepack pnpm package:linux:arm64`.
+L’équivalent ARM64 est produit avec corepack pnpm package:linux:arm64.
 
-## Mode natif recommandé pour la voix
-
-Le paquet autonome utilise WebRTC. Sur certains serveurs Discord, ICE aboutit mais la négociation DTLS reste bloquée. Le mode natif conserve le moteur vocal officiel de Discord et injecte seulement Midnightcord.
-
-Fermez Discord, construisez le mod puis injectez-le :
-
-```bash
-corepack pnpm run buildStandalone:linux
-corepack pnpm run inject:linux
-discord
-```
-
-Le script détecte aussi les versions installées dans `~/.config/discord/app-*/resources`. Il renomme `app.asar` en `_app.asar` avant de créer le chargeur Midnightcord. Pour restaurer Discord :
-
-```bash
-corepack pnpm run uninject:linux
-```
-
-## Installation
-
-AppImage :
-
-```bash
-chmod +x Midnightcord-*.AppImage
-./Midnightcord-*.AppImage
-```
-
-Debian/Ubuntu :
-
-```bash
-sudo apt install ./Midnightcord-*-linux-amd64.deb
-```
-
-L’application conserve ses données dans le répertoire Electron standard de l’utilisateur. Aucun mot de passe administrateur n’est requis pour l’AppImage ou l’archive portable.
+Ces paquets autonomes utilisent WebRTC. Ils restent utiles sans installation Discord séparée, mais le mode natif est préférable pour la voix.
 
 ## Wayland et X11
 
-Electron sélectionne automatiquement le backend disponible. Pour forcer Wayland :
+Discord sélectionne normalement le backend disponible. Les options Chromium habituelles restent utilisables avec l’application native.
 
-```bash
-midnightcord --ozone-platform=wayland
-```
+Pour forcer Wayland :
 
-Pour forcer X11/XWayland :
+    discord --ozone-platform=wayland
 
-```bash
-midnightcord --ozone-platform=x11
-```
+Pour forcer X11 :
 
-Si le partage d’écran ou l’accélération vidéo pose problème, commence par tester :
-
-```bash
-midnightcord --disable-gpu
-```
+    discord --ozone-platform=x11
 
 ## Profil de performance
 
-La version de production :
+Le build de production Midnightcord :
 
-- minifie et élimine le code mort sans obfuscation ;
-- n’embarque ni fichiers TypeScript ni source maps ;
-- regroupe l’application dans une archive ASAR ;
-- laisse Chromium ralentir les fenêtres masquées afin de réduire CPU et batterie ;
-- garde l’accélération GPU active par défaut.
-
-L’ancien comportement qui maintient tous les timers actifs reste disponible pour les cas particuliers :
-
-```bash
-midnightcord --disable-background-throttling
-```
-
-Cette option augmente volontairement la consommation de ressources.
+- est minifié avec élimination du code mort ;
+- ne contient ni sources TypeScript ni source maps dans les archives ;
+- conserve l’accélération GPU de Discord ;
+- réutilise le processus Electron officiel au lieu de lancer un second client ;
+- garde les modules vocaux natifs de Discord.
 
 ## Mises à jour
 
-Les mises à jour automatiques sont désactivées par défaut : un fork ne doit jamais remplacer silencieusement Midnightcord par un binaire Nightcord. Un distributeur peut configurer un flux générique compatible avec `electron-updater` via `MIDNIGHTCORD_UPDATE_URL`, et une source de réparation ASAR via `MIDNIGHTCORD_ASAR_URL`.
+Après une mise à jour de Discord, relancez l’injecteur. Il sélectionne la version complète la plus récente et ne modifie pas les dossiers de mise à jour incomplets.
 
-## Build local rapide
+Les paquets Flatpak et Snap sont isolés ou en lecture seule. Ils ne sont pas modifiés automatiquement.
 
-```bash
-corepack enable
-corepack pnpm install --frozen-lockfile
-corepack pnpm package:dir
-./release/linux-unpacked/midnightcord
-```
+## Build local
+
+    corepack enable
+    corepack pnpm install --frozen-lockfile
+    corepack pnpm package:native
+
+L’archive native est créée dans release/native/.

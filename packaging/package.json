@@ -1,10 +1,9 @@
 {
     "name": "midnightcord",
     "version": "0.0.0",
-    "description": "An optimized, Linux-first Discord desktop client",
-    "homepage": "https://source.nightcord.st/nightcord/nightcord",
+    "description": "A fast cross-platform Discord client mod with native voice",
+    "homepage": "https://github.com/Karmahghosting/midnightcord",
     "main": "dist/js/main.js",
     "license": "GPL-3.0-or-later",
-    "author": "Midnightcord contributors",
-    "dependencies": {}
+    "author": "Midnightcord contributors"
 }

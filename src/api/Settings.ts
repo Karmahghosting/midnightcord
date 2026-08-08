@@ -59,7 +59,6 @@ export interface Settings {
     enableOnlineThemes: boolean;
     pinnedThemes: string[];
     themeNames: Record<string, string>;
-    mellowtelOnboardingSeen: boolean;
     enableReactDevtools: boolean;
     themeLinks: string[];
     mainWindowFrameless: boolean;
@@ -107,13 +106,6 @@ export interface Settings {
         logLimit: number;
     };
 
-    cloud: {
-        authenticated: boolean;
-        url: string;
-        settingsSync: boolean;
-        settingsSyncVersion: number;
-    };
-
     ignoreResetWarning: boolean;
 
     userCssVars: {
@@ -136,7 +128,6 @@ const DefaultSettings: Settings = {
     enableOnlineThemes: true,
     pinnedThemes: [],
     themeNames: {},
-    mellowtelOnboardingSeen: false,
     enableReactDevtools: false,
     mainWindowFrameless: false,
     frameless: false,
@@ -146,7 +137,7 @@ const DefaultSettings: Settings = {
     disableMinSize: false,
     winNativeTitleBar: false,
     streamProof: false,
-    seeAllCustomProfile: true,
+    seeAllCustomProfile: false,
     syncOwnCustomProfile: false,
     syncDiscordLanguage: false,
     language: "en",
@@ -165,26 +156,17 @@ const DefaultSettings: Settings = {
         logLimit: 50
     },
 
-    cloud: {
-        authenticated: false,
-        url: "https://api.nightcord.st/",
-        settingsSync: false,
-        settingsSyncVersion: 0
-    },
-
+    ignoreResetWarning: false,
     userCssVars: {},
 };
 
 const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;
 mergeDefaults(settings, DefaultSettings);
 
-// Force migrate cloud URL to Midnightcord if it's still Equicord
-if (settings.cloud && settings.cloud.url && settings.cloud.url.includes("equicord.org")) {
-    settings.cloud.url = "https://api.nightcord.st/";
-}
-
-// Midnightcord native defaults — defaultPlugins is always enabled, no external prefs file
-const MIDNIGHTCORD_PREFS = { defaultPlugins: true, autoUpdate: true } as const;
+// Keep previous installations offline even if cloud options were enabled before this update.
+delete (settings as any).cloud;
+settings.seeAllCustomProfile = false;
+settings.syncOwnCustomProfile = false;
 
 // Ensure plugins have defaults set if missing, while preserving explicit user choices.
 if (!IS_REPORTER && settings.plugins && plugins) {
@@ -248,7 +230,6 @@ export const SettingsStore = new SettingsStoreClass(settings, {
             return target[key];
         }
 
-
         // Since the property is not set, check if this is a plugin's setting and if so, try to resolve
         // the default value.
         if (path.startsWith("plugins.")) {
@@ -275,7 +256,6 @@ export const SettingsStore = new SettingsStoreClass(settings, {
 
 if (!IS_REPORTER) {
     SettingsStore.addGlobalChangeListener((_, path) => {
-        SettingsStore.plain.cloud.settingsSyncVersion = Date.now();
         VencordNative.settings.set(SettingsStore.plain, path);
     });
 }

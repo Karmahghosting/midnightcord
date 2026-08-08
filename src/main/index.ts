@@ -22,7 +22,6 @@ import { pathToFileURL } from "url";
 
 import { initCsp } from "./csp";
 import { ensureSafePath } from "./ipcMain";
-import { applyStoredMellowtelConsent } from "./mellowtel";
 import { RendererSettings } from "./settings";
 import { IS_VANILLA, THEMES_DIR } from "./utils/constants";
 import { installExt } from "./utils/extensions";
@@ -106,9 +105,6 @@ if (!IS_VANILLA && !IS_EXTENSION) {
 
         initCsp();
 
-        applyStoredMellowtelConsent().catch(err =>
-            console.error("[Midnightcord] Failed to apply stored Mellowtel consent", err)
-        );
     });
 }
 

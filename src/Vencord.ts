@@ -49,7 +49,7 @@ try {
                 }
                 return String(a);
             }).join(" ");
-            
+
             return skipLogs.some(pat => str.includes(pat));
         } catch {
             return false;
@@ -70,7 +70,7 @@ try {
     wrap("info");
     wrap("debug");
 
-    window.addEventListener("error", (e) => {
+    window.addEventListener("error", e => {
         if (e.error?.message?.includes("Sentry successfully disabled") || e.message?.includes("Sentry successfully disabled")) {
             e.preventDefault();
             e.stopPropagation();
@@ -92,137 +92,20 @@ export { PlainSettings, Settings };
 
 import { coreStyleRootNode, initStyles } from "@api/Styles";
 import { openSettingsTabModal, UpdaterTab } from "@components/settings";
-import { openMellowtelOnboardingModal, shouldShowMellowtelOnboarding } from "@components/MellowtelConsentModal";
-import { addHeaderBarButton, HeaderBarButton } from "@api/HeaderBar";
-import { debounce } from "@shared/debounce";
 import { IS_WINDOWS } from "@utils/constants";
 import { createAndAppendStyle } from "@utils/css";
 import { StartAt } from "@utils/types";
-import { SettingsRouter } from "@webpack/common";
 
-import { get as dsGet } from "./api/DataStore";
 import { popNotice, showNotice } from "./api/Notices";
-import { showNotification } from "./api/Notifications";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
-import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
-import { getCloudSettings, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
-import { localStorage } from "./utils/localStorage";
+import { PlainSettings, Settings } from "./api/Settings";
 import { relaunch } from "./utils/native";
-import { checkForUpdates, isOutdated as getIsOutdated, rebuild, update, UpdateLogger } from "./utils/updater";
+import { checkForUpdates, isOutdated as getIsOutdated, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
 import { patches } from "./webpack/patchWebpack";
 
 if (IS_REPORTER) {
     require("./debug/runReporter");
-}
-
-async function syncSettings() {
-    // Check if cloud auth exists for current user before attempting sync
-    if (localStorage.Vencord_cloudSyncDirection === undefined) {
-        // by default, sync bi-directionally
-        localStorage.Vencord_cloudSyncDirection = "both";
-    }
-    const hasCloudAuth = await dsGet("Vencord_cloudSecret");
-    if (!hasCloudAuth) {
-        if (Settings.cloud.authenticated) {
-            // User switched to an account that isn't connected to cloud
-            showNotification({
-                title: "Cloud Settings",
-                body: "Cloud sync was disabled because this account isn't connected to the cloud App. You can enable it again by connecting this account in Cloud Settings. (note: it will store your preferences separately)",
-                color: "var(--yellow-360)",
-                onClick: () => SettingsRouter.openUserSettings("equicord_cloud_panel")
-            });
-            // Disable cloud sync globally
-            Settings.cloud.authenticated = false;
-        }
-        return;
-    }
-
-    // pre-check for local shared settings
-    if (
-        Settings.cloud.authenticated &&
-        !hasCloudAuth // this has been enabled due to local settings share or some other bug
-    ) {
-        // show a notification letting them know and tell them how to fix it
-        showNotification({
-            title: "Cloud Integrations",
-            body: "We've noticed you have cloud integrations enabled in another client! Due to limitations, you will " +
-                "need to re-authenticate to continue using them. Click here to go to the settings page to do so!",
-            color: "var(--yellow-360)",
-            onClick: () => SettingsRouter.openUserSettings("equicord_cloud_panel")
-        });
-        return;
-    }
-
-    if (
-        Settings.cloud.settingsSync && // if it's enabled
-        Settings.cloud.authenticated && // if cloud integrations are enabled
-        localStorage.Vencord_cloudSyncDirection !== "manual" // if we're not in manual mode
-    ) {
-        if (localStorage.Vencord_settingsDirty && shouldCloudSync("push")) {
-            await putCloudSettings();
-        } else if (shouldCloudSync("pull") && await getCloudSettings(false)) { // if we synchronized something (false means no sync)
-            // we show a notification here instead of allowing getCloudSettings() to show one to declutter the amount of
-            // potential notifications that might occur. getCloudSettings() will always send a notification regardless if
-            // there was an error to notify the user, but besides that we only want to show one notification instead of all
-            // of the possible ones it has (such as when your settings are newer).
-            showNotification({
-                title: "Cloud Settings",
-                body: "Your settings have been updated! Click here to restart to fully apply changes!",
-                color: "var(--green-360)",
-                onClick: relaunch
-            });
-        }
-    }
-
-    const saveSettingsOnFrequentAction = debounce(async () => {
-        if (Settings.cloud.settingsSync && Settings.cloud.authenticated && shouldCloudSync("push")) {
-            await putCloudSettings();
-        }
-    }, 60_000);
-
-    SettingsStore.addGlobalChangeListener(() => {
-        localStorage.Vencord_settingsDirty = true;
-        saveSettingsOnFrequentAction();
-    });
-}
-
-let stagedThisSession = false;
-
-/**
- * Downloads and stages the update silently in the background.
- * No banner, no user interaction needed.
- * midnightcord-index.js will apply the staged files on the next restart.
- */
-async function silentlyStageUpdate() {
-    if (stagedThisSession) return;
-    stagedThisSession = true;
-
-    try {
-        UpdateLogger.info("Silently staging update in background...");
-        // checkForUpdates() already set pendingDownloadUrl via IpcEvents.GET_UPDATES → getUpdates() → fetchUpdates()
-        // So we call rebuild() (= stageUpdate) directly — no redundant API call needed.
-        await rebuild(); // downloads zip to %temp%, extracts to staging dir, writes marker — no locked files touched
-        UpdateLogger.info("Update staged successfully. Will be applied on next Discord restart.");
-    } catch (e) {
-        UpdateLogger.error("Silent update staging failed", e);
-        stagedThisSession = false; // allow retry on next check interval
-    }
-}
-
-async function runUpdateCheck() {
-    if (IS_UPDATER_DISABLED || Settings.disableAutoUpdate) return;
-
-    try {
-        const isOutdated = await checkForUpdates();
-        if (IS_DISCORD_DESKTOP) VencordNative.tray.setUpdateState(isOutdated);
-        if (!isOutdated) return;
-
-        // Stage silently — no banner shown, update applies on next restart
-        silentlyStageUpdate();
-    } catch (err) {
-        UpdateLogger.error("Failed to check for updates", err);
-    }
 }
 
 function initTrayIpc() {
@@ -256,27 +139,12 @@ function initTrayIpc() {
     VencordNative.tray.setUpdateState(getIsOutdated);
 }
 
-import { ReactDOM } from "@webpack/common";
-
 async function init() {
     await onceReady;
 
     startAllPlugins(StartAt.WebpackReady);
 
-    syncSettings();
     initTrayIpc();
-
-    // Mandatory, one-time (per onboarding version) consent screen for the Mellowtel
-    // bandwidth-sharing SDK. It re-appears after major updates by bumping
-    // MELLOWTEL_ONBOARDING_VERSION.
-    if (shouldShowMellowtelOnboarding()) {
-        setTimeout(() => openMellowtelOnboardingModal(), 1500);
-    }
-
-    if (!IS_WEB && !IS_UPDATER_DISABLED) {
-        runUpdateCheck();
-        setInterval(runUpdateCheck, 1000 * 60 * 30); // 30 minutes
-    }
 
     if (IS_DEV) {
         const pendingPatches = patches.filter(p => !p.all && p.predicate?.() !== false);
@@ -319,4 +187,3 @@ document.addEventListener("DOMContentLoaded", () => {
         createAndAppendStyle("vencord-native-titlebar-style", coreStyleRootNode).textContent = "[class*=titleBar]{display: none!important}";
     }
 }, { once: true });
-

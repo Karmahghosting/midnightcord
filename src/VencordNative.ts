@@ -100,19 +100,11 @@ export default {
     },
 
     midnightcord: {
-        getInstallerPrefs: () => sendSync<{defaultPlugins: boolean, autoUpdate: boolean}>(IpcEvents.GET_INSTALLER_PREFS),
+        getInstallerPrefs: () => sendSync<{ defaultPlugins: boolean, autoUpdate: boolean }>(IpcEvents.GET_INSTALLER_PREFS),
         checkVBCable: () => invoke<{ installed: boolean; }>(IpcEvents.CHECK_VB_CABLE),
         installVBCable: () => invoke<{ success: boolean; error?: string; }>(IpcEvents.INSTALL_VB_CABLE),
 
         relaunch: () => invoke<void>(IpcEvents.RELAUNCH_APP),
-    },
-
-    mellowtel: {
-        /** Persist the user's onboarding choice and forward it to the main-process SDK. */
-        setConsent: (accepted: boolean, onboardingVersion: string) =>
-            invoke<void>(IpcEvents.MELLOWTEL_SET_CONSENT, accepted, onboardingVersion),
-        /** Returns the last stored choice, or null if the user hasn't been asked yet. */
-        getConsent: () => sendSync<{ consent: "accepted" | "declined"; version: string; } | null>(IpcEvents.MELLOWTEL_GET_CONSENT),
     },
 
     pluginHelpers: PluginHelpers,
@@ -148,4 +140,3 @@ export default {
     setContentProtection: (enabled: boolean) =>
         invoke<boolean>(IpcEvents.SET_CONTENT_PROTECTION, enabled),
 };
-

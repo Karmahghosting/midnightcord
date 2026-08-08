@@ -1,5 +1,5 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -14,7 +14,6 @@ import definePlugin from "@utils/types";
 import { ContextMenuApi,Menu, Popout, React, Tooltip, useEffect, useRef, useState } from "@webpack/common";
 
 const STORE_KEY = "Backpack_packedButtons";
-
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
@@ -264,7 +263,6 @@ async function isExistingUser(): Promise<boolean> {
         if ((await DataStore.get<any>("Vencord_existingPlugins")) !== undefined) return true;
         if ((await DataStore.get<any>("TokenImporter_accounts")) !== undefined) return true;
         if ((await DataStore.get<any>("SaveProfile_presets")) !== undefined) return true;
-        if ((await DataStore.get<any>("Vencord_cloudSecret")) !== undefined) return true;
     } catch { }
     return false;
 }
@@ -313,4 +311,3 @@ export default definePlugin({
         notifyBackpackChange();
     },
 });
-

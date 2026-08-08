@@ -1,16 +1,16 @@
 {
     "name": "midnightcord",
     "private": "true",
-    "version": "1.26.2",
-    "description": "An optimized, Linux-first Discord desktop client",
+    "version": "1.27.0",
+    "description": "A fast cross-platform Discord client mod with native voice",
     "main": "dist/js/main.js",
-    "homepage": "https://source.nightcord.st/nightcord/nightcord",
+    "homepage": "https://github.com/Karmahghosting/midnightcord",
     "bugs": {
-        "url": "https://source.nightcord.st/nightcord/nightcord/issues"
+        "url": "https://github.com/Karmahghosting/midnightcord/issues"
     },
     "repository": {
         "type": "git",
-        "url": "https://source.nightcord.st/nightcord/nightcord.git"
+        "url": "https://github.com/Karmahghosting/midnightcord.git"
     },
     "license": "GPL-3.0-or-later",
     "author": "Midnightcord contributors",
@@ -19,7 +19,7 @@
         "buildStandalone": "corepack pnpm build --standalone",
         "buildStandalone:linux": "corepack pnpm build --standalone --disable-updater",
         "buildDesktop": "tsx scripts/build/buildDesktop.mts",
-        "package": "corepack pnpm package:linux",
+        "package": "corepack pnpm package:native",
         "package:linux": "corepack enable --install-directory node_modules/.bin && corepack pnpm run buildDesktop && corepack pnpm run buildStandalone:linux && node scripts/packageLinux.mjs",
         "package:linux:x64": "corepack enable --install-directory node_modules/.bin && corepack pnpm run buildDesktop && corepack pnpm run buildStandalone:linux && node scripts/packageLinux.mjs --x64",
         "package:linux:arm64": "corepack enable --install-directory node_modules/.bin && corepack pnpm run buildDesktop && corepack pnpm run buildStandalone:linux && node scripts/packageLinux.mjs --arm64",
@@ -38,18 +38,28 @@
         "generateEquicordPluginJson": "tsx scripts/generatePluginList.ts --equicord plugins.json",
         "generateVencordPluginJson": "tsx scripts/generatePluginList.ts --vencord plugins.json",
         "generateTypes": "tspc --emitDeclarationOnly --declaration --outDir packages/vencord-types --allowJs false",
-        "inject": "node scripts/runInstaller.mjs -- --install",
+        "inject": "node scripts/inject.mjs",
         "inject:linux": "node scripts/inject.mjs",
-        "uninject": "node scripts/runInstaller.mjs -- --uninstall",
+        "uninject": "node scripts/uninject.mjs",
         "uninject:linux": "node scripts/uninject.mjs",
-        "repair": "node scripts/runInstaller.mjs -- --repair",
+        "repair": "node scripts/inject.mjs",
         "lint": "eslint",
         "lint-styles": "stylelint \"src/**/*.css\" --ignore-pattern src/userplugins",
         "lint:fix": "pnpm lint --fix",
         "test": "pnpm buildStandalone && pnpm testTsc && pnpm lint:fix && pnpm lint-styles && pnpm generatePluginJson",
         "testWeb": "pnpm lint:fix && pnpm buildWeb && pnpm testTsc",
         "testTsc": "tsc --noEmit",
-        "depCheck": "node scripts/depCheck.mjs"
+        "depCheck": "node scripts/depCheck.mjs",
+        "package:native": "corepack enable --install-directory node_modules/.bin && corepack pnpm build --standalone --disable-updater && node scripts/packageNative.mjs",
+        "package:all": "corepack pnpm run package:native && corepack pnpm run package:linux",
+        "inject:native": "node scripts/inject.mjs",
+        "inject:windows": "node scripts/inject.mjs",
+        "inject:macos": "node scripts/inject.mjs",
+        "uninject:native": "node scripts/uninject.mjs",
+        "uninject:windows": "node scripts/uninject.mjs",
+        "uninject:macos": "node scripts/uninject.mjs",
+        "test:native-injection": "node scripts/testNativeInjection.mjs",
+        "test:privacy": "node scripts/testPrivacy.mjs"
     },
     "dependencies": {
         "@ffmpeg/ffmpeg": "^0.12.10",
@@ -68,7 +78,6 @@
         "gifenc": "github:mattdesl/gifenc#64842fca317b112a8590f8fef2bf3825da8f6fe3",
         "idb": "8.0.3",
         "jsqr": "1.4.0",
-        "mellowtel": "^1.6.7",
         "monaco-editor": "^0.54.0",
         "nanoid": "^5.1.6",
         "native-file-system-adapter": "^3.0.1",
@@ -153,9 +162,5 @@
     },
     "engines": {
         "node": ">=18"
-    },
-    "build": {
-        "extends": null,
-        "configFile": "electron-builder.config.cjs"
     }
 }

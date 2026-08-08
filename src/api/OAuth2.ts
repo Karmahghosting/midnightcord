@@ -1,46 +1,35 @@
-export const API_BASE = "https://api.nightcord.st";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
 import * as DataStore from "./DataStore";
 
+export const API_BASE = "";
 export const OAUTH_TOKEN_KEY = "midnightcord_oauth_token";
 
-export async function beginDiscordOAuth(state?: string) {
-    const url = new URL(`${API_BASE}/api/oauth2/signing`);
-    if (state) {
-        url.searchParams.set('state', state);
-    }
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-        throw new Error('Failed to create OAuth URL');
-    }
-
-    return response.json() as Promise<{
-        url: string;
-        redirectUri: string;
-        scopes: string[];
-    }>;
+interface OAuthSigningData {
+    url: string;
+    redirectUri: string;
+    scopes: string[];
+    clientId?: string;
 }
 
-export async function checkOAuthToken(token: string) {
-    try {
-        const response = await fetch(`${API_BASE}/api/oauth2/check?token=${encodeURIComponent(token)}`);
-        if (!response.ok) {
-            return null;
-        }
-        return await response.json();
-    } catch (e) {
-        console.error("Failed to check OAuth token:", e);
-        return null;
-    }
+export async function beginDiscordOAuth(_state?: string): Promise<OAuthSigningData> {
+    throw new Error("Midnightcord cloud integration is disabled in this build.");
+}
+
+export async function checkOAuthToken(_token: string): Promise<null> {
+    return null;
 }
 
 export async function getStoredToken(): Promise<string | null> {
-    return (await DataStore.get(OAUTH_TOKEN_KEY)) || null;
+    return null;
 }
 
-export async function storeToken(token: string) {
-    await DataStore.set(OAUTH_TOKEN_KEY, token);
+export async function storeToken(_token: string) {
+    await DataStore.del(OAUTH_TOKEN_KEY);
 }
 
 export async function clearToken() {

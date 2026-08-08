@@ -54,11 +54,6 @@ export interface NativeSettings {
         };
     };
     customCspRules: Record<string, string[]>;
-    /** User's choice on the Mellowtel bandwidth-sharing onboarding modal. */
-    mellowtel?: {
-        consent: "accepted" | "declined";
-        version: string;
-    };
 }
 
 const DefaultNativeSettings: NativeSettings = {

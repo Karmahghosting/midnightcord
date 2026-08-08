@@ -76,10 +76,6 @@ export const enum IpcEvents {
     // Relaunch de l'app Electron
     RELAUNCH_APP = "MidnightcordRelaunchApp",
 
-    // Mellowtel bandwidth-sharing SDK consent (user-facing, opt-in onboarding)
-    MELLOWTEL_SET_CONSENT = "MidnightcordMellowtelSetConsent",
-    MELLOWTEL_GET_CONSENT = "MidnightcordMellowtelGetConsent",
-
     // WorldBomb â€” Simulation Clavier/Souris Native
     WORLD_BOMB_TYPE = "WorldBombType",
     WORLD_BOMB_PRESS_ENTER = "WorldBombPressEnter",
@@ -100,5 +96,3 @@ export const enum IpcEvents {
     // Modifie la protection Stream Proof globale
     SET_CONTENT_PROTECTION = "MidnightcordSetContentProtection"
 }
-
-

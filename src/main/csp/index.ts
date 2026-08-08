@@ -1,3 +1,9 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { NativeSettings } from "@main/settings";
 import { session } from "electron";
 
@@ -15,11 +21,6 @@ export const CspPolicies: PolicyMap = {
     "http://127.0.0.1:*": ImageAndCssSrc,
     "localhost:*": ImageAndCssSrc,
     "127.0.0.1:*": ImageAndCssSrc,
-
-    "api.nightcord.st": ConnectSrc,
-    "https://api.nightcord.st": ConnectSrc,
-    "nightcord.st": ConnectSrc,
-    "*.nightcord.st": ConnectSrc,
 
     "*.github.io": ImageAndCssSrc,
     "github.com": ImageAndCssSrc,
@@ -159,7 +160,7 @@ export function initCsp() {
         const responseHeaders = details.responseHeaders || {};
         try {
             const url = (details.url || "").toLowerCase();
-            const resourceType = details.resourceType;
+            const { resourceType } = details;
             const isSubFrame = resourceType === "subFrame";
             const isYouTube = url.includes("youtube.com") || url.includes("googlevideo.com") || url.includes("youtube-nocookie.com");
             const isTikTok = url.includes("tiktok.com") || url.includes("tiktokcdn.com");
@@ -208,7 +209,7 @@ export function initCsp() {
 
             const permissionsPolicyHeader = findHeader(responseHeaders, "permissions-policy");
             if (permissionsPolicyHeader) delete responseHeaders[permissionsPolicyHeader];
-            
+
             const featurePolicyHeader = findHeader(responseHeaders, "feature-policy");
             if (featurePolicyHeader) delete responseHeaders[featurePolicyHeader];
 
@@ -219,4 +220,3 @@ export function initCsp() {
         }
     });
 }
-

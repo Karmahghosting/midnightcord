@@ -1,46 +1,120 @@
-name: Build & Release Midnightcord
+name: Build and release Midnightcord
 
 on:
   push:
     tags:
-      - "v*"          # déclenché sur : git tag v1.0.0 && git push --tags
+      - "v*"
+  workflow_dispatch:
 
 permissions:
-  contents: write    # nécessaire pour créer la GitHub Release
+  contents: write
+
+env:
+  FORCE_COLOR: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  native:
+    name: Native ${{ matrix.platform }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x64
+          - os: macos-15-intel
+            platform: macos
+            arch: x64
+          - os: macos-latest
+            platform: macos
+            arch: arm64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          version: 10.30.3
+          node-version: "24"
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Linux packages
+      - name: Build native archive
+        run: pnpm package:native
+
+      - name: Verify privacy and native injection
+        run: pnpm test:privacy && pnpm test:native-injection
+
+      - name: Upload native archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release/native/*
+          if-no-files-found: error
+
+  linux-standalone:
+    name: Linux standalone x64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Linux standalone packages
         run: pnpm package:linux:x64
+
+      - name: Upload Linux packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-standalone-x64
+          path: |
+            release/*.AppImage
+            release/*.deb
+            release/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs:
+      - native
+      - linux-standalone
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: release-assets
+          merge-multiple: true
 
       - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/*.AppImage
-            release/*.deb
-            release/*.tar.gz
+          generate_release_notes: true
+          files: release-assets/*
           fail_on_unmatched_files: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

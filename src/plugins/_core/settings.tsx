@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { BackupRestoreIcon, CloudIcon, LogIcon, MagnifyingGlassIcon,MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, UpdaterIcon } from "@components/Icons";
+import { BackupRestoreIcon, LogIcon, MagnifyingGlassIcon,MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, ShieldIcon, UpdaterIcon } from "@components/Icons";
 import { LangIcon } from "@components/LangIcon";
 import {
     BackupAndRestoreTab,
@@ -29,13 +29,13 @@ function CodeIcon(props: IconProps) {
         </svg>
     );
 }
+import { t } from "@api/i18n";
 import IconsTab from "@midnightcordplugins/iconViewer/components/IconsTab";
 import { gitHashShort } from "@shared/vencordUserAgent";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
 import { waitFor } from "@webpack";
-import { t } from "@api/i18n";
 import { React } from "@webpack/common";
 import type { ComponentType, PropsWithChildren, ReactNode } from "react";
 
@@ -132,7 +132,6 @@ const settingsSectionMap: [string, string][] = [
     ["EquicordCreateTheme", "equicord_create_theme_panel"],
     ["EquicordUpdater", "equicord_updater_panel"],
     ["EquicordChangelog", "equicord_changelog_panel"],
-    ["EquicordCloud", "equicord_cloud_panel"],
     ["EquicordBackupAndRestore", "equicord_backup_restore_panel"],
     ["EquicordPatchHelper", "equicord_patch_helper_panel"],
     ["EquibopSettings", "equicord_equibop_settings_panel"],
@@ -283,10 +282,10 @@ export default definePlugin({
             }),
             buildEntry({
                 key: "midnightcord_sync",
-                title: "Synchronization",
-                panelTitle: "Midnightcord Sync",
+                title: "Privacy",
+                panelTitle: "Midnightcord Privacy",
                 Component: SyncTab,
-                Icon: CloudIcon
+                Icon: ShieldIcon
             }),
             buildEntry({
                 key: "midnightcord_language",
