@@ -26,10 +26,9 @@ import { copyToClipboard } from "@utils/clipboard";
 import { IS_MAC, IS_WINDOWS } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
-import { identity } from "@utils/misc";
 import { openModal } from "@utils/modal";
 import { relaunch } from "@utils/native";
-import { Avatar, React, Select, showToast, Toasts,UserStore } from "@webpack/common";
+import { React } from "@webpack/common";
 
 import { ContributeModal } from "../../../../midnightcord/renderer/components/ContributeModal";
 import { openNotificationSettingsModal } from "./NotificationSettings";
@@ -49,36 +48,7 @@ const DEV_TEAM_IDS = [
     }
 ];
 
-function useDiscordUser(userId: string) {
-    const [user, setUser] = React.useState<{ name: string; pfp: string; } | null>(null);
-    React.useEffect(() => {
-        const cached = UserStore?.getUser(userId);
-        if (cached) {
-            setUser({
-                name: (cached as any).globalName || (cached as any).global_name || cached.username,
-                pfp: cached.avatar
-                    ? `https://cdn.discordapp.com/avatars/${userId}/${cached.avatar}.webp?size=128`
-                    : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`
-            });
-            return;
-        }
-        fetch(`https://discord.com/api/v9/users/${userId}`, {
-            headers: { Authorization: (window as any).token ?? "" }
-        })
-            .then(r => r.json())
-            .then(u => setUser({
-                name: u.global_name || u.username || userId,
-                pfp: u.avatar
-                    ? `https://cdn.discordapp.com/avatars/${userId}/${u.avatar}.webp?size=128`
-                    : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`
-            }))
-            .catch(() => setUser({ name: userId, pfp: "https://cdn.discordapp.com/embed/avatars/0.png" }));
-    }, [userId]);
-    return user;
-}
-
 function DevCard({ id, role, description }: { id: string; role: string; description: string; }) {
-    const user = useDiscordUser(id);
     const [copied, setCopied] = React.useState(false);
 
     const handleCopy = (e: React.MouseEvent) => {
@@ -89,20 +59,33 @@ function DevCard({ id, role, description }: { id: string; role: string; descript
             navigator.clipboard.writeText(id);
         }
         setCopied(true);
-        try { showToast("ID copié !", Toasts.Type.SUCCESS); } catch {}
         setTimeout(() => setCopied(false), 1500);
     };
 
     return (
         <Card variant="primary" outline style={{ padding: "12px" }}>
             <Flex align={Flex.Align.CENTER} gap="12px">
-                <Avatar
-                    src={user?.pfp ?? "https://cdn.discordapp.com/embed/avatars/0.png"}
-                    size="SIZE_48"
-                />
+                <div
+                    aria-hidden="true"
+                    style={{
+                        alignItems: "center",
+                        background: "var(--brand-500)",
+                        borderRadius: "50%",
+                        color: "white",
+                        display: "flex",
+                        flex: "0 0 48px",
+                        fontSize: "18px",
+                        fontWeight: 700,
+                        height: 48,
+                        justifyContent: "center",
+                        width: 48
+                    }}
+                >
+                    {role.slice(0, 1)}
+                </div>
                 <Flex direction={Flex.Direction.VERTICAL} style={{ flex: 1, gap: "2px" }}>
                     <Flex align={Flex.Align.CENTER} justify={Flex.Justify.BETWEEN} style={{ width: "100%" }}>
-                        <Heading tag="h3" style={{ marginBottom: "0px", fontSize: "14px", fontWeight: "bold" }}>{user?.name ?? "..."}</Heading>
+                        <Heading tag="h3" style={{ marginBottom: "0px", fontSize: "14px", fontWeight: "bold" }}>{`Midnightcord ${role}`}</Heading>
                         <Heading tag="h4" style={{ color: "var(--brand-experiment)", fontWeight: "bold", fontSize: "12px" }}>{role}</Heading>
                     </Flex>
 
@@ -266,8 +249,6 @@ function EquicordSettings() {
 
     const needsVibrancySettings = IS_DISCORD_DESKTOP && IS_MAC;
 
-    const user = UserStore?.getCurrentUser();
-
     const Switches: Array<false | {
         key: KeysOfType<typeof settings, boolean>;
         title: string;
@@ -427,68 +408,34 @@ function EquicordSettings() {
                         <Paragraph className={Margins.bottom16}>
                             Customize the macOS window vibrancy effect. This controls the blur and transparency style of the Discord window. Changes require a restart to take effect.
                         </Paragraph>
-                        <Select
+                        <select
                             className={Margins.bottom20}
-                            placeholder="Window vibrancy style"
-                            options={[
-                                // Sorted from most opaque to most transparent
-                                {
-                                    label: "No vibrancy",
-                                    value: undefined,
-                                },
-                                {
-                                    label: "Under Page (window tinting)",
-                                    value: "under-page",
-                                },
-                                {
-                                    label: "Content",
-                                    value: "content",
-                                },
-                                {
-                                    label: "Window",
-                                    value: "window",
-                                },
-                                {
-                                    label: "Selection",
-                                    value: "selection",
-                                },
-                                {
-                                    label: "Titlebar",
-                                    value: "titlebar",
-                                },
-                                {
-                                    label: "Header",
-                                    value: "header",
-                                },
-                                {
-                                    label: "Sidebar",
-                                    value: "sidebar",
-                                },
-                                {
-                                    label: "Tooltip",
-                                    value: "tooltip",
-                                },
-                                {
-                                    label: "Menu",
-                                    value: "menu",
-                                },
-                                {
-                                    label: "Popover",
-                                    value: "popover",
-                                },
-                                {
-                                    label: "Fullscreen UI (transparent but slightly muted)",
-                                    value: "fullscreen-ui",
-                                },
-                                {
-                                    label: "HUD (Most transparent)",
-                                    value: "hud",
-                                },
-                            ]}
-                            select={v => (settings.macosVibrancyStyle = v)}
-                            isSelected={v => settings.macosVibrancyStyle === v}
-                            serialize={identity}
-                        />
+                            aria-label="Window vibrancy style"
+                            value={settings.macosVibrancyStyle ?? ""}
+                            onChange={event => (settings.macosVibrancyStyle = (event.currentTarget.value || undefined) as typeof settings.macosVibrancyStyle)}
+                            style={{
+                                width: "100%",
+                                padding: "8px 12px",
+                                borderRadius: 4,
+                                background: "var(--background-tertiary)",
+                                color: "var(--text-normal)",
+                                border: "1px solid var(--background-modifier-accent)"
+                            }}
+                        >
+                            <option value="">No vibrancy</option>
+                            <option value="under-page">Under Page (window tinting)</option>
+                            <option value="content">Content</option>
+                            <option value="window">Window</option>
+                            <option value="selection">Selection</option>
+                            <option value="titlebar">Titlebar</option>
+                            <option value="header">Header</option>
+                            <option value="sidebar">Sidebar</option>
+                            <option value="tooltip">Tooltip</option>
+                            <option value="menu">Menu</option>
+                            <option value="popover">Popover</option>
+                            <option value="fullscreen-ui">Fullscreen UI</option>
+                            <option value="hud">HUD</option>
+                        </select>
                     </>
                 )}
 

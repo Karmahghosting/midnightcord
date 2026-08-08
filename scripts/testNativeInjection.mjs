@@ -124,7 +124,11 @@ try {
         iconSource
     });
     const desktopContent = readFileSync(desktopEntry, "utf8");
-    assert.match(desktopContent, /Exec=discord --ozone-platform=auto %U/);
+    assert.match(desktopContent, /Exec=discord %U/);
+    assert.doesNotMatch(desktopContent, /--ozone-platform=auto/);
+    assert.match(desktopContent, /Actions=Restart;Quit;/);
+    assert.match(desktopContent, /Exec=discord --midnightcord-restart/);
+    assert.match(desktopContent, /Exec=discord --midnightcord-quit/);
     assert.match(desktopContent, /StartupWMClass=discord/);
     assert.match(desktopContent, /X-Midnightcord-Native=true/);
     removeLinuxDesktopEntry({ platform: "linux", home: kdeHome, env: {}, purgeIcon: true });

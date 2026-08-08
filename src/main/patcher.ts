@@ -33,6 +33,19 @@ if (process.platform === "linux") app.setDesktopName("midnightcord.desktop");
 // Our injector file at app/index.js
 const injectorPath = require.main!.filename;
 
+const DESKTOP_RESTART_ARG = "--midnightcord-restart";
+const DESKTOP_QUIT_ARG = "--midnightcord-quit";
+
+app.on("second-instance", (event, argv) => {
+    const restartRequested = argv.includes(DESKTOP_RESTART_ARG);
+    const quitRequested = argv.includes(DESKTOP_QUIT_ARG);
+    if (!restartRequested && !quitRequested) return;
+
+    event.preventDefault();
+    if (restartRequested) app.relaunch();
+    app.quit();
+});
+
 // The original app.asar
 const _asarFromInjector = join(dirname(injectorPath), "..", "_app.asar");
 const _asarFromResources = join(process.resourcesPath, "_app.asar");

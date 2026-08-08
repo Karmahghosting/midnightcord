@@ -46,7 +46,7 @@ export const settings = definePluginSettings({
     instantScreenshare: {
         type: OptionType.BOOLEAN,
         description: "Enables automatic screenshare feature",
-        default: true,
+        default: false,
     },
     keybindScreenshare: {
         type: OptionType.BOOLEAN,

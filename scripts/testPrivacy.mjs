@@ -81,4 +81,19 @@ for (const relativePath of [
     assert(!streamerModeSource.includes("STREAMING_AUTO_STREAMER_MODE"), "Streamer Mode must use Discord's native support predicate");
 }
 
+const instantScreenshareSource = readFileSync(join(rootDir, "src", "plugins", "instantScreenshare", "utils.tsx"), "utf8");
+assert(/instantScreenshare:\s*\{[\s\S]*?default:\s*false/.test(instantScreenshareSource), "Automatic screenshare must remain opt-in");
+
+const midnightcordSettingsSource = readFileSync(join(rootDir, "src", "components", "settings", "tabs", "vencord", "index.tsx"), "utf8");
+assert(!midnightcordSettingsSource.includes("UserStore"), "Midnightcord settings must not call a missing lazy UserStore");
+assert(!midnightcordSettingsSource.includes("<Select"), "Midnightcord settings must not depend on Discord's unstable lazy Select");
+
+const trayMenuSource = readFileSync(join(rootDir, "src", "main", "trayMenu.ts"), "utf8");
+assert(trayMenuSource.includes("Menu.buildFromTemplate ="), "The native Discord tray menu must be patched");
+assert(trayMenuSource.includes("Restart Midnightcord"), "The native tray menu must provide restart");
+assert(trayMenuSource.includes('item.label?.includes("Midnightcord")'), "The tray menu must not inject itself recursively");
+assert(trayMenuSource.includes("return hasOpenOrShow && hasQuit && isNotAppMenu"), "Only the native tray menu may be patched");
+
+const rendererStartupSource = readFileSync(join(rootDir, "src", "Vencord.ts"), "utf8");
+assert(rendererStartupSource.includes("openSettingsTabModal(UpdaterTab)"), "Startup updates must open the updater popup");
 console.log("[test] Privacy regression checks passed.");

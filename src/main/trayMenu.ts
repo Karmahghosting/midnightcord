@@ -6,49 +6,68 @@
 
 import { IpcEvents } from "@shared/IpcEvents";
 import { gitHashShort } from "@shared/vencordUserAgent";
-import { BrowserWindow, ipcMain, MenuItemConstructorOptions, shell } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, MenuItemConstructorOptions, shell } from "electron";
 import aboutHtml from "file://about.html?minify";
 
 import { SETTINGS_DIR, THEMES_DIR } from "./utils/constants";
 
 let cachedUpdateAvailable = false;
+let trayMenuPatched = false;
 
 ipcMain.on(IpcEvents.SET_TRAY_UPDATE_STATE, (_, available: boolean) => {
     cachedUpdateAvailable = available;
 });
 
 function getMainWindow(): BrowserWindow | undefined {
-    return BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+    const windows = BrowserWindow.getAllWindows().filter(window => !window.isDestroyed());
+    return BrowserWindow.getFocusedWindow()
+        ?? windows.find(window => window.getTitle() === "Discord")
+        ?? windows.find(window => window.isVisible())
+        ?? windows[0];
+}
+
+function openMainWindow(): void {
+    const window = getMainWindow();
+    if (!window) return;
+    if (window.isMinimized()) window.restore();
+    window.show();
+    window.focus();
+}
+
+function restartApp(): void {
+    app.relaunch();
+    app.quit();
 }
 
 function sendToRenderer(event: IpcEvents): void {
     getMainWindow()?.webContents.send(event);
 }
 
-function findInsertIndex(template: MenuItemConstructorOptions[]): number {
+function findInsertIndex(template: Array<MenuItemConstructorOptions | MenuItem>): number {
     const openIndex = template.findIndex(item => {
         const label = item.label?.toLowerCase() ?? "";
-        return label.includes("open") || label.includes("show");
+        return /open|show|ouvrir|afficher/.test(label);
     });
     return openIndex !== -1 ? openIndex + 1 : 0;
 }
 
-function isTrayMenu(template: MenuItemConstructorOptions[]): boolean {
-    if (!template.length) return false;
+function isTrayMenu(template: Array<MenuItemConstructorOptions | MenuItem>): boolean {
+    if (!template.length || template.length > 20) return false;
 
     const hasOpenOrShow = template.some(item => {
         const label = item.label?.toLowerCase() ?? "";
-        return label.includes("open") || label.includes("show");
+        return /open|show|ouvrir|afficher/.test(label);
     });
 
-    const hasQuit = template.some(item =>
-        item.label?.toLowerCase().includes("quit") || item.role === "quit"
-    );
+    const hasQuit = template.some(item => {
+        const label = item.label?.toLowerCase() ?? "";
+        return item.role === "quit" || /quit|exit|quitter/.test(label);
+    });
 
-    const isNotAppMenu = !template.some(item =>
-        item.label === "&File" || item.label === "File" ||
-        item.label === "&Edit" || item.label === "Edit"
-    );
+    const isNotAppMenu = !template.some(item => {
+        const label = item.label?.replace("&", "").toLowerCase() ?? "";
+        return ["file", "edit", "view", "window", "help"].includes(label);
+    });
 
     return hasOpenOrShow && hasQuit && isNotAppMenu;
 }
@@ -76,8 +95,8 @@ function openAboutWindow() {
         return { action: "deny" };
     });
 
-    aboutWindow.webContents.on("will-navigate", (e, url) => {
-        e.preventDefault();
+    aboutWindow.webContents.on("will-navigate", (event, url) => {
+        event.preventDefault();
         shell.openExternal(url);
     });
 
@@ -97,8 +116,8 @@ function createMidnightcordMenuItems(): MenuItemConstructorOptions[] {
             label: "Midnightcord",
             submenu: [
                 {
-                    label: "About Midnightcord",
-                    click: () => openAboutWindow()
+                    label: "Open Midnightcord",
+                    click: openMainWindow
                 },
                 {
                     label: cachedUpdateAvailable ? "Update Midnightcord" : "Check for Updates",
@@ -110,12 +129,25 @@ function createMidnightcordMenuItems(): MenuItemConstructorOptions[] {
                 },
                 { type: "separator" },
                 {
+                    label: "Restart Midnightcord",
+                    click: restartApp
+                },
+                {
+                    label: "Quit Midnightcord",
+                    click: () => app.quit()
+                },
+                { type: "separator" },
+                {
                     label: "Open Settings Folder",
                     click: () => shell.openPath(SETTINGS_DIR)
                 },
                 {
                     label: "Open Themes Folder",
                     click: () => shell.openPath(THEMES_DIR)
+                },
+                {
+                    label: "About Midnightcord",
+                    click: openAboutWindow
                 }
             ]
         },
@@ -124,5 +156,18 @@ function createMidnightcordMenuItems(): MenuItemConstructorOptions[] {
 }
 
 export function patchTrayMenu(): void {
-    // No longer patching tray menu — Midnightcord manages its own tray in patcher.ts
+    if (trayMenuPatched) return;
+    trayMenuPatched = true;
+
+    const originalBuildFromTemplate = Menu.buildFromTemplate.bind(Menu);
+    Menu.buildFromTemplate = (template => {
+        if (!isTrayMenu(template) || template.some(item => item.label?.includes("Midnightcord"))) {
+            return originalBuildFromTemplate(template);
+        }
+
+        const patchedTemplate = [...template];
+        patchedTemplate.splice(findInsertIndex(patchedTemplate), 0, ...createMidnightcordMenuItems());
+        console.log("[Midnightcord] Native tray menu patched");
+        return originalBuildFromTemplate(patchedTemplate);
+    }) as typeof Menu.buildFromTemplate;
 }

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { Settings } from "@api/Settings";
+
 import { Logger } from "./Logger";
 import { IpcRes } from "./types";
 
@@ -13,56 +15,39 @@ export const isNewer = false;
 export let updateError: any;
 export let changes: Record<"hash" | "author" | "message", string>[] = [];
 
-async function Unwrap<T>(p: Promise<IpcRes<T>>): Promise<T> {
-    const res = await p;
-    if (res.ok) return res.value as T;
-    updateError = res.error;
-    throw res.error;
+async function Unwrap<T>(promise: Promise<IpcRes<T>>): Promise<T> {
+    const result = await promise;
+    if (result.ok) return result.value as T;
+    updateError = result.error;
+    throw result.error;
 }
 
-/**
- * Checks whether GitHub contains a newer Midnightcord release.
- */
 export async function checkForUpdates(): Promise<boolean> {
     changes = await Unwrap(VencordNative.updater.getUpdates());
     return (isOutdated = changes.length > 0);
 }
 
-/**
- * Resolves the verified assets for the latest GitHub release.
- */
 export async function update(): Promise<boolean> {
     if (!isOutdated) return true;
-    const ok = await Unwrap(VencordNative.updater.update());
-    if (ok) isOutdated = false;
-    return ok;
+    return Unwrap(VencordNative.updater.update());
 }
 
-/**
- * Downloads, verifies and stages the selected update for the next launch.
- */
 export async function rebuild(): Promise<boolean> {
-    return Unwrap(VencordNative.updater.rebuild());
+    const staged = await Unwrap(VencordNative.updater.rebuild());
+    if (staged) isOutdated = false;
+    return staged;
 }
-
-import { Settings } from "@api/Settings";
 
 export const getRepo = () => Unwrap(VencordNative.updater.getRepo());
 
-/**
- * Checks GitHub in the background and stages a verified update.
- * The loader applies it on the next normal Discord launch.
- */
 export async function stageAutomaticUpdate(): Promise<boolean> {
     if (IS_WEB || IS_UPDATER_DISABLED || Settings.disableAutoUpdate) return false;
 
     try {
         if (!await checkForUpdates()) return false;
+        if (!await update()) return false;
         const staged = await rebuild();
-        if (staged) {
-            isOutdated = false;
-            UpdateLogger.info("Update verified and staged for the next launch.");
-        }
+        if (staged) UpdateLogger.info("Update verified and staged for the next launch.");
         return staged;
     } catch (error) {
         UpdateLogger.error("Automatic GitHub update failed", error);
@@ -70,19 +55,15 @@ export async function stageAutomaticUpdate(): Promise<boolean> {
     }
 }
 
-export async function maybePromptToUpdate(confirmMessage: string, checkForDev = false) {
+export async function maybePromptToUpdate(_confirmMessage: string, checkForDev = false) {
     if (IS_WEB || IS_UPDATER_DISABLED || Settings.disableAutoUpdate) return;
     if (checkForDev && IS_DEV) return;
 
     try {
-        const outdated = await checkForUpdates();
-        if (outdated) {
-            // Mise à jour automatique sans confirmation
-            const downloaded = await update();
-            if (downloaded) await rebuild();
-        }
-    } catch (err) {
-        UpdateLogger.error(err);
+        if (!await checkForUpdates()) return;
+        if (await update()) await rebuild();
+    } catch (error) {
+        UpdateLogger.error(error);
         alert("La vérification des mises à jour a échoué. Vérifie ta connexion ou réinstalle Midnightcord.");
     }
 }

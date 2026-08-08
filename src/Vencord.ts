@@ -100,7 +100,7 @@ import { popNotice, showNotice } from "./api/Notices";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings } from "./api/Settings";
 import { relaunch } from "./utils/native";
-import { checkForUpdates, isOutdated as getIsOutdated, stageAutomaticUpdate, update, UpdateLogger } from "./utils/updater";
+import { checkForUpdates, isOutdated as getIsOutdated, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
 import { patches } from "./webpack/patchWebpack";
 
@@ -139,12 +139,23 @@ function initTrayIpc() {
     VencordNative.tray.setUpdateState(getIsOutdated);
 }
 
+async function checkForStartupUpdate() {
+    if (IS_WEB || IS_UPDATER_DISABLED || Settings.disableAutoUpdate || !UpdaterTab) return;
+
+    try {
+        const outdated = await checkForUpdates();
+        VencordNative.tray.setUpdateState(outdated);
+        if (outdated) openSettingsTabModal(UpdaterTab);
+    } catch (error) {
+        UpdateLogger.error("Startup update check failed", error);
+    }
+}
 async function init() {
     await onceReady;
 
     startAllPlugins(StartAt.WebpackReady);
 
-    setTimeout(() => void stageAutomaticUpdate(), 15_000);
+    setTimeout(() => void checkForStartupUpdate(), 5_000);
 
     initTrayIpc();
 
