@@ -91,9 +91,9 @@ function UpdaterTab() {
 
     return (
         <SettingsTab>
-            <Heading className={Margins.top16}>{t("Nightcord Updater")}</Heading>
+            <Heading className={Margins.top16}>{t("Midnightcord Updater")}</Heading>
             <Paragraph className={Margins.bottom20}>
-                {t("Check for new versions of Nightcord. Updates can be installed automatically.")}
+                {t("Check for new versions of Midnightcord. Updates can be installed automatically.")}
             </Paragraph>
 
             {/* Version actuelle */}

@@ -7,7 +7,7 @@
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
-import equicordToolbox from "@nightcordplugins/equicordToolbox";
+import equicordToolbox from "@midnightcordplugins/equicordToolbox";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Constants, Menu, RestAPI, useEffect, useState } from "@webpack/common";

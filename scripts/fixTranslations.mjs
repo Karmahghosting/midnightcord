@@ -1,5 +1,5 @@
 /**
- * Regenerate corrupted translations in autoTranslateNightcord/index.ts
+ * Regenerate corrupted translations in autoTranslateMidnightcord/index.ts
  * Uses Google Translate API (free tier via unofficial endpoint)
  */
 import { readFileSync, writeFileSync } from "fs";
@@ -87,13 +87,13 @@ const MANUAL_TRANSLATIONS = {
     "Slow": { es: "Lento", ru: "Медленно", zh: "慢" },
     "account": { es: "cuenta", ru: "аккаунт", zh: "账号" },
     "accounts": { es: "cuentas", ru: "аккаунты", zh: "账号" },
-    "Nightcord AI": { es: "IA de Nightcord", ru: "Nightcord ИИ", zh: "Nightcord AI" },
+    "Midnightcord AI": { es: "IA de Midnightcord", ru: "Midnightcord ИИ", zh: "Midnightcord AI" },
     "Online": { es: "En línea", ru: "В сети", zh: "在线" },
     "❌ Clé API missinge": { es: "❌ Falta la clave API", ru: "❌ Отсутствует ключ API", zh: "❌ 缺少 API 密钥" },
     "Clear history": { es: "Borrar historial", ru: "Очистить историю", zh: "清除历史记录" },
     "How can I help you?": { es: "¿Cómo puedo ayudarte?", ru: "Как я могу вам помочь?", zh: "我能帮您什么?" },
     "Ask anything!": { es: "¡Pregunta lo que sea!", ru: "Спрашивайте что угодно!", zh: "随便问！" },
-    "Configure ta clé API dans Equicord Settings → Plugins → NightcordAI": { es: "Configura tu clave API en Equicord Settings → Plugins → NightcordAI", ru: "Настройте ключ API в Equicord Settings → Plugins → NightcordAI", zh: "在 Equicord 设置 → 插件 → NightcordAI 中配置 API 密钥" },
+    "Configure ta clé API dans Equicord Settings → Plugins → MidnightcordAI": { es: "Configura tu clave API en Equicord Settings → Plugins → MidnightcordAI", ru: "Настройте ключ API в Equicord Settings → Plugins → MidnightcordAI", zh: "在 Equicord 设置 → 插件 → MidnightcordAI 中配置 API 密钥" },
     "Send a message… (Enter = send, Ctrl+V = paste image)": { es: "Envía un mensaje… (Enter = enviar, Ctrl+V = pegar imagen)", ru: "Отправьте сообщение… (Enter = отправить, Ctrl+V = вставить изображение)", zh: "发送消息…（Enter=发送，Ctrl+V=粘贴图片）" },
     "Configure your API key first…": { es: "Configura tu clave API primero…", ru: "Сначала настройте ключ API…", zh: "请先配置 API 密钥…" },
     "Shift+Enter for new line · Local history (100 messages)": { es: "Shift+Enter para nueva línea · Historial local (100 mensajes)", ru: "Shift+Enter для новой строки · Локальная история (100 сообщений)", zh: "Shift+Enter 换行 · 本地历史（100条消息）" },
@@ -103,7 +103,7 @@ const MANUAL_TRANSLATIONS = {
     "Write a poem about the night": { es: "Escribe un poema sobre la noche", ru: "Напишите стихотворение о ночи", zh: "写一首关于夜晚的诗" },
     "Give me 5 productivity tips": { es: "Dame 5 consejos de productividad", ru: "Дайте мне 5 советов по продуктивности", zh: "给我5个提高生产力的建议" },
     "AI": { es: "IA", ru: "ИИ", zh: "人工智能" },
-    "Nightcord": { es: "Nightcord", ru: "Nightcord", zh: "Nightcord" },
+    "Midnightcord": { es: "Midnightcord", ru: "Midnightcord", zh: "Midnightcord" },
     "Type a message...": { es: "Escribe un mensaje...", ru: "Введите сообщение...", zh: "输入消息..." },
     "Auto Correct": { es: "Corrección automática", ru: "Автокоррекция", zh: "自动更正" },
     "AutoCorrect": { es: "Corrección automática", ru: "Автокоррекция", zh: "自动更正" },
@@ -211,7 +211,7 @@ const MANUAL_TRANSLATIONS = {
 };
 
 // Read the current file
-const content = readFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", "utf8");
+const content = readFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", "utf8");
 
 // Extract all current entries
 const entryRegex = /("(?:[^"\\]|\\.)*"):\s*\{[^}]+\}/g;
@@ -230,5 +230,5 @@ for (const [key, trans] of Object.entries(MANUAL_TRANSLATIONS)) {
     }
 }
 
-writeFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", updated, "utf8");
+writeFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", updated, "utf8");
 console.log(`Fixed ${fixedCount} translation entries.`);

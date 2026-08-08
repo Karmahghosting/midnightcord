@@ -57,7 +57,7 @@ export const VesktopNative = {
             ipcRenderer.on(IpcEvents.VESKTOP_RENDERER_CSS_UPDATE, (_e, newCss: string) => cb(newCss));
         }
     },
-    nightcord: {
+    midnightcord: {
         relaunch: () => invoke<void>(IpcEvents.RELAUNCH_APP),
     },
     autostart: {

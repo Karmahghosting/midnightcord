@@ -54,11 +54,11 @@ import { StockPluginsCard } from "./PluginStatCards";
 import { TUTORIAL_PLUGIN_NAMES } from "./tutorialList";
 import { UIElementsButton } from "./UIElements";
 
-const NIGHTCORD_TAB_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABkRSURBVHhe7VsJVJRHtubNvDPvTWYmM4lGRFHZBERZm00Emm6abpYGARtj3HeNiltcomjQuARRFJVNQdbu/+/GJe5K3LdEjUncBYSIAWSTfUfxe6eq6RZ+SOK8M5i85TunjvTfVfe/9+tbt+6tKnV0/h+/Cf7AffB/Anl5eX61NbVn21pbsxtqa1UVZWWT7t+/b8Lt93vFHwryC2TVldXyqqqa/bmPcidwO/wSCgsKZa/aX4GLlpaWtuam5jvVVVXxRQUF0qSkpL9xx/7mKCgokNXX1X3HVb7op6Jobt+ecOX4lfeam5oqyJjS0lJcuXIZz58/54qjaG5sfFr2rHAMV8Zvguzs7FE1NTXnOitYVFSIZ8+eaT9fPn9jN3ccF4WFhXM0/efOnYM+fd7DyJGOmDFzKmLjduPqtcuorKT8ULS/fIHs7LuBXDlvDWfOnOlTW10d/+LFC61SFRUViI7eARsbKzg48PDjj/n0eVsTMH/87jSujM6orqo+Q/oS4qytrTF48GAYGAzBgAF60NX9AEOGDMLIkU5YuHABnj4toHJLCytaJ3qtX8iV1esoLii2a21pydMY3tTUhOTkZLi4uKBfv34wMDBAnz7vY9WqlVpyTqtyYK23aDFXFsGWLVv+1tBQT/39yJEj0NPTg6mpaUczo23o0KGUkHfe+U/s25dEZbY1tWNh4AHwTcLncmX2Gm7cuNGnubGpRGPY8ePH4efnRw0fNGgQVdrMzAxGRoYYPnwY8vMf034NtW2Y7r+3/s86ogFcmZcuXRK+etVO+61Zs4bKIjI0JJC/NZ/JO06ePEH7VpXXYa54P6TDdz94a8tmaXHpLPLy1tYWLF68GLq6uhg4cGAXRTWNGLJq9QoNVzi1PxeuBsu6xYPCp082kO9bWlohkUiokVxZpBkbG8PCwgLZ2Y+ovNs38iGzSUKwzb5SL6tP/sKV2yuoKC9PJS//4Yfvoa8/EIaGht0U1fxaRkZGMDMfitzHaoWbGl5iTtCepj4cL6iprrxMvr9z5zb1HBMT427ySCNxQCDgo7Gxnso7ytyAj2k8ZPZ7i6W82e90ltlrqH5eeZG8/Ny5M5QAMje5hnd23X79PkBY2CqtF5xUZcN10IpIjbysrKx+zc2NDeS7uLhY9OvXt5vra+Tq6fXH7NkztbJiNpyDn3kKgni77+jo6PxbV017CQ119d+Slx85cphG6J4I6PyZ/KKmpkPx4MF9qnRjQxs+lu2r66sj0SPyHjx4MFpj0MSJ46mRXBkauf376yI+Ppb2fdHWgoUfMpBZKxHEi1Zx9ewt/KG+rj6HKJCWlob+/ft3U7Sn9sEHfbvGAlU2nIcs30oElpaWxJFnJSXPYGtrTVcQ7njSCNGEzOvXr1IZz54+x9iRCRjHYzGaF7WSq2ivYE/Enr831DeUEwV27typjda/1tQrgjke5z2kyjfWtWJWYGKFjo6dXlNTLQ0Qx44eQf/+/br9+prPBgaGcHFxRlUVfT2uZGVDOiweY+3T4cNb5cXVtVdw6uApvaamJhqBNm3aRFcAjaLm5ubdDH/dzOncXrV6udYLlEk3sW6J4mb7q5cvyeeVK1dAV/fnCSVTY9as6drxSdvOws9sL4Ls4xqETjN0ubr2Cm7fvm3Y1tbaRhT49NNPtQkLV9meGlktSF6Ql5dNDagor0Zedin9myRSQqGQZn8aeVy5ZP6npSfT/iT7XD55P4ItGQQ77LrF1bPXcO9etsOrV+pqbfbs2RgwYEA3RbmfNc9I69dPF6s+1cQCIkct68aN63TJNDEx6XEFIOu/ubkZcnLUU+hJXilG28Ug0ILBKP01UVw9ew35ubn+HdpDJpN1S4B6Ur7zcyMjksiYIS8/VyOGIjIyEn379v1ZGfr6g+Dr64O2thba/5jyFvytd2DtrCM4mH5eUVJSuPLZs6LE+tqaQ02N9SfbWluPtzY3H6iuro6vr69f3FjbGFBSUmLIteefRuHTwslEAZIFent7U5flGtqT8a8/m9PCZvXqT7XGt7e3Y8yY4B69Sd1MaWz47LM12jE5D4qQn10GgIaPN8LLl20tLc3N3zbW128uKiqy4dr2RigvLV1KhNXW1sLd3f1nl6xfamRFsLAwR24uXU2Rm5uNYcOIm5t060uaqakJBg3SR1bWqQ5T1DVDF7S/QnVlAwryK/DgXjFu//AT7t4rRl5+OZ4/r0d7R52hwcuXL9Dc1HiirLh4FNfGX0RJcXEUEVBSUgIej6dOdXtQ+tcaWRE02WFKahL66X7QrY+mGRoawNHRHhXl6oCpxitUFFXj+lc5SN52EeHzD2P++ExMCVJirJSB1CcD3n4Z8AtSQDZZhVmfHMPGmMs4fjkP5TXqNJqAEFFT8/wzrp0/i8rKCloHPH78mBYlJDhxFSatp3mseU7+JV5gZTUCT58+wZw5s3tMqDR99fQGYMbMaVqlc28VInn9GXzin46ZbqmY5JqKj/hp+FCYgbFiBmN8lJD6KuHtp4KnL4tRvgrY+aRjmDgFZj7J8JqxH9HpN1BYVqeVWVZcnMC1tUfU1FRlkgF37tyhEbsnAoji6trdQEtE56bpR35ZL7EnrKystOl0t36mZtDV08X+QwrUljQiddVJLOenYIFTGhby5ZjvqcAsiQLTvBlM8lbgI18FZH4MAqQM/AJUkPirIBithEsQA4dABrbBDExHK6DnlYiRk+X45nahloRFUxNYHR39P3Nt7oKqqqrTpPPXX1/DkCFDKAlc4wkpzs7OmDZtGgYPHtLdKG1fMxpEiQxNEsXta2g0BDb2I3A04Qyigw9gmf0+rOKz+FSowmIRi1AvBrMpAQotASFSBqMDWPgFZFIChKOVGBXIwDGIgV0wA0uZHOYyBd4T7cWy7We1BKxfeBaOQ9bs5drcBTXV1bdJ59OnT0Jff0C3Qog08sv7+HgjPz8PLi4ju60Ub9ZMYWJqAgOjIZjkMhsRAgbrRjJYL1BitZDBck8Wi70YLBAzmOPNUA+Y6K3AOF85JSCQEqCCdwcBbh0E2AYrYDlGDjMZi/4++xB/4BY1/sWLNswfr4SHeVQr32FZf67dFKGhof9RX1f3lAxgGAUGDCBVW1fFyS9HNjMCA9UFXnp6co/5/a81EvkNjAdhHG86dnhkYoubEhuFDNZ7sAgTKrFcRAhQYIE3g9kaAnwIAQrIpAwC/Fn4Big7CFDBLZCFUzDxAEKAAsaBclhNkCO3SL3rnJddAj/H3fC22wshL9yRaztFRkbGu81NTTQUJyTEU8O6K25K1/OJEyd0MNuK0aMD6LPOfbjjusoYikFG+vC3DMQuDxY73FSI8GCxUaDEOg9lJwIYLJAwNAZM1xDgpyZgtD/xACW8A157gBOdAmoC9H2SMWndSbzqyETT4y5ilPE2+NjHQey4xpprO8WVK1fea2lpoZRt2RLxsxsXJKKHhoZSwQRZWV9BX19fm+ZyCevyzNQMBkMHwcncCZH8vYhxVyHKncUWvhIbBSzWCTKxRqjCCk8llohYLPBSYLaYeACLSdQD5JD5sQj0U0JKp4ASnh0EOAcy4NEYoIC+dyKSj96h+r18+RLzJ6TD1TQOYtvtpXz+vL9ybae4dOnmoOam5mYyKCxsNd3p4RpEGqkQ16wJ0xJAaofJkyd3qRw7G99ZBnF9I2MDLHZcjUT+AUS7yrHNnUEEn3gAoyVgpUiJxSIGC0gQFLOYJmEwQcJCJmLgL0iDt0cqPIUZcPfMgKu3HKP8GYwMZGAfzGBYkBy8CRnIL66k+uU8LIYXbxe8bNMgtItguHZr8ejuI56mEAoNXdCtdNUYQ55HRGzWEkBw48YNWg1qls2ejCeBz8BkEEQWIsTx5Yh1Y7HTTYFtbgotAeECFZ0ChIClIgahHUGQ5AEh7imYP+EQ1q04gchNZxEZcRFhYacxZfaX8AxkYC1Og5W/HAY+qZj62Smt+6fEX4KT8TZ4O+wD32aNjGu3Fk8eP/HQGDR16hTo6fX0i6rL1ri43Z3tpwgNXUg3UEhV191zTGFqZgTDoQZY4RCGfe4HsNtNgZ2uckS5KTqmAFkF1ASsELFYImYwX8RgklsKwuYcxuWsbNRUka3FzvXBKzS3tOFRThniUm9BNEmJgcJYsKfV23Pt7S8xZ3wq3MxjIOHtqHG1HP8e124t8nPzpRqxISGkEtTjGKFuZONCLs+g/V62kxxcrVBOTg6GDTOnWWCXMeTQw9QUBqaD4GThhF2uSUhwZSkBZAqoCWCwiRKgDoIrRSwWiRSY6pqExC3n0dTQqlHtF/G0uAYnLuaisZXOZOTcK4KX7XZ485Lgabf5INfmLigsKJxEBrW2tkIs9qIFivqX7+oFhJhjx47SFzx5XIyLx+keKsWmTZ/T/UHNONKfBEejocbQN9LDWJsQJPGViBulUBPgpuhEgOL1MuilxOxRqdgVloVXlGQ18rKfgUm+iqjPT2L756eRHn8Nl7Luo+p5jbaPBmTc6lAVXE2jIXVMBN92+SSuzV2gKYVbWlogEHjg3Xf/Std8ktISI0hSRBqZAufPqzOsx3cLsUAag5pydQFSWvYMPJ4t3nvvH9DV7U+XUjKVBuj3x+AhA7HUaTlSXTMRP4rBbjdGS0Akn8FGD3UeQILgJx4slgcoUFZUpbEGyTHn4W23HS7GW+Bqsh18s1h4mMdBaLETE8WpYPfexLOfqlBf24AnueXYuPJLuJhthcQuEV52W1v4DiE9J0Aa5NzPsdGwl5V1GpMmTaSeYGdnow5gBkPQt8/7sLGxpEUOwf1vCiDR34DMmCuaofjm+jWErV6FzZs3IiEhDkqlAqeyTuHapatIHZuOBF5aNwKIBxACwoUswjyVWOCSCsVWepZC8WXGdTgPWQ+RxU4E2KfAx2ZHi5fVpgvuI9Yk8YeHpzqbrLzsOnRtSaDbTkzyS4N05G64DYuG2G4PRjtlwNN2bRzX3h5R/bxS7dsdaG5pRFFRAe7du4PLly/h4MEDuHf/rvZ7dtdV+AyKxBT3Xe2lRZ3L2R7Q+ArpUgXi7FMQ66qZAgzNA4gHbPJgES5gESZQInRUCr49pz5zrK2px2SfvRCaRcOflwhv280nBfaLzLi6m5iYvGs5+GORs2kYKxqx44Wv3T742MdCZBd+gMfjvdmp0unTp9+vLK/M4ureE/IfPMNUl3iMH5GMAPNNRUcPHRVXlJXf6NrrFc0TCMqzy5DgnogE53TEuhEPkHclgM8g3IPFKncWK8VyFOap7wp8dy0XQvNIjLZLg7dN5OU3OSQVWM41Ew1fLxFaLrbjfvcm+Pf1C1MLMmO+w7nDd/DDtTzkPShGSWElXYYqSqpx/sj3mCGIQ+DQGEx3UEJmt+Fsx9g/fvZx6jcxq89jY+ghrJ6ShuyOkvTpraeIdUrAHud0xNEpIMcOmgcw6iBIYgCfxQpXOdaOZlFZUkvHnT74PdyNt0BqGwuxzQoXjq69A7N3Jkl8Tbc0yywSETI8HuN5cZjJT8Q8nxTM4Ccg2CwaY80TMcU2AxMdEhDguNhPM1ZPZ4q51HDjgxCzOMjM4/HwZpGagBsFnQggU0BNQJQbg0iP1wSsdJUjPJhFdbmagFMHvofAZCfE1pty3tr5IIG3zRyL0VaRa4Mso46NGbE9J3DYtrJA06iGIPPo9nEjYvGRZVz7BN7Ox362odO5Y3VMdP4jePhaSaD5+gU/PiiiQaPou0IkOCeppwCNAWQKKLDdnUEkn6VTYJ1AiU89WKz0SUNRPtkUBW5dzYFkeCw8LTe/8fngrVu3XMtLSw9WVVV9lZOTE8T9/p9HiM4fHR293xXZLh8gsVxj5msRbiOxXG5mYaHzJ25XLioqSzbSGJBTjj3u+xDvlIZYN3lHEJQjihKgxCY+KYbIfoASoS77cOtMRxCsasR073Q4DlyVzJXNRXhI+J9KS0sjyFLeGZWVFeTOwtvzns4oLCigFy4ayhuQ5JuGOMcUxGlXAUUHAcQD1ASECVksdE4FE/l6GbxwNBtuRiuOcWV3xt2bN40a6uuva8Y8LKjAtR/Ud5gIch4+ziTxjTuu15GXnT2KavDyFfZPP4Q42xTEuSmwi04Bkgoz2EoIoOUwSz1guQdLN0V/+lE9DQiunb3zLHxR+D+48rPS0//yvLx8RlNjo7bz7ZxSOE/MwGC/BHzzoFgrI2yh/Ah3fK/jwoULf21uVp84n//iEnZZ70WMdgp08gCaBzBYLSDFkAofu6biiwWH0VDfpDWgubH+UV1d5fanT598WlZWsr6xvia9taVFnZV14MyNfIycJMdgv1T09dmHqRtOaCvDezfKMMp06Vqujr2OuroammBln85FtO1exLkQAtRBkHjAFncWGzvyAEIA2RMkGyIzXFLxxaJjKPzx9f3Bn0NJRR227LmKEf77YCJNh1kIA8Mxcgz0S0DWzddTYe0CVZuOjvPbvZr7vLx8EXl5Q0UDEn0ZxDiSZEhB9wPoMuiuxEaPjiAoUGKZkKUbIovESkxzlWNeoAKK+K+R+/AZ6uub0NbShtamFlRW1uH7u0WITrgGv0lKWEjSMDxIjhF0Y1QBk5AM9PFJQuDKI2h7SQ+9kXOnCnyL1W+8ovxLcPfuXaO2tjaqwfltV7Hdeh9i3RlEu5IpQDJBpXoKkFpASAhgsMSTwUIxg7kSFlOFcshck/GRTzrmTT2IJfOOYe6coxg3YT8EUgV4ogw4+MnhEMzCRsbAcgwD0zFyGMsyMEiWjj6+idh/QX1UR7Bh+SG8q+Njz9WzV9HUWEfPHCqfVGO3ZwainTM6pgBLPUBNAIMwIYMVhADqAQzmiVnMFLOYImExzisTgSIWPiIGXmIGnhIlhFIlPAJVcAlSwiGIgfUY9caoqUwO4zEZMJAp8L5fKkQLD6CuWb083v+uAh7D153g6tireP68TKz5BS7F3MRWqyTscmOww43tiAEdQVBDgBfxALaDAAZTJSqM985EiG8mAqWZkPpn0m1xUYASHkFKjApi4RBMCJCrzwZC5DAOkcNAJsfAMQr8TbIHqrPqnaLqqkbIPPfCQndFz1vkvYWGhoYLRIGWumakTj6ESNtkRPHJfoCagHUaAjxZLPVisMhLTcAsMg28OxHgr4LUX30uIApQwSNIRQlwHMN2eICaAJMQBQxlcvQPTEdfaTy+uqm+/VtTXY8PJelwNo/I4OrYq8h7+HBEW1sbvX1dfL8U24VyRNhnIJKv6giChAAWKwkBIgaLOzxgFvUAJSZQAlQIkmbC318JH38lvEZnQhCoJsCBECBT0OMxM5kcQ2UZ0A9Kx/u+exDFkkJVvRx+c/kxBDax4FtHFzs7L/nl88J/NSoqKrQ3qR6d+xFfuKdhsxPZElN2JEKs2gM6EUCmwLQOAmQ+SgRJiQew9FyAeICWADIFKAEKmIfIoR+QBj2fBOxQ3tS8Ei2NrZg7Ph0jzXdBaLe70WnEqrdzAaszqqoq92tJuFCAL7wYhNmnUw8I82ToydBST4buDBMCZksYOgUmSDIx1luFYGkmAgKIB6jowYggSAlXMgWCGdjIFBguY9DfJxnW41KgPHNPa/yLtpdYv+wQnE22QWyfCr5NVIGFhcWv1jP/cuwJ3/NOfV299n+fFNwpxq7Jh7HMIQUr3VgsFynxiYgQwGK+WKUmQKLEeEKATyYlwD9ACV8yBQKUEASyHQSwMJWmY4h4Dz5cfgi3H7/epWpqaMZnSw/B3mgrhLYJ8HHKAN927QKubm8N3377rV59bY36ljVRsL4JWYnf4jOpEvMckrHQVY7FIhXmizMxW6zsiAH78SEhwE8FqZ8KvlIVjQFuASxsJRkYIU7B6LmZSD96F63q234UZSU1CJ2WBp5RBAS2CfB2Soe7zfpfPip/G1ClqgYW5Ba/9lFyv/CnGpzYcxMbJhzGPH4GpjorMHmUHB/xFQgRMgjyVEBK8gBPBdwEqXARpUIQmIEZS79E5vEHqG1o7CwOVy9mY6x3PByHboWnXSIk9inwtN0Yw9XlN4PIbNyAL9MvP2p9faOFormuGfevFeDA3pvYHX4ea+cfxaKpBzFv8gHMn3kYnyw5hoiIc8g8+D0e5JbiRXvXG2XlpdWI3nga7iMi4Tx0ByQOqZA4JMLdau2b3xl6i+g/M2D7xayDD9Hc0PPVOHJ7tLGhBXW1TWhobEZ7+2sX7wzi7slxFxAs2AVHw0h4WibAx4FsjW8v5dus+vmzwd8B/mivu3jDDL+Y1ozd1/HwdhGaG16Xwr+E6qpafHMlF9vWH0eQRwwcDSLgMSwWEvtUiOxiILDdkmptPXkg94W/S/TTkVny+i9TSiy34OMgFTYvO4F9O8/imOo7nDvxABdOPcTZY/fxpeIm9u44gzULD+FDr1i4DduCkcZREA7fA1+7NHha74TAduvhUXYrnLnv+B8BV+NPeC5Ga/aMNPz8Gd84Cl5mcRAPS4DXsDiIzGPhaRoD4dAYCM3iIbFKhq9dCrxt4+FpveMnD5sv4p3/m2cCvzvweCF/F1iHiSVWG9d6W0cwXsMjv/IaEXXZyyrqa1/bmKti2x1nPG0jUgTWm5a4W653s7Lyejv/uep/E/4LA2ZEkUlEbFAAAAAASUVORK5CYII=";
+const MIDNIGHTCORD_TAB_ICON = "data:image/png;base64,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";
 const VENCORD_EQUICORD_TAB_ICON = "data:image/png;base64,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";
 
-function NightcordTabIcon() {
-    return <img src={NIGHTCORD_TAB_ICON} alt="Nightcord" style={{ width: 18, height: 18, borderRadius: 4 }} />;
+function MidnightcordTabIcon() {
+    return <img src={MIDNIGHTCORD_TAB_ICON} alt="Midnightcord" style={{ width: 18, height: 18, borderRadius: 4 }} />;
 }
 
 function VencordEquicordTabIcon() {
@@ -79,7 +79,7 @@ function LikedPluginsTabIcon() {
 
 const makeCategoryOptions = (othersCount?: number) => [
     { label: "Vencord & Equicord", value: SearchStatus.OTHERS },
-    { label: "Nightcord", value: SearchStatus.NIGHTCORD },
+    { label: "Midnightcord", value: SearchStatus.MIDNIGHTCORD },
     { label: t("User Plugins"), value: SearchStatus.USER_PLUGINS },
     { label: t("Liked Plugins"), value: SearchStatus.LIKED_PLUGINS },
     { label: t("Community Plugins"), value: "community", disabled: true }
@@ -154,7 +154,7 @@ export const ExcludedReasons: Record<"web" | "discordDesktop" | "vesktop" | "equ
     vesktop: "Vesktop/Equibop apps",
     equibop: "Vesktop/Equibop apps",
     web: "Vesktop/Equibop apps & Discord web",
-    dev: "Developer version of Nightcord"
+    dev: "Developer version of Midnightcord"
 };
 
 function ExcludedPluginsList({ search }: { search: string; }) {
@@ -326,7 +326,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
 
     const hasUserPlugins = useMemo(() => !IS_STANDALONE && Object.values(PluginMeta).some(m => m.userPlugin), []);
 
-    const [searchValue, setSearchValue] = useState({ value: "", status: SearchStatus.NIGHTCORD });
+    const [searchValue, setSearchValue] = useState({ value: "", status: SearchStatus.MIDNIGHTCORD });
     const [searchInput, setSearchInput] = useState("");
 
     const debouncedSetSearch = useMemo(
@@ -390,11 +390,11 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
             case SearchStatus.ENABLED:
                 if (!enabled) return false;
                 break;
-            case SearchStatus.NIGHTCORD:
-                if (!pluginMeta?.folderName?.startsWith("src/nightcordplugins/")) return false;
+            case SearchStatus.MIDNIGHTCORD:
+                if (!pluginMeta?.folderName?.startsWith("src/midnightcordplugins/")) return false;
                 break;
             case SearchStatus.OTHERS:
-                if (pluginMeta?.folderName?.startsWith("src/nightcordplugins/") || pluginMeta?.folderName?.startsWith("src/plugins/_")) return false;
+                if (pluginMeta?.folderName?.startsWith("src/midnightcordplugins/") || pluginMeta?.folderName?.startsWith("src/plugins/_")) return false;
                 if (!pluginMeta?.folderName?.startsWith("src/plugins/")) return false;
                 break;
             case SearchStatus.VENCORD:
@@ -413,7 +413,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                 if (!TUTORIAL_CACHE.get(plugin.name)) return false;
                 break;
             case SearchStatus.LIKED_PLUGINS:
-                if (!pluginMeta?.folderName?.startsWith("src/nightcordplugins/")) return false;
+                if (!pluginMeta?.folderName?.startsWith("src/midnightcordplugins/")) return false;
                 if (!ratings[plugin.name]?.likedByMe) return false;
                 break;
         }
@@ -460,8 +460,8 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
     const handleRestartNeeded = useCallback((name: string, key: string) => changes.handleChange(`${name}:${key}`), [changes]);
 
     // Only filter/categorize plugin DATA here — no JSX created yet
-        const { nightcordData, othersData, requiredData } = useMemo(() => {
-        const nightcordData: typeof sortedPlugins = [];
+        const { midnightcordData, othersData, requiredData } = useMemo(() => {
+        const midnightcordData: typeof sortedPlugins = [];
         const othersData: typeof sortedPlugins = [];
         const requiredData: typeof sortedPlugins = [];
 
@@ -478,8 +478,8 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                 requiredData.push(p);
             } else {
                 const folderName = PluginMeta[p.name]?.folderName ?? "";
-                if (folderName.startsWith("src/nightcordplugins/")) {
-                    nightcordData.push(p);
+                if (folderName.startsWith("src/midnightcordplugins/")) {
+                    midnightcordData.push(p);
                 } else {
                     othersData.push(p);
                 }
@@ -491,13 +491,13 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
             if (b.name === "AutoCallRecorder") return 1;
             return (ratings[b.name]?.likes ?? 0) - (ratings[a.name]?.likes ?? 0);
         };
-        nightcordData.sort(byLikes);
+        midnightcordData.sort(byLikes);
         othersData.sort(byLikes);
 
-        return { nightcordData, othersData, requiredData };
+        return { midnightcordData, othersData, requiredData };
     }, [sortedPlugins, searchValue, newPluginsSet, depMap, pluginFilter, ratings]);
 
-    const allDataLength = nightcordData.length + othersData.length;
+    const allDataLength = midnightcordData.length + othersData.length;
     const hasMore = visibleCount < allDataLength;
 
     // Store allDataLength in a ref so the observer callback always sees the latest value
@@ -641,8 +641,8 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
     }, [settings.plugins]);
 
     // Slice DATA first, then create JSX only for visible items
-    const nightcordVisibleData = nightcordData.slice(0, Math.min(visibleCount, nightcordData.length));
-    const othersVisibleData = othersData.slice(0, Math.max(0, visibleCount - nightcordData.length));
+    const midnightcordVisibleData = midnightcordData.slice(0, Math.min(visibleCount, midnightcordData.length));
+    const othersVisibleData = othersData.slice(0, Math.max(0, visibleCount - midnightcordData.length));
 
     const makeCard = (p: typeof sortedPlugins[number]) => (
         <ErrorBoundary fallback={<div style={{ color: "red", padding: 8 }}>Failed to render {p.name}.</div>} key={p.name}>
@@ -658,7 +658,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
 
     const makeRequiredCard = (p: typeof sortedPlugins[number]) => {
         const tooltipText = p.required || !depMap[p.name]
-            ? "This plugin is required for Nightcord to function."
+            ? "This plugin is required for Midnightcord to function."
             : <PluginDependencyList deps={depMap[p.name]?.filter(d => isPluginEnabled(d))} />;
         return (
             <ErrorBoundary fallback={<div style={{ color: "red", padding: 8 }}>Failed to render {p.name}.</div>} key={p.name}>
@@ -678,37 +678,37 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
         );
     };
 
-    const nightcordPlugins = nightcordVisibleData.map(makeCard);
+    const midnightcordPlugins = midnightcordVisibleData.map(makeCard);
     const othersVisible = othersVisibleData.map(makeCard);
     const requiredPlugins = requiredData.map(makeRequiredCard);
 
-    const totalNightcordPlugins = React.useMemo(() => {
-        return Object.values(Plugins).filter(p => PluginMeta[p.name]?.folderName?.startsWith("src/nightcordplugins/")).length;
+    const totalMidnightcordPlugins = React.useMemo(() => {
+        return Object.values(Plugins).filter(p => PluginMeta[p.name]?.folderName?.startsWith("src/midnightcordplugins/")).length;
     }, []);
 
     const totalOtherPlugins = React.useMemo(() => {
-        const isNightcordPlugin = (p: string) => PluginMeta[p]?.folderName?.startsWith("src/nightcordplugins/");
+        const isMidnightcordPlugin = (p: string) => PluginMeta[p]?.folderName?.startsWith("src/midnightcordplugins/");
         const isCorePlugin = (p: string) => PluginMeta[p]?.folderName?.startsWith("src/plugins/_");
-        return Object.values(Plugins).filter(p => !isNightcordPlugin(p.name) && !isCorePlugin(p.name)).length;
+        return Object.values(Plugins).filter(p => !isMidnightcordPlugin(p.name) && !isCorePlugin(p.name)).length;
     }, []);
 
     // Category-aware stats for the "ENABLED PLUGINS" card: reflects whichever tab
-    // (NIGHTCORD / OTHERS / all) is currently selected, instead of always being global.
+    // (MIDNIGHTCORD / OTHERS / all) is currently selected, instead of always being global.
     const categoryStats = useMemo(() => {
         const isApiPlugin = (plugin: string) => plugin.endsWith("API") || Plugins[plugin].required;
-        const isNightcordPlugin = (p: string) => PluginMeta[p]?.folderName?.startsWith("src/nightcordplugins/");
+        const isMidnightcordPlugin = (p: string) => PluginMeta[p]?.folderName?.startsWith("src/midnightcordplugins/");
         const isUserPlugin = (p: string) => PluginMeta[p]?.userPlugin === true;
 
         let plugins = Object.keys(Plugins).filter(p => !isApiPlugin(p) && !Plugins[p].hidden);
 
-        if (searchValue.status === SearchStatus.NIGHTCORD) {
-            plugins = plugins.filter(isNightcordPlugin);
+        if (searchValue.status === SearchStatus.MIDNIGHTCORD) {
+            plugins = plugins.filter(isMidnightcordPlugin);
         } else if (searchValue.status === SearchStatus.OTHERS) {
-            plugins = plugins.filter(p => !isNightcordPlugin(p));
+            plugins = plugins.filter(p => !isMidnightcordPlugin(p));
         } else if (searchValue.status === SearchStatus.USER_PLUGINS) {
             plugins = plugins.filter(isUserPlugin);
         } else if (searchValue.status === SearchStatus.LIKED_PLUGINS) {
-            plugins = plugins.filter(p => isNightcordPlugin(p) && ratings[p]?.likedByMe);
+            plugins = plugins.filter(p => isMidnightcordPlugin(p) && ratings[p]?.likedByMe);
         }
 
         const total = plugins.length;
@@ -726,7 +726,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                     <div className={cl("ecosystem-banner")}>
                         <div className={cl("ecosystem-banner-text")}>
                             <HeadingTertiary>{t("Plugin Ecosystem Management")}</HeadingTertiary>
-                            <Paragraph>{t("Manage your Nightcord and community plugins here. Enable, disable, and configure them to your liking.")}</Paragraph>
+                            <Paragraph>{t("Manage your Midnightcord and community plugins here. Enable, disable, and configure them to your liking.")}</Paragraph>
                         </div>
                         <div className={cl("ecosystem-banner-buttons")}>
                             {!isLikeLoggedIn && (
@@ -785,7 +785,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                                     const home = native.process.env.USERPROFILE || native.process.env.HOME;
                                     if (home) {
                                         const isWindows = !!native.process.env.USERPROFILE;
-                                        const folderPath = isWindows ? `${home}\\Documents\\Nightcord\\userplugins` : `${home}/Documents/Nightcord/userplugins`;
+                                        const folderPath = isWindows ? `${home}\\Documents\\Midnightcord\\userplugins` : `${home}/Documents/Midnightcord/userplugins`;
                                         // Open the directory itself (will open its parent and highlight it)
                                         showItemInFolder(folderPath);
                                     }
@@ -797,13 +797,13 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                                 {searchValue.status === SearchStatus.USER_PLUGINS ? t("USER PLUGINS") : 
                                  searchValue.status === SearchStatus.OTHERS ? t("VENCORD & EQUICORD PLUGINS") : 
                                  searchValue.status === SearchStatus.LIKED_PLUGINS ? t("LIKED PLUGINS") :
-                                 t("NIGHTCORD PLUGINS")}
+                                 t("MIDNIGHTCORD PLUGINS")}
                             </div>
                             <div className={cl("stat-value")}>
                                 {searchValue.status === SearchStatus.USER_PLUGINS ? totalUserPlugins : 
                                  searchValue.status === SearchStatus.OTHERS ? totalOtherPlugins : 
                                  searchValue.status === SearchStatus.LIKED_PLUGINS ? categoryStats.total :
-                                 totalNightcordPlugins}
+                                 totalMidnightcordPlugins}
                             </div>
                         </div>
                     </div>
@@ -816,14 +816,14 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                     <div className={cl("filter-buttons")} style={{ minWidth: 220 }}>
                         <SafeSearchableSelect
                             options={makeCategoryOptions(totalOtherPlugins)}
-                            value={makeCategoryOptions(totalOtherPlugins).find(o => o.value === searchValue.status)?.value ?? SearchStatus.NIGHTCORD}
+                            value={makeCategoryOptions(totalOtherPlugins).find(o => o.value === searchValue.status)?.value ?? SearchStatus.MIDNIGHTCORD}
                             onChange={(v: any) => {
                                 if (v === "community") return;
                                 onStatusChange(v);
                             }}
                             closeOnSelect={true}
                             renderOptionPrefix={(o: any) => {
-                                if (o?.value === SearchStatus.NIGHTCORD) return <NightcordTabIcon />;
+                                if (o?.value === SearchStatus.MIDNIGHTCORD) return <MidnightcordTabIcon />;
                                 if (o?.value === SearchStatus.OTHERS) return <VencordEquicordTabIcon />;
                                 if (o?.value === SearchStatus.USER_PLUGINS) return <UserPluginsTabIcon />;
                                 if (o?.value === SearchStatus.LIKED_PLUGINS) return <LikedPluginsTabIcon />;
@@ -836,11 +836,11 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
             {premiumOnly ? (
                 <>
                     <HeadingTertiary className={Margins.top20}>Premium Plugins</HeadingTertiary>
-                    {nightcordData.length || othersData.length
+                    {midnightcordData.length || othersData.length
                         ? (
                             <div className={cl("grid")}>
-                                {[...nightcordPlugins, ...othersVisible].length
-                                    ? [...nightcordPlugins, ...othersVisible]
+                                {[...midnightcordPlugins, ...othersVisible].length
+                                    ? [...midnightcordPlugins, ...othersVisible]
                                     : <Paragraph>{t("No plugins meet the search criteria.")}</Paragraph>
                                 }
                             </div>
@@ -850,9 +850,9 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                 </>
             ) : (
                 <>
-                    {nightcordData.length > 0 && searchValue.status === SearchStatus.NIGHTCORD && (
+                    {midnightcordData.length > 0 && searchValue.status === SearchStatus.MIDNIGHTCORD && (
                         <div className={cl("grid")}>
-                            {nightcordPlugins}
+                            {midnightcordPlugins}
                         </div>
                     )}
                     
@@ -889,28 +889,28 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                                     {t("Note: User plugins require installing the client via a local build, not from the website installer.")}
                                 </div>
                             </div>
-                            {nightcordPlugins.length > 0 || othersVisible.length > 0 ? (
+                            {midnightcordPlugins.length > 0 || othersVisible.length > 0 ? (
                                 <div className={cl("grid")}>
-                                    {[...nightcordPlugins, ...othersVisible]}
+                                    {[...midnightcordPlugins, ...othersVisible]}
                                 </div>
                             ) : (
                                 <div style={{ textAlign: "center", padding: "48px 16px", color: "var(--text-muted)" }}>
                                     <div style={{ fontSize: 32, marginBottom: 12 }}>📁</div>
                                     <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>{t("No user plugins found")}</div>
-                                    <div style={{ fontSize: 13 }}>{t("Add .tsx files to your")} <code>Documents/Nightcord/userplugins/</code> {t("folder and rebuild with a local build.")}</div>
+                                    <div style={{ fontSize: 13 }}>{t("Add .tsx files to your")} <code>Documents/Midnightcord/userplugins/</code> {t("folder and rebuild with a local build.")}</div>
                                 </div>
                             )}
                         </>
                     )}
 
-                    {(searchValue.status !== SearchStatus.NIGHTCORD && searchValue.status !== SearchStatus.OTHERS && searchValue.status !== SearchStatus.USER_PLUGINS) && (
+                    {(searchValue.status !== SearchStatus.MIDNIGHTCORD && searchValue.status !== SearchStatus.OTHERS && searchValue.status !== SearchStatus.USER_PLUGINS) && (
                         <div className={cl("grid")}>
-                            {nightcordPlugins}
+                            {midnightcordPlugins}
                             {othersVisible}
                         </div>
                     )}
 
-                    {nightcordData.length === 0 && othersData.length === 0 && searchValue.status === SearchStatus.LIKED_PLUGINS && (
+                    {midnightcordData.length === 0 && othersData.length === 0 && searchValue.status === SearchStatus.LIKED_PLUGINS && (
                         <div style={{ textAlign: "center", padding: "48px 16px", color: "var(--text-muted)" }}>
                             <div style={{ fontSize: 32, marginBottom: 12 }}>
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto" }}>
@@ -918,11 +918,11 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                                 </svg>
                             </div>
                             <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>{t("No liked plugins yet")}</div>
-                            <div style={{ fontSize: 13 }}>{t("Like a Nightcord plugin from its card to see it here.")}</div>
+                            <div style={{ fontSize: 13 }}>{t("Like a Midnightcord plugin from its card to see it here.")}</div>
                         </div>
                     )}
 
-                    {nightcordData.length === 0 && othersData.length === 0 && searchValue.status !== SearchStatus.USER_PLUGINS && searchValue.status !== SearchStatus.LIKED_PLUGINS && (
+                    {midnightcordData.length === 0 && othersData.length === 0 && searchValue.status !== SearchStatus.USER_PLUGINS && searchValue.status !== SearchStatus.LIKED_PLUGINS && (
                         <ExcludedPluginsList search={search} />
                     )}
 

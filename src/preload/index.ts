@@ -11,7 +11,7 @@ import { VesktopNative } from "./VesktopNative";
 
 contextBridge.exposeInMainWorld("VesktopNative", VesktopNative);
 contextBridge.exposeInMainWorld("VencordNative", VesktopNative);
-contextBridge.exposeInMainWorld("NightcordNative", VesktopNative);
+contextBridge.exposeInMainWorld("MidnightcordNative", VesktopNative);
 
 // TODO: remove this legacy workaround once some time has passed
 const isSandboxed = typeof __dirname === "undefined";

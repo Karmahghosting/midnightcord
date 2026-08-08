@@ -1,5 +1,5 @@
 /*
- * Nightcord, a modification for Discord's desktop app
+ * Midnightcord, a modification for Discord's desktop app
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -17,12 +17,12 @@ function patchResourcesDir(resourcesDir: string) {
         const appAsar = join(resourcesDir, "app.asar");
         const _appAsar = join(resourcesDir, "_app.asar");
 
-        // Check if already patched cleanly with app/index.js pointing to Nightcord
+        // Check if already patched cleanly with app/index.js pointing to Midnightcord
         const loaderIndex = join(appDir, "index.js");
         if (existsSync(loaderIndex)) {
             try {
                 const content = readFileSync(loaderIndex, "utf-8");
-                if (content.includes("Nightcord")) return; // Already patched
+                if (content.includes("Midnightcord")) return; // Already patched
             } catch {}
         }
 
@@ -49,7 +49,7 @@ function patchResourcesDir(resourcesDir: string) {
             return;
         }
 
-        console.info(`[Nightcord] Auto-injecting into ${resourcesDir}...`);
+        console.info(`[Midnightcord] Auto-injecting into ${resourcesDir}...`);
 
         if (existsSync(appDir)) {
             try { rmSync(appDir, { recursive: true, force: true }); } catch {}
@@ -62,14 +62,14 @@ function patchResourcesDir(resourcesDir: string) {
         }, null, 2));
 
         const indexJs = [
-            "// Nightcord Injector — auto-generated",
+            "// Midnightcord Injector — auto-generated",
             "\"use strict\";",
             "const path = require(\"path\");",
             "const fs = require(\"fs\");",
             "try {",
             `    require(${JSON.stringify(OUR_PATCHER_PATH)});`,
             "} catch (e) {",
-            "    console.error(\"[Nightcord] Injection failed, falling back to original _app.asar:\", e);",
+            "    console.error(\"[Midnightcord] Injection failed, falling back to original _app.asar:\", e);",
             "    const originalAsar = path.join(__dirname, \"..\", \"_app.asar\");",
             "    if (fs.existsSync(originalAsar)) {",
             "        require(originalAsar);",
@@ -79,9 +79,9 @@ function patchResourcesDir(resourcesDir: string) {
         ].join("\n");
 
         writeFileSync(join(appDir, "index.js"), indexJs);
-        console.info(`[Nightcord] Successfully injected into ${resourcesDir}`);
+        console.info(`[Midnightcord] Successfully injected into ${resourcesDir}`);
     } catch (err) {
-        console.error(`[Nightcord] Failed to auto-inject into ${resourcesDir}:`, err);
+        console.error(`[Midnightcord] Failed to auto-inject into ${resourcesDir}:`, err);
     }
 }
 
@@ -106,7 +106,7 @@ function patchAllDiscordInstallations() {
             }
         }
     } catch (err) {
-        console.error("[Nightcord] Error in patchAllDiscordInstallations:", err);
+        console.error("[Midnightcord] Error in patchAllDiscordInstallations:", err);
     }
 }
 

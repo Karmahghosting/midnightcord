@@ -1,5 +1,5 @@
 /*
- * Nightcord, a Discord client mod
+ * Midnightcord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -11,7 +11,7 @@ import { OAuth2AuthorizeModal } from "@webpack/common";
 import { beginDiscordOAuth, getStoredToken, storeToken } from "./OAuth2";
 
 /** Dispatched on window whenever the like-system login state changes, so mounted components (like PluginCard) can react. */
-export const LIKE_AUTH_EVENT = "nightcord-like-auth-changed";
+export const LIKE_AUTH_EVENT = "midnightcord-like-auth-changed";
 
 function notifyAuthChanged() {
     window.dispatchEvent(new CustomEvent(LIKE_AUTH_EVENT));
@@ -39,7 +39,7 @@ export async function authorizeLikeSystem(): Promise<string | null> {
     } catch (e) {
         console.error("[PluginLikes] Failed to start OAuth flow:", e);
         showNotification({
-            title: "Nightcord",
+            title: "Midnightcord",
             body: "Failed to start the login flow. Please try again."
         });
         return null;
@@ -69,13 +69,13 @@ export async function authorizeLikeSystem(): Promise<string | null> {
                             await storeToken(data.token);
                             notifyAuthChanged();
                             showNotification({
-                                title: "Nightcord",
+                                title: "Midnightcord",
                                 body: "Successfully logged in! You can now like plugins."
                             });
                             resolve(data.token);
                         } else {
                             showNotification({
-                                title: "Nightcord",
+                                title: "Midnightcord",
                                 body: "Login failed, no token returned."
                             });
                             resolve(null);
@@ -83,7 +83,7 @@ export async function authorizeLikeSystem(): Promise<string | null> {
                     } catch (e) {
                         console.error("[PluginLikes] Failed to complete OAuth flow:", e);
                         showNotification({
-                            title: "Nightcord",
+                            title: "Midnightcord",
                             body: "Login failed, check console."
                         });
                         resolve(null);

@@ -10,7 +10,7 @@ async function repairShims(paths) {
     process.noAsar = true;
     const progressPerLoop = (RESTART_DISCORD_PROGRESS - progress.value) / paths.length;
     for (const resPath of paths) {
-        log(`Repairing Nightcord in: ${resPath}`);
+        log(`Repairing Midnightcord in: ${resPath}`);
         try {
             log("Closing Discord...");
             killDiscord(resPath, log);
@@ -20,7 +20,7 @@ async function repairShims(paths) {
             startDiscord(resPath);
             progress.set(progress.value + progressPerLoop);
         } catch (err) {
-            log(`❌ Could not repair Nightcord in ${resPath}`);
+            log(`❌ Could not repair Midnightcord in ${resPath}`);
             log(`❌ ${err.message}`);
             return err;
         }

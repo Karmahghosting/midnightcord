@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "fs";
 
-const file = "src/nightcordplugins/stereoInstaller.desktop/index.tsx";
+const file = "src/midnightcordplugins/stereoInstaller.desktop/index.tsx";
 let content = readFileSync(file, "utf8");
 
 const stringsToWrap = [

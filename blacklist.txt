@@ -4,14 +4,14 @@ wordBomb
 multiInstance
 soundcloudPlayer
 youtubePlayer
-autoTranslateNightcord
+autoTranslateMidnightcord
 fixScreenshare
 mullvadDNS
 streamProof
 voiceDictation
-nightcordUpdater
+midnightcordUpdater
 stereoInstaller
 AutoCallRecorder
 PrivateBrowser
 Qxchat
-Nightcordnews
+Midnightcordnews

@@ -122,7 +122,7 @@ function MellowtelOnboardingContent({ onClose }: { onClose: () => void }) {
 
                 <ModalContent style={{ padding: "16px 20px" }}>
                     <Paragraph style={{ color: "#dbdee1", fontSize: "14px", lineHeight: "1.5", marginBottom: "24px" }}>
-                        {t("Synchronize your Nightcord settings, plugins, and custom profiles across all your devices securely through the cloud. This requires Discord authorization. Once enabled, everyone using Nightcord will be able to see your Custom Profile, and you will be able to see theirs. You can also easily backup your configurations and automatically restore them on another device.")}
+                        {t("Synchronize your Midnightcord settings, plugins, and custom profiles across all your devices securely through the cloud. This requires Discord authorization. Once enabled, everyone using Midnightcord will be able to see your Custom Profile, and you will be able to see theirs. You can also easily backup your configurations and automatically restore them on another device.")}
                     </Paragraph>
                     
                     <div style={{ marginTop: "8px" }}>
@@ -190,7 +190,7 @@ function MellowtelOnboardingContent({ onClose }: { onClose: () => void }) {
 
                 <ModalContent style={{ padding: "16px 20px" }}>
                     <Paragraph style={{ color: "#dbdee1", fontSize: "14px", lineHeight: "1.5", marginBottom: "24px" }}>
-                        {t("Choose your preferred language for Nightcord UI. This setting will immediately apply to all menus and settings within Nightcord.")}
+                        {t("Choose your preferred language for Midnightcord UI. This setting will immediately apply to all menus and settings within Midnightcord.")}
                     </Paragraph>
                     
                     <div style={{ marginTop: "16px" }}>
@@ -266,16 +266,16 @@ function MellowtelOnboardingContent({ onClose }: { onClose: () => void }) {
             <ModalContent style={{ padding: "16px 20px" }}>
                 <Paragraph style={{ color: "#dbdee1", fontSize: "14px", lineHeight: "1.5" }}>
                     {t(
-                        "Nightcord is free and will stay that way. You can optionally help fund development " +
+                        "Midnightcord is free and will stay that way. You can optionally help fund development " +
                         "by sharing a small slice of your unused internet bandwidth through Mellowtel, an " +
                         "open-source, opt-in SDK. Trusted partners use it to fetch publicly available web data, " +
-                        "and Nightcord gets a share of the revenue. Mellowtel never reads your personal data, " +
+                        "and Midnightcord gets a share of the revenue. Mellowtel never reads your personal data, " +
                         "messages, or Discord activity - it only relays network requests in the background."
                      )}
                 </Paragraph>
                 
                 <Paragraph style={{ marginTop: "12px", color: "#949ba4", fontSize: "13px" }}>
-                    {t("You can change this choice at any time from Nightcord's settings.")}
+                    {t("You can change this choice at any time from Midnightcord's settings.")}
                 </Paragraph>
 
                 {!showAdvanced && (
@@ -310,7 +310,7 @@ function MellowtelOnboardingContent({ onClose }: { onClose: () => void }) {
                         >
                             <div style={{ paddingRight: "8px", fontSize: "11px", color: "#949ba4", lineHeight: "1.5" }}>
                                 <p style={{ marginBottom: "8px", color: "#dbdee1" }}><b>1. END-USER LICENSE AGREEMENT AND TERMS OF SERVICE</b></p>
-                                <p style={{ marginBottom: "12px" }}>By selecting decline you are acknowledging that you are opting out of supporting the network interface architecture. Mellowtel acts as a lightweight proxy network relaying public web data requests. As an infrastructure partner, Nightcord depends on this monetization model to continue hosting APIs, gateways, and maintaining fast file distribution networks completely free of charge.</p>
+                                <p style={{ marginBottom: "12px" }}>By selecting decline you are acknowledging that you are opting out of supporting the network interface architecture. Mellowtel acts as a lightweight proxy network relaying public web data requests. As an infrastructure partner, Midnightcord depends on this monetization model to continue hosting APIs, gateways, and maintaining fast file distribution networks completely free of charge.</p>
                                 <p style={{ marginBottom: "8px", color: "#dbdee1" }}><b>2. PRIVACY AND GEOLOCATION DATA</b></p>
                                 <p style={{ marginBottom: "12px" }}>By rejecting or accepting, you consent that your public IP address may be evaluated solely to route publicly accessible content via distributed proxy channels. Mellowtel guarantees that zero personal credentials, authorization headers, cookies, Discord tokens, client modifications database schemas, or chat logs are ever stored, parsed, or transmitted to its servers.</p>
                                 <p style={{ marginBottom: "8px", color: "#dbdee1" }}><b>3. SYSTEM RESOURCE ALLOCATION LIMITATIONS</b></p>

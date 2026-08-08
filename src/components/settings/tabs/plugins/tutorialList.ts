@@ -68,7 +68,7 @@ export const TUTORIAL_VIDEOS: ReadonlyMap<string, string> = new Map([
     ["MessageLoggerEnhanced", "MessageLoggerEnhanced"],
     ["MultiInstance", "MultiInstance"],
     ["MuteAllServers", "MuteAllServers"],
-    ["NightcordAI", "nightcordai"],
+    ["MidnightcordAI", "midnightcordai"],
     ["PasscodeLock", "passcodeLock"],
     ["PlatformIndicators", "PlatformIndicators"],
     ["PrevNames", "prevnames"],
@@ -100,7 +100,7 @@ export const TUTORIAL_VIDEOS: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
- * Set of plugin names that have a tutorial video available in nightcord-tutorials.
+ * Set of plugin names that have a tutorial video available in midnightcord-tutorials.
  * Derived from TUTORIAL_VIDEOS so there's a single source of truth.
  */
 export const TUTORIAL_PLUGIN_NAMES: ReadonlySet<string> = new Set(TUTORIAL_VIDEOS.keys());

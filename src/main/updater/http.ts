@@ -19,15 +19,15 @@ const API_BASE = `${GITEA_BASE}/api/v1/repos/nightcord/nightcord`;
 const REPO_URL = `${GITEA_BASE}/nightcord/nightcord`;
 declare const VERSION: string;
 const CURRENT_VERSION = `v${VERSION}`;
-const ZIP_FILE = "nightcord-dist.zip";
+const ZIP_FILE = "midnightcord-dist.zip";
 
 /**
  * Marker file written into __dirname when an update has been staged.
- * nightcord-index.js reads this on next startup (before any file is locked)
+ * midnightcord-index.js reads this on next startup (before any file is locked)
  * and performs the actual file-swap then.
  */
-export const PENDING_UPDATE_MARKER = join(__dirname, "nightcord-pending-update.json");
-const STAGING_DIR = join(app.getPath("temp"), "nightcord-pending-update");
+export const PENDING_UPDATE_MARKER = join(__dirname, "midnightcord-pending-update.json");
+const STAGING_DIR = join(app.getPath("temp"), "midnightcord-pending-update");
 
 let pendingDownloadUrl: string | null = null;
 let pendingVersion: string | null = null;
@@ -73,7 +73,7 @@ async function getUpdates() {
     if (!outdated) return [];
     return [{
         hash: pendingVersion ?? "new",
-        author: "Nightcord",
+        author: "Midnightcord",
         message: `Nouvelle version disponible : ${pendingVersion}`
     }];
 }
@@ -91,7 +91,7 @@ async function stageUpdate(): Promise<boolean> {
         const data = await fetchBuffer(pendingDownloadUrl);
 
         // Save zip to temp
-        const zipPath = join(app.getPath("temp"), `nightcord-update-${Date.now()}.zip`);
+        const zipPath = join(app.getPath("temp"), `midnightcord-update-${Date.now()}.zip`);
         writeFileSync(zipPath, data, { flush: true });
 
         // Clean any stale staging dir first
@@ -110,7 +110,7 @@ async function stageUpdate(): Promise<boolean> {
                     return reject(new Error("ZIP extraction failed: " + err.message));
                 }
 
-                // Write marker so nightcord-index.js knows to apply on next boot
+                // Write marker so midnightcord-index.js knows to apply on next boot
                 writeFileSync(PENDING_UPDATE_MARKER, JSON.stringify({
                     version: pendingVersion,
                     stagingDir: STAGING_DIR,
@@ -131,5 +131,5 @@ async function stageUpdate(): Promise<boolean> {
 ipcMain.handle(IpcEvents.GET_REPO, serializeErrors(() => REPO_URL));
 ipcMain.handle(IpcEvents.GET_UPDATES, serializeErrors(getUpdates));
 ipcMain.handle(IpcEvents.UPDATE, serializeErrors(fetchUpdates));
-// BUILD is now "stage update" — actual file swap happens on next startup via nightcord-index.js
+// BUILD is now "stage update" — actual file swap happens on next startup via midnightcord-index.js
 ipcMain.handle(IpcEvents.BUILD, serializeErrors(stageUpdate));

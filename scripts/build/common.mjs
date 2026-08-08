@@ -49,11 +49,11 @@ if (!IS_COMPANION_TEST && process.argv.includes("--companion-test"))
     console.error("--companion-test must be run with --reporter for any effect");
 
 export const IS_UPDATER_DISABLED = process.argv.includes("--disable-updater");
-export const gitHash = process.env.NIGHTCORD_HASH || execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
+export const gitHash = process.env.MIDNIGHTCORD_HASH || execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
 
 export const banner = {
     js: `
-// Nightcord ${gitHash}
+// Midnightcord ${gitHash}
 // Standalone: ${IS_STANDALONE}
 // Platform: ${IS_STANDALONE === false ? process.platform : "Universal"}
 // Updater Disabled: ${IS_UPDATER_DISABLED}
@@ -147,7 +147,7 @@ export const globPlugins = kind => ({
         });
 
         build.onLoad({ filter, namespace: "import-plugins" }, async () => {
-            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "userplugins", "nightcordplugins", "nightcordplugins/_api"];
+            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "userplugins", "midnightcordplugins", "midnightcordplugins/_api"];
             
             let blacklist = [];
             try {
@@ -219,9 +219,9 @@ export const globPlugins = kind => ({
             }
             code += `export default {${pluginsCode}};export const PluginMeta={${metaCode}};export const ExcludedPlugins={${excludedCode}};`;
 
-            // ─── External User Plugins (~/Documents/Nightcord/userplugins/) ───────────
+            // ─── External User Plugins (~/Documents/Midnightcord/userplugins/) ───────────
             // Scan and auto-create the external userplugins directory.
-            const externalUserPluginsDir = join(homedir(), "Documents", "Nightcord", "userplugins");
+            const externalUserPluginsDir = join(homedir(), "Documents", "Midnightcord", "userplugins");
             try {
                 await mkdir(externalUserPluginsDir, { recursive: true });
             } catch { /* already exists or permission error — silently skip */ }
@@ -314,7 +314,7 @@ export const gitRemotePlugin = {
             namespace: "git-remote", path: args.path
         }));
         build.onLoad({ filter, namespace: "git-remote" }, async () => {
-            let remote = process.env.NIGHTCORD_REMOTE;
+            let remote = process.env.MIDNIGHTCORD_REMOTE;
             if (!remote) {
                 const res = await promisify(exec)("git remote get-url origin", { encoding: "utf-8" });
                 remote = res.stdout.trim()
@@ -455,15 +455,15 @@ export const commonOpts = {
         "@webpack/common": "./src/webpack/common",
         "@webpack/patcher": "./src/webpack/patchWebpack",
         "@webpack": "./src/webpack/webpack",
-        "@nightcordplugins": "./src/nightcordplugins",
+        "@midnightcordplugins": "./src/midnightcordplugins",
         "@equicordplugins": "./src/plugins",
-        "@Nightcord/types/webpack/common": "./src/webpack/common",
-        "@Nightcord/types/webpack": "./src/webpack/webpack",
-        "@Nightcord/types/utils": "./src/utils",
-        "@Nightcord/types/components": "./src/components",
-        "@Nightcord/types/api": "./src/api",
-        "@Nightcord/types/plugins": "./src/plugins",
-        "@Nightcord/types": "./src",
+        "@Midnightcord/types/webpack/common": "./src/webpack/common",
+        "@Midnightcord/types/webpack": "./src/webpack/webpack",
+        "@Midnightcord/types/utils": "./src/utils",
+        "@Midnightcord/types/components": "./src/components",
+        "@Midnightcord/types/api": "./src/api",
+        "@Midnightcord/types/plugins": "./src/plugins",
+        "@Midnightcord/types": "./src",
         "@equicord/types/webpack/common": "./src/webpack/common",
         "@equicord/types/webpack": "./src/webpack/webpack",
         "@equicord/types/utils": "./src/utils",

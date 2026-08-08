@@ -178,13 +178,13 @@ const DefaultSettings: Settings = {
 const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;
 mergeDefaults(settings, DefaultSettings);
 
-// Force migrate cloud URL to Nightcord if it's still Equicord
+// Force migrate cloud URL to Midnightcord if it's still Equicord
 if (settings.cloud && settings.cloud.url && settings.cloud.url.includes("equicord.org")) {
     settings.cloud.url = "https://api.nightcord.st/";
 }
 
-// Nightcord native defaults — defaultPlugins is always enabled, no external prefs file
-const NIGHTCORD_PREFS = { defaultPlugins: true, autoUpdate: true } as const;
+// Midnightcord native defaults — defaultPlugins is always enabled, no external prefs file
+const MIDNIGHTCORD_PREFS = { defaultPlugins: true, autoUpdate: true } as const;
 
 // Ensure plugins have defaults set if missing, while preserving explicit user choices.
 if (!IS_REPORTER && settings.plugins && plugins) {

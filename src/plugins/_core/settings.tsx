@@ -29,7 +29,7 @@ function CodeIcon(props: IconProps) {
         </svg>
     );
 }
-import IconsTab from "@nightcordplugins/iconViewer/components/IconsTab";
+import IconsTab from "@midnightcordplugins/iconViewer/components/IconsTab";
 import { gitHashShort } from "@shared/vencordUserAgent";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
@@ -113,7 +113,7 @@ interface SettingsLayoutBuilder {
 const settings = definePluginSettings({
     settingsLocation: {
         type: OptionType.SELECT,
-        description: "Where to put the Nightcord settings section",
+        description: "Where to put the Midnightcord settings section",
         options: [
             { label: "At the very top", value: "top" },
             { label: "Above the Nitro section", value: "aboveNitro", default: true },
@@ -233,8 +233,8 @@ export default definePlugin({
 
         const mainEntry = buildEntry({
             key: "equicord_main",
-            title: "Nightcord",
-            panelTitle: "Nightcord Settings",
+            title: "Midnightcord",
+            panelTitle: "Midnightcord Settings",
             Component: VencordTab,
             Icon: MainSettingsIcon
         });
@@ -265,7 +265,7 @@ export default definePlugin({
             !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
                 key: "equicord_updater",
                 title: "Updater",
-                panelTitle: "Nightcord Updater",
+                panelTitle: "Midnightcord Updater",
                 Component: UpdaterTab,
                 Icon: UpdaterIcon
             }),
@@ -282,14 +282,14 @@ export default definePlugin({
                 Icon: BackupRestoreIcon
             }),
             buildEntry({
-                key: "nightcord_sync",
+                key: "midnightcord_sync",
                 title: "Synchronization",
-                panelTitle: "Nightcord Sync",
+                panelTitle: "Midnightcord Sync",
                 Component: SyncTab,
                 Icon: CloudIcon
             }),
             buildEntry({
-                key: "nightcord_language",
+                key: "midnightcord_language",
                 title: "Language",
                 Component: LanguageTab,
                 Icon: LangIcon
@@ -301,7 +301,7 @@ export default definePlugin({
                 Icon: PatchHelperIcon
             }),
             buildEntry({
-                key: "nightcord_icon_finder",
+                key: "midnightcord_icon_finder",
                 title: "Icon Finder",
                 Component: IconsTab,
                 Icon: MagnifyingGlassIcon
@@ -313,11 +313,11 @@ export default definePlugin({
             key: "equicord_section",
             type: LayoutTypes.SECTION,
             useTitle: () => {
-                try { if (localStorage.getItem("Nightcord_stealthMode") === "1") return ""; } catch { }
-                return t("Nightcord Settings");
+                try { if (localStorage.getItem("Midnightcord_stealthMode") === "1") return ""; } catch { }
+                return t("Midnightcord Settings");
             },
             buildLayout: () => {
-                try { if (localStorage.getItem("Nightcord_stealthMode") === "1") return [mainEntry]; } catch { }
+                try { if (localStorage.getItem("Midnightcord_stealthMode") === "1") return [mainEntry]; } catch { }
                 return fullEntries;
             }
         };
@@ -384,7 +384,7 @@ export default definePlugin({
     getInfoRows() {
         const { electronVersion, chromiumVersion, getVersionInfo } = this;
 
-        const rows = [`Nightcord ${gitHashShort}${getVersionInfo()}`];
+        const rows = [`Midnightcord ${gitHashShort}${getVersionInfo()}`];
 
         if (electronVersion) rows.push(`Electron ${electronVersion}`);
         if (chromiumVersion) rows.push(`Chromium ${chromiumVersion}`);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nightcord Installer</title>
+  <title>Midnightcord Installer</title>
   <!-- Async font load: doesn't block first paint -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -464,7 +464,7 @@
     <div class="titlebar">
       <div class="titlebar-left">
         <img src="{{ICON_BASE64}}" class="logo-mark" />
-        <span class="titlebar-title" style="cursor: pointer;" onclick="window.nightcord.openUrl('https://nightcord.st/')">Nightcord Installer</span>
+        <span class="titlebar-title" style="cursor: pointer;" onclick="window.midnightcord.openUrl('https://nightcord.st/')">Midnightcord Installer</span>
         <span class="titlebar-version" id="titlebar-version">...</span>
       </div>
       <div class="titlebar-right">
@@ -475,15 +475,15 @@
           </svg>
         </button>
         <div class="titlebar-controls">
-          <button class="btn-minimize" onclick="window.nightcord.minimizeApp()"></button>
-          <button class="btn-close" onclick="window.nightcord.closeApp()"></button>
+          <button class="btn-minimize" onclick="window.midnightcord.minimizeApp()"></button>
+          <button class="btn-close" onclick="window.midnightcord.closeApp()"></button>
         </div>
       </div>
     </div>
 
     <div class="content">
       <div class="header">
-        <h1>Nightcord</h1>
+        <h1>Midnightcord</h1>
         <p>// discord client mod — select your installation target</p>
       </div>
 
@@ -506,7 +506,7 @@
 
       <div class="actions">
         <button class="btn btn-primary" id="btn-inject" disabled onclick="handleInject()">
-          Inject Nightcord
+          Inject Midnightcord
         </button>
         <button class="btn btn-secondary" id="btn-uninject-thirdparty" disabled onclick="handleUninjectThirdParty()" style="background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.35);">
           Uninstall Vencord/Equicord
@@ -539,25 +539,25 @@
   <div class="settings-overlay" id="settings-overlay" onclick="closeSettingsModal(event)">
     <div class="settings-container" onclick="event.stopPropagation()">
       <div class="settings-header">
-        <h2>Nightcord Links</h2>
+        <h2>Midnightcord Links</h2>
         <button class="settings-close-btn" onclick="toggleSettingsModal()">&#x2715;</button>
       </div>
       <div class="settings-content">
-        <p class="settings-desc">Access official Nightcord links and community resources.</p>
+        <p class="settings-desc">Access official Midnightcord links and community resources.</p>
         <div class="settings-buttons">
-          <button class="btn-setting-link" onclick="window.nightcord.openUrl('https://source.nightcord.st/nightcord/nightcord')">
+          <button class="btn-setting-link" onclick="window.midnightcord.openUrl('https://source.nightcord.st/nightcord/nightcord')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="btn-link-icon">
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.11.82-.26.82-.577v-2.17c-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.084 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.775.42-1.305.763-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.467-2.38 1.235-3.22-.123-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.957-.266 1.98-.398 3-.403 1.02.005 2.043.137 3 .403 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.24 2.873.118 3.176.77.84 1.233 1.91 1.233 3.22 0 4.61-2.803 5.625-5.475 5.92.43.37.823 1.102.823 2.222v3.293c0 .32.218.694.825.577C20.565 21.797 24 17.298 24 12c0-6.63-5.37-12-12-12z"/>
             </svg>
             <span>Gitea Repository</span>
           </button>
-          <button class="btn-setting-link btn-telegram" onclick="window.nightcord.openUrl('https://t.me/nightcordoff')">
+          <button class="btn-setting-link btn-telegram" onclick="window.midnightcord.openUrl('https://t.me/nightcordoff')">
             <svg width="20" height="20" viewBox="0 0 32 32" fill="currentColor" class="btn-link-icon">
               <path d="M22.122 10.040c0.006-0 0.014-0 0.022-0 0.209 0 0.403 0.065 0.562 0.177l-0.003-0.002c0.116 0.101 0.194 0.243 0.213 0.403l0 0.003c0.020 0.122 0.031 0.262 0.031 0.405 0 0.065-0.002 0.129-0.007 0.193l0-0.009c-0.225 2.369-1.201 8.114-1.697 10.766-0.21 1.123-0.623 1.499-1.023 1.535-0.869 0.081-1.529-0.574-2.371-1.126-1.318-0.865-2.063-1.403-3.342-2.246-1.479-0.973-0.52-1.51 0.322-2.384 0.221-0.23 4.052-3.715 4.127-4.031 0.004-0.019 0.006-0.040 0.006-0.062 0-0.078-0.029-0.149-0.076-0.203l0 0c-0.052-0.034-0.117-0.053-0.185-0.053-0.045 0-0.088 0.009-0.128 0.024l0.002-0.001q-0.198 0.045-6.316 4.174c-0.445 0.351-1.007 0.573-1.619 0.599l-0.006 0c-0.867-0.105-1.654-0.298-2.401-0.573l0.074 0.024c-0.938-0.306-1.683-0.467-1.619-0.985q0.051-0.404 1.114-0.827 6.548-2.853 8.733-3.761c1.607-0.853 3.47-1.555 5.429-2.010l0.157-0.031zM15.93 1.025c-8.302 0.020-15.025 6.755-15.025 15.060 0 8.317 6.742 15.060 15.060 15.060s15.060-6.742 15.060-15.060c0-8.305-6.723-15.040-15.023-15.060h-0.002q-0.035-0-0.070 0z"></path>
             </svg>
             <span>Join Telegram Channel</span>
           </button>
-          <button class="btn-setting-link btn-website" onclick="window.nightcord.openUrl('https://nightcord.st')">
+          <button class="btn-setting-link btn-website" onclick="window.midnightcord.openUrl('https://nightcord.st')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-link-icon">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -567,7 +567,7 @@
           </button>
         </div>
       </div>
-      <div class="settings-dev-footer">dev by ahki__ (nightcord)</div>
+      <div class="settings-dev-footer">dev by ahki__ (midnightcord)</div>
     </div>
   </div>
 
@@ -616,7 +616,7 @@
       const p = input.value.trim();
       if (!p) return;
 
-      const injected = await window.nightcord.isInjected(p);
+      const injected = await window.midnightcord.isInjected(p);
       const entry = {
         name: 'Manual',
         path: p,
@@ -635,7 +635,7 @@
       setStatus('loading', 'Detecting Discord installations...');
 
       try {
-        const found = await window.nightcord.detectDiscord();
+        const found = await window.midnightcord.detectDiscord();
         discords = found || [];
       } catch(e) {
         discords = [];
@@ -661,9 +661,9 @@
         const icon = ICONS[d.name] || { emoji: '&#9898;', cls: 'stable' };
         let injected = false;
         let hasThirdParty = false;
-        try { injected = await window.nightcord.isInjected(d.path); } catch {}
+        try { injected = await window.midnightcord.isInjected(d.path); } catch {}
         if (!injected) {
-          try { hasThirdParty = await window.nightcord.hasThirdPartyMod(d.path); } catch {}
+          try { hasThirdParty = await window.midnightcord.hasThirdPartyMod(d.path); } catch {}
         }
         renderCard(d, i, injected, icon.cls, hasThirdParty);
       }
@@ -718,11 +718,11 @@
       const card = document.querySelectorAll('.discord-card')[index];
       const isThirdParty = card && card.dataset.thirdParty === '1';
       if (isThirdParty) {
-        setStatus('loading', `&#9888; ${selected.name}: Vencord/Equicord detected — clicking Inject will replace it with Nightcord.`);
-        document.getElementById('btn-inject').textContent = 'Replace with Nightcord';
+        setStatus('loading', `&#9888; ${selected.name}: Vencord/Equicord detected — clicking Inject will replace it with Midnightcord.`);
+        document.getElementById('btn-inject').textContent = 'Replace with Midnightcord';
       } else {
         setStatus('idle', `Selected: ${selected.name} — ${selected.path}`);
-        document.getElementById('btn-inject').textContent = 'Inject Nightcord';
+        document.getElementById('btn-inject').textContent = 'Inject Midnightcord';
       }
     }
 
@@ -749,7 +749,7 @@
 
       await new Promise((resolve) => {
         const interval = setInterval(() => {
-          const status = window.nightcord.getInjectStatus();
+          const status = window.midnightcord.getInjectStatus();
           if (status.state === 'done') {
             clearInterval(interval);
             resolve({ success: true });
@@ -763,7 +763,7 @@
           setLoading(true, "Finalizing installation...", 100);
           setTimeout(async () => {
             setLoading(false);
-            setStatus('success', `&#10004; Nightcord injected into ${selected.name}! Restarting Discord...`);
+            setStatus('success', `&#10004; Midnightcord injected into ${selected.name}! Restarting Discord...`);
             await loadDiscords();
             const idx = discords.findIndex(d => d.path === selected.path);
             if (idx !== -1) selectDiscord(idx);
@@ -781,7 +781,7 @@
       setLoading(true, "Removing Vencord/Equicord...", 10);
       setStatus('loading', `Uninstalling Vencord/Equicord from ${selected.name}...`);
 
-      const result = await window.nightcord.uninjectThirdParty(selected.path);
+      const result = await window.midnightcord.uninjectThirdParty(selected.path);
 
       if (result.success) {
         setLoading(true, "Completed", 100);
@@ -802,13 +802,13 @@
       setLoading(true, "Preparing uninjection...", 5);
       setStatus('loading', `Uninjecting from ${selected.name}...`);
       
-      const result = await window.nightcord.uninject(selected.path);
+      const result = await window.midnightcord.uninject(selected.path);
       
       if (result.success) {
         setLoading(true, "Completed", 100);
         setTimeout(async () => {
           setLoading(false);
-          setStatus('success', `&#10004; Nightcord uninjected from ${selected.name}.`);
+          setStatus('success', `&#10004; Midnightcord uninjected from ${selected.name}.`);
           await loadDiscords();
         }, 600);
       } else {

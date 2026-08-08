@@ -249,11 +249,11 @@
   "project": {
     "version": "2.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\zzafi\\Documents\\GitHub\\nightcord\\installer-src\\NightcordInstaller.csproj",
-      "projectName": "Nightcord-Installer",
-      "projectPath": "C:\\Users\\zzafi\\Documents\\GitHub\\nightcord\\installer-src\\NightcordInstaller.csproj",
+      "projectUniqueName": "C:\\Users\\zzafi\\Documents\\GitHub\\midnightcord\\installer-src\\MidnightcordInstaller.csproj",
+      "projectName": "Midnightcord-Installer",
+      "projectPath": "C:\\Users\\zzafi\\Documents\\GitHub\\midnightcord\\installer-src\\MidnightcordInstaller.csproj",
       "packagesPath": "C:\\Users\\zzafi\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\zzafi\\Documents\\GitHub\\nightcord\\installer-src\\obj\\",
+      "outputPath": "C:\\Users\\zzafi\\Documents\\GitHub\\midnightcord\\installer-src\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

@@ -4,7 +4,7 @@ import { join } from "path";
 const targetPlugins = [
     "FakeVoice",
     "antiMoveDeco",
-    "nightcordAI",
+    "midnightcordAI",
     "ClearGroups",
     "ClearDMs",
     "messageCleaner",
@@ -47,13 +47,13 @@ function getFiles(dir) {
     return results;
 }
 
-const atcContent = readFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", "utf8");
+const atcContent = readFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", "utf8");
 
 const allKeysToTranslate = new Set();
 const rawStringsToWrap = [];
 
 for (const pluginFolder of targetPlugins) {
-    const pluginPath = join("src/nightcordplugins", pluginFolder);
+    const pluginPath = join("src/midnightcordplugins", pluginFolder);
     const files = getFiles(pluginPath);
 
     for (const file of files) {
@@ -69,7 +69,7 @@ for (const pluginFolder of targetPlugins) {
         const jsxTextMatches = [...content.matchAll(/>\s*([A-Za-z][^<>{}\n]*[A-Za-z0-9!?.:])\s*</g)];
         for (const m of jsxTextMatches) {
             const str = m[1].trim();
-            if (str !== "Nightcord" && str !== "Nightcord AI" && !str.startsWith("http") && !str.includes("{")) {
+            if (str !== "Midnightcord" && str !== "Midnightcord AI" && !str.startsWith("http") && !str.includes("{")) {
                 rawStringsToWrap.push({ file, str });
                 allKeysToTranslate.add(str);
             }
@@ -79,6 +79,6 @@ for (const pluginFolder of targetPlugins) {
 
 console.log(`\n=== Total unique keys collected from target plugins: ${allKeysToTranslate.size} ===`);
 const missingInATC = [...allKeysToTranslate].filter(k => !atcContent.includes(`"${k}":`));
-console.log(`Keys missing in autoTranslateNightcord: ${missingInATC.length}`);
+console.log(`Keys missing in autoTranslateMidnightcord: ${missingInATC.length}`);
 console.log("\nSample missing keys:", missingInATC.slice(0, 30));
 console.log(`\nRaw strings needing t() wrapping in JSX: ${rawStringsToWrap.length}`);

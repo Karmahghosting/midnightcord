@@ -27,7 +27,7 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, P
 
     // Setup userplugins
     try {
-        const userTarget = join(homedir(), "Documents", "Nightcord", "userplugins");
+        const userTarget = join(homedir(), "Documents", "Midnightcord", "userplugins");
         const srcLink = join(process.cwd(), "src", "userplugins");
         if (!existsSync(userTarget)) mkdirSync(userTarget, { recursive: true });
         if (!existsSync(srcLink)) {
@@ -35,25 +35,25 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, P
             symlinkSync(userTarget, srcLink, process.platform === "win32" ? "junction" : "dir");
         }
     } catch (e) {
-        console.error("[Nightcord] Failed to setup userplugins link", e);
+        console.error("[Midnightcord] Failed to setup userplugins link", e);
     }
 
     const args = process.argv.slice(2);
 
     const equicordFlag = args.includes("--equicord");
     const vencordFlag = args.includes("--vencord");
-    const nightcordFlag = args.includes("--nightcord");
+    const midnightcordFlag = args.includes("--midnightcord");
 
     let dirs: string[];
 
-    if (nightcordFlag) {
-        dirs = ["src/nightcordplugins"];
+    if (midnightcordFlag) {
+        dirs = ["src/midnightcordplugins"];
     } else if (equicordFlag) {
-        dirs = ["src/nightcordplugins", "src/userplugins"];
+        dirs = ["src/midnightcordplugins", "src/userplugins"];
     } else if (vencordFlag) {
         dirs = ["src/plugins", "src/plugins/_core"];
     } else {
-        dirs = ["src/plugins", "src/plugins/_core", "src/nightcordplugins", "src/userplugins"];
+        dirs = ["src/plugins", "src/plugins/_core", "src/midnightcordplugins", "src/userplugins"];
     }
 
 

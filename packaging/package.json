@@ -1,0 +1,10 @@
+{
+    "name": "midnightcord",
+    "version": "0.0.0",
+    "description": "An optimized, Linux-first Discord desktop client",
+    "homepage": "https://source.nightcord.st/nightcord/nightcord",
+    "main": "dist/js/main.js",
+    "license": "GPL-3.0-or-later",
+    "author": "Midnightcord contributors",
+    "dependencies": {}
+}

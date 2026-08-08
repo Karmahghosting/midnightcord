@@ -21,12 +21,12 @@ import electron, { app, BrowserWindowConstructorOptions, Menu, session } from "e
 import { existsSync as fsExistsSync, statSync as fsStatSync } from "original-fs";
 import { dirname, join } from "path";
 
-import { registerMediaPermissionsForSession } from "../nightcord/main/mediaPermissions";
+import { registerMediaPermissionsForSession } from "../midnightcord/main/mediaPermissions";
 import { RendererSettings } from "./settings";
 import { patchTrayMenu } from "./trayMenu";
 import { IS_VANILLA } from "./utils/constants";
 
-console.log("[Nightcord] Starting up...");
+console.log("[Midnightcord] Starting up...");
 
 
 // Our injector file at app/index.js
@@ -93,10 +93,10 @@ if (!IS_VANILLA) {
                 return;
             }
 
-            // On n'injecte le preload Nightcord QUE dans les fenêtres Discord/Nightcord légitimes.
+            // On n'injecte le preload Midnightcord QUE dans les fenêtres Discord/Midnightcord légitimes.
             const ourPreload = join(__dirname, "preload.js");
             const preloadIsOurs = options.webPreferences.preload === ourPreload;
-            const KNOWN_TITLES = /^(Discord|Vesktop|Equibop)$|^(Nightcord|Equicord)|Overlay/i;
+            const KNOWN_TITLES = /^(Discord|Vesktop|Equibop)$|^(Midnightcord|Equicord)|Overlay/i;
             const isTrustedTitle = !!(options.title && KNOWN_TITLES.test(options.title));
             const isVBCable = !!(options.title && options.title.includes("VB-Cable"));
 
@@ -247,10 +247,10 @@ if (!IS_VANILLA) {
                             applied = true;
                         }
                         if (!applied) {
-                            console.warn("[Nightcord] No background material API available on this system");
+                            console.warn("[Midnightcord] No background material API available on this system");
                         }
                     } catch (e) {
-                        console.error("[Nightcord] setBackgroundMaterial failed:", e);
+                        console.error("[Midnightcord] setBackgroundMaterial failed:", e);
                     }
                 }
 
@@ -305,8 +305,8 @@ function isInternalAppUrl(rawUrl: string): boolean {
 }
 
 function patchWebContents(wc: electron.WebContents) {
-    if ((wc as any)._nightcordPatched) return;
-    (wc as any)._nightcordPatched = true;
+    if ((wc as any)._midnightcordPatched) return;
+    (wc as any)._midnightcordPatched = true;
 
     wc.setWindowOpenHandler(({ url, frameName }) => {
         const isOverlay = frameName && (frameName.toLowerCase().includes("overlay") || frameName.startsWith("DISCORD_"));
@@ -370,8 +370,8 @@ function patchWebContents(wc: electron.WebContents) {
         });
 
         const childWc = childWin.webContents;
-        if ((childWc as any)._nightcordPatched) return;
-        (childWc as any)._nightcordPatched = true;
+        if ((childWc as any)._midnightcordPatched) return;
+        (childWc as any)._midnightcordPatched = true;
 
         const openUrl = details && details.url;
         if (openUrl && openUrl !== "about:blank" && !openUrl.startsWith("devtools://") && !isInternalAppUrl(openUrl)) {
@@ -447,7 +447,7 @@ app.on("web-contents-created", (_, wc) => {
     patchWebContents(wc);
 });
 
-process.env.DATA_DIR = join(app.getPath("userData"), "..", "Nightcord");
+process.env.DATA_DIR = join(app.getPath("userData"), "..", "Midnightcord");
 
 app.whenReady().then(() => {
     registerMediaPermissionsForSession(session.defaultSession);
@@ -495,7 +495,7 @@ app.whenReady().then(() => {
                 return _originalHandle(channel, listener);
             } catch (e: any) {
                 if (e?.message?.includes?.("Attempted to register a second handler")) {
-                    console.warn(`[Nightcord] Ignored duplicate IPC handler for '${channel}'`);
+                    console.warn(`[Midnightcord] Ignored duplicate IPC handler for '${channel}'`);
                     return;
                 }
                 throw e;
@@ -518,8 +518,8 @@ app.whenReady().then(() => {
     app.commandLine.appendSwitch("disable-background-timer-throttling");
     app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
 } else {
-    console.log("[Nightcord] Running in vanilla mode. Not loading Nightcord");
+    console.log("[Midnightcord] Running in vanilla mode. Not loading Midnightcord");
 }
 
-console.log("[Nightcord] Loading original Discord app.asar");
+console.log("[Midnightcord] Loading original Discord app.asar");
 require(require.main!.filename);

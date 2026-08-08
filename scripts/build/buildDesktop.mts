@@ -1,5 +1,5 @@
 /*
- * Nightcord, a desktop app aiming to give you a snappier Discord Experience
+ * Midnightcord, a desktop app aiming to give you a snappier Discord Experience
  * Copyright (c) 2023 Vendicated and Vencord contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -8,10 +8,10 @@ import { execSync } from "child_process";
 import { BuildContext, BuildOptions, context } from "esbuild";
 import { copyFile } from "fs/promises";
 import * as path from "path";
-import { obfuscateDistJs } from "./obfuscate.mjs";
 
 import vencordDep from "./vencordDep.mjs";
 import { includeDirPlugin } from "./includeDirPlugin.mts";
+import { BUILD_TIMESTAMP, commonOpts, commonRendererPlugins, globPlugins, VERSION } from "./common.mjs";
 
 const isDev = process.argv.includes("--dev");
 
@@ -25,8 +25,10 @@ try {
 const CommonOpts: BuildOptions = {
     minify: !isDev,
     bundle: true,
-    sourcemap: "linked",
-    logLevel: "info"
+    sourcemap: isDev ? "inline" : false,
+    treeShaking: true,
+    legalComments: "none",
+    logLevel: "info",
 };
 
 const NodeCommonOpts: BuildOptions = {
@@ -40,6 +42,19 @@ const NodeCommonOpts: BuildOptions = {
     },
     define: {
         IS_DEV: JSON.stringify(isDev),
+        IS_STANDALONE: "true",
+        IS_REPORTER: "false",
+        IS_COMPANION_TEST: "false",
+        IS_UPDATER_DISABLED: "true",
+        IS_ANTI_CRASH_TEST: "false",
+        IS_WEB: "false",
+        IS_EXTENSION: "false",
+        IS_USERSCRIPT: "false",
+        IS_DISCORD_DESKTOP: "false",
+        IS_VESKTOP: "false",
+        IS_EQUIBOP: "true",
+        VERSION: JSON.stringify(VERSION),
+        BUILD_TIMESTAMP: JSON.stringify(BUILD_TIMESTAMP),
         EQUIBOP_GIT_HASH: JSON.stringify(gitHash)
     }
 };
@@ -53,26 +68,26 @@ await Promise.all([
     // Main process
     createContext({
         ...NodeCommonOpts,
-        entryPoints: ["src/nightcord/main/index.ts"],
+        entryPoints: ["src/midnightcord/main/index.ts"],
         outfile: "dist/js/main.js",
         footer: { js: "//# sourceURL=VesktopMain" }
     }),
     // Preloads
     createContext({
         ...NodeCommonOpts,
-        entryPoints: ["src/nightcord/preload/index.ts"],
+        entryPoints: ["src/midnightcord/preload/index.ts"],
         outfile: "dist/js/preload.js",
         footer: { js: "//# sourceURL=VesktopPreload" }
     }),
     createContext({
         ...NodeCommonOpts,
-        entryPoints: ["src/nightcord/preload/splash.ts"],
+        entryPoints: ["src/midnightcord/preload/splash.ts"],
         outfile: "dist/js/splashPreload.js",
         footer: { js: "//# sourceURL=VesktopSplashPreload" }
     }),
     createContext({
         ...NodeCommonOpts,
-        entryPoints: ["src/nightcord/preload/updater.ts"],
+        entryPoints: ["src/midnightcord/preload/updater.ts"],
         outfile: "dist/js/updaterPreload.js",
         footer: { js: "//# sourceURL=VesktopUpdaterPreload" }
     }),
@@ -80,14 +95,36 @@ await Promise.all([
     createContext({
         ...CommonOpts,
         globalName: "Equibop",
-        entryPoints: ["src/nightcord/renderer/index.ts"],
+        entryPoints: ["src/midnightcord/renderer/index.ts"],
         outfile: "dist/js/renderer.js",
         format: "iife",
+        alias: commonOpts.alias,
+        external: commonOpts.external,
         inject: ["./scripts/build/injectReact.mjs"],
         jsxFactory: "VencordCreateElement",
         jsxFragment: "VencordFragment",
-        external: ["@Nightcord/types/*", "@nightcord/types/*"],
-        plugins: [vencordDep, includeDirPlugin("patches", "src/nightcord/renderer/patches")],
+        plugins: [
+            globPlugins("equibop"),
+            ...commonRendererPlugins,
+            vencordDep,
+            includeDirPlugin("patches", "src/midnightcord/renderer/patches")
+        ],
+        define: {
+            IS_STANDALONE: "true",
+            IS_DEV: JSON.stringify(isDev),
+            IS_REPORTER: "false",
+            IS_COMPANION_TEST: "false",
+            IS_UPDATER_DISABLED: "true",
+            IS_ANTI_CRASH_TEST: "false",
+            IS_WEB: "false",
+            IS_EXTENSION: "false",
+            IS_USERSCRIPT: "false",
+            IS_DISCORD_DESKTOP: "false",
+            IS_VESKTOP: "false",
+            IS_EQUIBOP: "true",
+            VERSION: JSON.stringify(VERSION),
+            BUILD_TIMESTAMP: JSON.stringify(BUILD_TIMESTAMP)
+        },
         footer: { js: "//# sourceURL=VesktopRenderer" }
     })
 ]);
@@ -114,10 +151,5 @@ if (watch) {
 				console.log(`  ${output} ${size} KB`);
 			}
 		}
-	}
-
-	// Post-build obfuscation (disabled in dev mode)
-	if (!isDev) {
-		await obfuscateDistJs();
 	}
 }

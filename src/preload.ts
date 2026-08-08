@@ -48,12 +48,12 @@ if (location.protocol !== "data:") {
         // Not supported in sandboxed preload scripts but Discord doesn't support it either so who cares
         require(process.env.DISCORD_PRELOAD!);
 
-        // Remplace "Discord" par "Nightcord" dans le titre de la fenêtre (document.title)
+        // Remplace "Discord" par "Midnightcord" dans le titre de la fenêtre (document.title)
         // Discord change le titre dynamiquement depuis le renderer — on intercepte ça ici
         webFrame.executeJavaScript(`
             (function() {
                 function patchTitle(t) {
-                    return t ? t.replace(/Discord/g, 'Nightcord') : t;
+                    return t ? t.replace(/Discord/g, 'Midnightcord') : t;
                 }
                 // Patch initial
                 if (document.title) document.title = patchTitle(document.title);

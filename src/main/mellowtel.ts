@@ -9,7 +9,7 @@ import { ipcMain } from "electron";
 
 import { NativeSettings } from "./settings";
 
-// Unique Nightcord configuration key, provided by Mellowtel.
+// Unique Midnightcord configuration key, provided by Mellowtel.
 const MELLOWTEL_CONFIGURATION_KEY = "intgr-xbMMjQpcsJ";
 const MELLOWTEL_INTEGRATION_ID = MELLOWTEL_CONFIGURATION_KEY;
 

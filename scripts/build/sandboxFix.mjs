@@ -52,11 +52,15 @@ SCRIPT_DIR="$( cd "$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 IS_STEAMOS=0
 
 if [[ "$SteamOS" == "1" && "$SteamGamepadUI" == "1" ]]; then
-    echo "Running Equibop on SteamOS, disabling sandbox"
+    echo "Running Midnightcord on SteamOS, disabling sandbox"
     IS_STEAMOS=1
 fi
 
-exec "$SCRIPT_DIR/${this.packager.executableName}.bin" "$([ "$IS_STEAMOS" == 1 ] && echo '--no-sandbox')" "$@"
+if [[ "$IS_STEAMOS" == 1 ]]; then
+    exec "$SCRIPT_DIR/${this.packager.executableName}.bin" --no-sandbox "$@"
+fi
+
+exec "$SCRIPT_DIR/${this.packager.executableName}.bin" "$@"
                 `.trim();
 
         try {

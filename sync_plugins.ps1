@@ -1,4 +1,4 @@
-$dest = "C:\Users\zzafi\Documents\GitHub\nightcord\src\plugins"
+$dest = "C:\Users\zzafi\Documents\GitHub\midnightcord\src\plugins"
 $srcVencord = "C:\Users\zzafi\Desktop\vencord&equicord\vencord\src\plugins"
 $srcEquicord = "C:\Users\zzafi\Desktop\vencord&equicord\equicord\src\plugins"
 

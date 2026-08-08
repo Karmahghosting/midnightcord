@@ -1,96 +1,67 @@
 <div align="center">
-  <img src="https://nightcord.st/image.png" width="96" height="96" alt="Nightcord Logo">
+  <img src="./static/icon.png" width="96" height="96" alt="Midnightcord Logo">
 
-# Nightcord
+# Midnightcord
 
-**A custom Discord client built for people who actually care about how Discord runs.**
+**Un client Discord Linux autonome, léger et optimisé.**
 
-[![Telegram](https://img.shields.io/badge/Telegram-Join%20us-26A5E4?logo=telegram&logoColor=white)](https://t.me/nightcordoff)
 [![License](https://img.shields.io/badge/license-GPL%20v3-a855f7)](./LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows-3b82f6.svg?logo=windows\&logoColor=white)](https://source.nightcord.st/nightcord/nightcord)
-[![Website](https://img.shields.io/badge/website-nightcord.st-5865F2?logo=googlechrome\&logoColor=white)](https://nightcord.st)
+[![Platform](https://img.shields.io/badge/platform-Linux-FCC624.svg?logo=linux&logoColor=black)](./docs/LINUX.md)
 
 ---
 
 </div>
 
-Nightcord is a fork of Equicord, which itself builds on top of Vencord. We stripped out the obfuscation, cleaned things up, added our own improvements, and kept what works. No bloat, no nonsense.
+Midnightcord est un fork Linux de [Nightcord](https://source.nightcord.st/nightcord/nightcord), lui-même basé sur Equicord et Vencord. Il produit une application Electron autonome : aucune installation Discord séparée n’est nécessaire.
 
 ---
 
-## What's in it
+## Optimisations Linux
 
-* **Faster startup** — no obfuscation means the client loads noticeably quicker and sits lighter on your CPU and RAM.
-* **Auto-updates** — checks for updates in the background on launch and applies them silently.
-* **Plugin support** — compatible with the existing plugin ecosystem. Install community plugins straight from Git links.
-* **Better audio** — hardware-optimized voice modules for cleaner, louder audio out of the box.
-* **Custom styling** — smoother UI, custom icons, and various quality-of-life improvements.
-
----
-
-## Installation (Windows)
-
-1. Download **`nightcord-install.ps1`**
-2. Right-click → **Run with PowerShell**
-3. Follow the steps, restart Discord, done.
+* bundle de production minifié, sans obfuscation ni source maps ;
+* application empaquetée dans `app.asar` pour réduire les accès disque ;
+* throttling Chromium conservé en arrière-plan pour limiter CPU et batterie ;
+* accélération matérielle active par défaut, décodage vidéo matériel optionnel ;
+* sorties AppImage, Debian et archive portable `tar.gz` ;
+* mises à jour réseau désactivées tant qu’un flux Midnightcord n’est pas explicitement configuré.
 
 ---
 
-## Building from source
+## Construire sous Linux
 
-### Requirements
-
-* Git
-* Node.js (LTS)
-* pnpm
+Prérequis : Git, Node.js 20 ou plus récent, Corepack et les outils système usuels (`fakeroot`/`dpkg` pour le paquet Debian).
 
 ```bash
-npm install -g pnpm
+git clone https://source.nightcord.st/nightcord/nightcord.git midnightcord
+cd midnightcord
+corepack pnpm install --frozen-lockfile
+corepack pnpm package:linux:x64
 ```
 
-### Clone & Build
+Les paquets sont créés dans `release/`. Pour ARM64 :
 
 ```bash
-git clone https://source.nightcord.st/nightcord/nightcord.git
-cd nightcord
-pnpm install
-pnpm build
+corepack pnpm package:linux:arm64
 ```
 
-### Inject into Discord
+Pour tester un dossier non empaqueté :
 
 ```bash
-pnpm inject
+corepack pnpm package:dir
 ```
 
-### Restore stock Discord
-
-```bash
-pnpm uninject
-```
-
----
-
-## Repository
-
-Source code:
-
-https://source.nightcord.st/nightcord/nightcord
+Voir [la documentation Linux](./docs/LINUX.md) pour l’installation et les options Wayland/X11.
 
 ---
 
 ## Credits
 
-Nightcord wouldn't exist without [Equicord](https://github.com/Equicord/Equicord) and [Vencord](https://github.com/Vendicated/Vencord). A huge chunk of what makes this work comes directly from their projects. We're fully aware of that and genuinely appreciate everything they've built — we're just taking it in a different direction. Big thanks to everyone who's contributed to both.
-
-### Special Thanks
-A massive thank you to the owner of **Illegalcord**, with whom we are proudly partnered. They have been incredibly helpful in brainstorming, sharing ideas, and collaborating on plugins. Our smooth and constructive exchanges have been invaluable, and we want to highlight their exemplary, minimalist work that very few can match. 
-➡️ [Check out Illegalcord here](https://github.com/ImHisako/Illegalcord)
+Midnightcord dérive de [Nightcord](https://source.nightcord.st/nightcord/nightcord), [Equicord](https://github.com/Equicord/Equicord), [Vesktop](https://github.com/Vencord/Vesktop) et [Vencord](https://github.com/Vendicated/Vencord). Leurs auteurs et contributeurs conservent tous leurs crédits et droits respectifs.
 
 ---
 
 ## Disclaimer
 
-*Nightcord is not affiliated with Discord Inc. in any way.*
+*Midnightcord is not affiliated with Discord Inc. in any way.*
 
 Using third-party clients is technically against Discord's Terms of Service. Use at your own risk.

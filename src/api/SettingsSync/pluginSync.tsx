@@ -14,7 +14,7 @@ import { OAuth2AuthorizeModal } from "@webpack/common";
 
 const logger = new Logger("SettingsSync:PluginSync", "#39b7e0");
 
-const PLUGIN_TOKEN_KEY = "Nightcord_pluginSyncToken";
+const PLUGIN_TOKEN_KEY = "Midnightcord_pluginSyncToken";
 
 export async function getPluginSyncToken(): Promise<string | undefined> {
     return await DataStore.get<string>(PLUGIN_TOKEN_KEY);

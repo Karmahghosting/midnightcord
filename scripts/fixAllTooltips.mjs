@@ -20,7 +20,7 @@ function getFiles(dir) {
     return results;
 }
 
-const files = getFiles("src/nightcordplugins");
+const files = getFiles("src/midnightcordplugins");
 const tooltipsFound = [];
 
 for (const file of files) {
@@ -32,13 +32,13 @@ for (const file of files) {
     for (const m of tooltipMatches) {
         const attr = m[1];
         const val = m[2].trim();
-        if (val && val !== "Nightcord" && val !== "Nightcord AI" && !val.startsWith("http") && !/^\d+$/.test(val)) {
+        if (val && val !== "Midnightcord" && val !== "Midnightcord AI" && !val.startsWith("http") && !/^\d+$/.test(val)) {
             tooltipsFound.push({ file, attr, val });
             
             // Check if file has t imported
-            if (!content.includes('autoTranslateNightcord') && !content.includes('import { t }') && !content.includes('import { tPlugin as t }')) {
-                const depth = file.split(/[/\\]/).length - file.split(/[/\\]/).indexOf("nightcordplugins") - 2;
-                const relPath = "../".repeat(Math.max(1, depth)) + "autoTranslateNightcord";
+            if (!content.includes('autoTranslateMidnightcord') && !content.includes('import { t }') && !content.includes('import { tPlugin as t }')) {
+                const depth = file.split(/[/\\]/).length - file.split(/[/\\]/).indexOf("midnightcordplugins") - 2;
+                const relPath = "../".repeat(Math.max(1, depth)) + "autoTranslateMidnightcord";
                 content = `import { t } from "${relPath}";\n` + content;
             }
 

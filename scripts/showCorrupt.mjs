@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 
-const c = readFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", "utf8");
+const c = readFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", "utf8");
 const lines = c.split("\n");
 const corrupt = [];
 for (let i = 0; i < lines.length; i++) {

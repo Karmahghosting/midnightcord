@@ -39,7 +39,7 @@ export const enum IpcEvents {
     BUILD = "VencordBuild",
     OPEN_MONACO_EDITOR = "VencordOpenMonacoEditor",
     GET_MONACO_THEME = "VencordGetMonacoTheme",
-    GET_INSTALLER_PREFS = "NightcordGetInstallerPrefs",
+    GET_INSTALLER_PREFS = "MidnightcordGetInstallerPrefs",
 
     GET_PLUGIN_IPC_METHOD_MAP = "VencordGetPluginIpcMethodMap",
 
@@ -60,25 +60,25 @@ export const enum IpcEvents {
 
     GET_DESKTOP_SOURCES = "VencordGetDesktopSources",
 
-    SET_WINDOW_BACKGROUND_MATERIAL = "NightcordSetWindowBackgroundMaterial",
+    SET_WINDOW_BACKGROUND_MATERIAL = "MidnightcordSetWindowBackgroundMaterial",
 
     // SoundCord Player â€” thumbnail toolbar Windows
     SET_THUMBAR_BUTTONS = "SoundCordSetThumbarButtons",
     THUMBAR_BUTTON_CLICK = "SoundCordThumbarButtonClick",
 
-    // Nightcord Updater â€” tÃ©lÃ©charge un exe depuis une URL et le lance
-    NIGHTCORD_DOWNLOAD_AND_RUN = "NightcordDownloadAndRun",
+    // Midnightcord Updater â€” tÃ©lÃ©charge un exe depuis une URL et le lance
+    MIDNIGHTCORD_DOWNLOAD_AND_RUN = "MidnightcordDownloadAndRun",
 
     // VB-Audio Virtual Cable (Windows only)
-    CHECK_VB_CABLE = "NightcordCheckVBCable",
-    INSTALL_VB_CABLE = "NightcordInstallVBCable",
+    CHECK_VB_CABLE = "MidnightcordCheckVBCable",
+    INSTALL_VB_CABLE = "MidnightcordInstallVBCable",
 
     // Relaunch de l'app Electron
-    RELAUNCH_APP = "NightcordRelaunchApp",
+    RELAUNCH_APP = "MidnightcordRelaunchApp",
 
     // Mellowtel bandwidth-sharing SDK consent (user-facing, opt-in onboarding)
-    MELLOWTEL_SET_CONSENT = "NightcordMellowtelSetConsent",
-    MELLOWTEL_GET_CONSENT = "NightcordMellowtelGetConsent",
+    MELLOWTEL_SET_CONSENT = "MidnightcordMellowtelSetConsent",
+    MELLOWTEL_GET_CONSENT = "MidnightcordMellowtelGetConsent",
 
     // WorldBomb â€” Simulation Clavier/Souris Native
     WORLD_BOMB_TYPE = "WorldBombType",
@@ -98,7 +98,7 @@ export const enum IpcEvents {
     // Redimensionne la fenÃªtre externe
     WORLD_BOMB_RESIZE_WINDOW = "WorldBombResizeWindow",
     // Modifie la protection Stream Proof globale
-    SET_CONTENT_PROTECTION = "NightcordSetContentProtection"
+    SET_CONTENT_PROTECTION = "MidnightcordSetContentProtection"
 }
 
 

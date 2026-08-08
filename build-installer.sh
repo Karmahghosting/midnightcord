@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── Nightcord Installer — Build ─────────────────────────────────────────────
+# ─── Midnightcord Installer — Build ─────────────────────────────────────────────
 # Equivalent bash de build-installer.ps1 (converti depuis build-installer.bat)
 
 set -euo pipefail
@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 
 echo ""
 echo " ================================"
-echo "  Nightcord Installer - Build"
+echo "  Midnightcord Installer - Build"
 echo " ================================"
 echo ""
 
@@ -62,16 +62,16 @@ fi
 cd ..
 
 # ── Vérification ─────────────────────────────────────────────────────────────
-if [[ ! -f "release/installer/Nightcord-Installer.exe" ]]; then
+if [[ ! -f "release/installer/Midnightcord-Installer.exe" ]]; then
     echo ""
-    echo " [ERREUR] Nightcord-Installer.exe introuvable apres build."
+    echo " [ERREUR] Midnightcord-Installer.exe introuvable apres build."
     exit 1
 fi
 
-SIZE=$(stat -c%s "release/installer/Nightcord-Installer.exe" 2>/dev/null \
-    || stat -f%z "release/installer/Nightcord-Installer.exe")
+SIZE=$(stat -c%s "release/installer/Midnightcord-Installer.exe" 2>/dev/null \
+    || stat -f%z "release/installer/Midnightcord-Installer.exe")
 
 echo ""
 echo " [OK] Build reussi !"
-echo " Fichier : release/installer/Nightcord-Installer.exe  ($SIZE octets)"
+echo " Fichier : release/installer/Midnightcord-Installer.exe  ($SIZE octets)"
 echo ""

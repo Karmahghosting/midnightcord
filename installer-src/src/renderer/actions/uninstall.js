@@ -21,7 +21,7 @@ const safeDelete = async (p) => {
 
 async function shouldAutoRestart() {
     try {
-        const prefsPath = path.join(process.env.APPDATA, "Nightcord", "settings", "installer-prefs.json");
+        const prefsPath = path.join(process.env.APPDATA, "Midnightcord", "settings", "installer-prefs.json");
         const raw = JSON.parse(await fs.readFile(prefsPath, "utf-8"));
         return raw.autoRestart !== false;
     } catch { return true; }
@@ -49,7 +49,7 @@ async function deleteShims(paths) {
     process.noAsar = true;
     const progressPerLoop = (DELETE_SHIM_PROGRESS - progress.value) / paths.length;
     for (const resPath of paths) {
-        log(`Removing Nightcord from: ${resPath}`);
+        log(`Removing Midnightcord from: ${resPath}`);
         try {
             const appDir = path.join(resPath, "app");
             const backup = path.join(resPath, "_app.asar");
@@ -63,7 +63,7 @@ async function deleteShims(paths) {
                 const pkg = path.join(appDir, "package.json");
                 if (await safeExists(pkg)) {
                     const content = await fs.readFile(pkg, "utf-8").catch(() => "");
-                    if (content.includes('"nightcord"')) {
+                    if (content.includes('"midnightcord"')) {
                         try { await fs.rm(appDir, { recursive: true, force: true }); } catch {}
                     }
                 }
@@ -120,7 +120,7 @@ async function deleteShims(paths) {
             log("✅ Uninstallation successful!");
             progress.set(progress.value + progressPerLoop);
         } catch (err) {
-            log(`❌ Could not remove Nightcord from ${resPath}`);
+            log(`❌ Could not remove Midnightcord from ${resPath}`);
             log(`❌ ${err.message}`);
             return err;
         }
@@ -130,7 +130,7 @@ async function deleteShims(paths) {
 export default async function(paths) {
     try {
         log("Starting Uninstall...");
-        lognewline("Deleting Nightcord loader and restoring files...");
+        lognewline("Deleting Midnightcord loader and restoring files...");
         
         const err = await deleteShims(Object.values(paths));
         if (err) return false;

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── Nightcord — Publier une nouvelle release sur Gitea ──────────────────────
+# ─── Midnightcord — Publier une nouvelle release sur Gitea ──────────────────────
 # Usage : ./publish-release.sh 1.18.1 "Description des changements"
 # Necessite : pnpm, node, dotnet SDK, curl, zip, git
 #
@@ -17,11 +17,11 @@ if [[ -z "$VERSION" ]]; then
     exit 1
 fi
 
-[[ -z "$NOTES" ]] && NOTES="Nightcord $VERSION"
+[[ -z "$NOTES" ]] && NOTES="Midnightcord $VERSION"
 
 # ── Config Gitea ──────────────────────────────────────────────────────────────
 GITEA_URL="https://source.nightcord.st"
-GITEA_REPO="nightcord/nightcord"
+GITEA_REPO="midnightcord/midnightcord"
 GITEA_API="$GITEA_URL/api/v1"
 
 # ── Lecture du token depuis le fichier local (non versionne) ──────────────────
@@ -43,14 +43,14 @@ fi
 # ── Chemins de sortie ─────────────────────────────────────────────────────────
 DIST_DIR="dist/desktop"
 OUT_DIR="release/installer"
-DIST_ZIP="$OUT_DIR/nightcord-dist.zip"
-INSTALLER_EXE="$OUT_DIR/Nightcord-Installer.exe"
+DIST_ZIP="$OUT_DIR/midnightcord-dist.zip"
+INSTALLER_EXE="$OUT_DIR/Midnightcord-Installer.exe"
 VERSION_JSON="$OUT_DIR/version.json"
 DESKTOP_ASAR="dist/desktop.asar"
 
 echo ""
 echo " ╔═══════════════════════════════════════════════════╗"
-echo " ║    NIGHTCORD — Publication release v$VERSION"
+echo " ║    MIDNIGHTCORD — Publication release v$VERSION"
 echo " ╚═══════════════════════════════════════════════════╝"
 echo ""
 
@@ -107,9 +107,9 @@ node scripts/build/collect-assets.mjs
 
 echo " [4/8] Assets copies."
 
-# ── 5. Compiler Nightcord-Installer.exe ──────────────────────────────────────
+# ── 5. Compiler Midnightcord-Installer.exe ──────────────────────────────────────
 echo ""
-echo " [5/8] Compilation de Nightcord-Installer.exe..."
+echo " [5/8] Compilation de Midnightcord-Installer.exe..."
 
 mkdir -p "$OUT_DIR"
 
@@ -125,16 +125,16 @@ else
 fi
 
 if [[ ! -f "$INSTALLER_EXE" ]]; then
-    echo " [ERREUR] Nightcord-Installer.exe introuvable apres compilation."
+    echo " [ERREUR] Midnightcord-Installer.exe introuvable apres compilation."
     exit 1
 fi
 
 INSTALLER_SIZE=$(stat -c%s "$INSTALLER_EXE" 2>/dev/null || stat -f%z "$INSTALLER_EXE")
-echo " [5/8] Nightcord-Installer.exe cree ($INSTALLER_SIZE octets)"
+echo " [5/8] Midnightcord-Installer.exe cree ($INSTALLER_SIZE octets)"
 
-# ── 6. Créer nightcord-dist.zip ──────────────────────────────────────────────
+# ── 6. Créer midnightcord-dist.zip ──────────────────────────────────────────────
 echo ""
-echo " [6/8] Creation de nightcord-dist.zip..."
+echo " [6/8] Creation de midnightcord-dist.zip..."
 
 if [[ ! -f "$DIST_DIR/patcher.js" ]]; then
     echo " [ERREUR] dist/desktop/patcher.js introuvable."
@@ -154,12 +154,12 @@ fi
 (cd "$DIST_DIR" && zip -r -9 "../../$DIST_ZIP" .)
 
 if [[ ! -f "$DIST_ZIP" ]]; then
-    echo " [ERREUR] Impossible de creer nightcord-dist.zip"
+    echo " [ERREUR] Impossible de creer midnightcord-dist.zip"
     exit 1
 fi
 
 DIST_ZIP_SIZE=$(stat -c%s "$DIST_ZIP" 2>/dev/null || stat -f%z "$DIST_ZIP")
-echo " [6/8] nightcord-dist.zip cree ($DIST_ZIP_SIZE octets)"
+echo " [6/8] midnightcord-dist.zip cree ($DIST_ZIP_SIZE octets)"
 
 # ── 7. Mettre à jour version.json ─────────────────────────────────────────────
 echo ""
@@ -171,8 +171,8 @@ cat > "$VERSION_JSON" <<EOF
 {
   "version": "$VERSION",
   "releaseDate": "$ISO_DATE",
-  "installerUrl": "$GITEA_URL/$GITEA_REPO/releases/download/v$VERSION/Nightcord-Installer.exe",
-  "distUrl": "$GITEA_URL/$GITEA_REPO/releases/download/v$VERSION/nightcord-dist.zip",
+  "installerUrl": "$GITEA_URL/$GITEA_REPO/releases/download/v$VERSION/Midnightcord-Installer.exe",
+  "distUrl": "$GITEA_URL/$GITEA_REPO/releases/download/v$VERSION/midnightcord-dist.zip",
   "downloadUrl": "$GITEA_URL/$GITEA_REPO/releases/download/v$VERSION/desktop.asar",
   "changelog": "$NOTES"
 }
@@ -213,7 +213,7 @@ else
         -d "{
   \"tag_name\": \"$TAG_NAME\",
   \"target_commitish\": \"master\",
-  \"name\": \"Nightcord v$VERSION\",
+  \"name\": \"Midnightcord v$VERSION\",
   \"body\": \"$NOTES\",
   \"draft\": false,
   \"prerelease\": false
@@ -259,21 +259,21 @@ upload_asset() {
 }
 
 # 8c. Upload des assets
-upload_asset "$INSTALLER_EXE" "Nightcord-Installer.exe" "application/octet-stream"
-upload_asset "$DIST_ZIP"      "nightcord-dist.zip"      "application/zip"
+upload_asset "$INSTALLER_EXE" "Midnightcord-Installer.exe" "application/octet-stream"
+upload_asset "$DIST_ZIP"      "midnightcord-dist.zip"      "application/zip"
 upload_asset "$DESKTOP_ASAR"  "desktop.asar"            "application/octet-stream"
 upload_asset "$VERSION_JSON"  "version.json"            "application/json"
 
 # ── Done ───────────────────────────────────────────────────────────────────────
 echo ""
 echo " ╔═══════════════════════════════════════════════════════════════════════╗"
-echo " ║  Nightcord v$VERSION publie avec succes sur Gitea !"
+echo " ║  Midnightcord v$VERSION publie avec succes sur Gitea !"
 echo " ║"
 echo " ║  URL : $GITEA_URL/$GITEA_REPO/releases/tag/v$VERSION"
 echo " ║"
 echo " ║  Fichiers publies :"
-echo " ║    Nightcord-Installer.exe    — installeur .exe avec GUI"
-echo " ║    nightcord-dist.zip         — JS obfusques (pour l'injec.)"
+echo " ║    Midnightcord-Installer.exe    — installeur .exe avec GUI"
+echo " ║    midnightcord-dist.zip         — JS obfusques (pour l'injec.)"
 echo " ║    desktop.asar               — asar Discord patcher"
 echo " ║    version.json               — metadonnees de version"
 echo " ╚═══════════════════════════════════════════════════════════════════════╝"

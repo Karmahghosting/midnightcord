@@ -21,7 +21,7 @@ const safeDelete = async (p) => {
 
 async function shouldAutoRestart() {
     try {
-        const prefsPath = path.join(process.env.APPDATA, "Nightcord", "settings", "installer-prefs.json");
+        const prefsPath = path.join(process.env.APPDATA, "Midnightcord", "settings", "installer-prefs.json");
         const raw = JSON.parse(await fs.readFile(prefsPath, "utf-8"));
         return raw.autoRestart !== false;
     } catch { return true; }

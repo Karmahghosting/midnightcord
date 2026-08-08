@@ -1,10 +1,10 @@
 @echo off
-title Nightcord Installer - Build
+title Midnightcord Installer - Build
 cd /d "%~dp0"
 
 echo.
 echo  ====================================
-echo   Nightcord Installer - Build (Electron)
+echo   Midnightcord Installer - Build (Electron)
 echo  ====================================
 echo.
 
@@ -17,7 +17,7 @@ if errorlevel 1 (
 )
 
 :: Ferme toute instance de l'installeur en cours d'execution pour debloquer les fichiers
-taskkill /F /IM Nightcord.exe /IM Nightcord-Installer.exe >nul 2>&1
+taskkill /F /IM Midnightcord.exe /IM Midnightcord-Installer.exe >nul 2>&1
 
 :: Cree le dossier de sortie si besoin
 if not exist "release\installer" mkdir "release\installer"
@@ -53,14 +53,14 @@ if errorlevel 1 (
 echo  [2/3] Compilation webpack reussie.
 
 :: Re-ferme toute instance de l'installeur avant le packaging
-taskkill /F /IM Nightcord.exe /IM Nightcord-Installer.exe >nul 2>&1
+taskkill /F /IM Midnightcord.exe /IM Midnightcord-Installer.exe >nul 2>&1
 
 :: Tente de nettoyer win-unpacked s'il existe
 if exist "..\release\installer\win-unpacked" (
     rmdir /S /Q "..\release\installer\win-unpacked" >nul 2>&1
 )
 
-:: Packaging electron-builder -> Nightcord-Installer.exe dans release/installer
+:: Packaging electron-builder -> Midnightcord-Installer.exe dans release/installer
 echo.
 echo  [3/3] Packaging electron-builder...
 call npx electron-builder --win -p never
@@ -74,17 +74,17 @@ if errorlevel 1 (
 cd ..
 
 :: Verification
-if not exist "release\installer\Nightcord-Installer.exe" (
+if not exist "release\installer\Midnightcord-Installer.exe" (
     echo.
-    echo  [ERREUR] Nightcord-Installer.exe introuvable apres compilation.
+    echo  [ERREUR] Midnightcord-Installer.exe introuvable apres compilation.
     pause
     exit /b 1
 )
 
-for %%F in ("release\installer\Nightcord-Installer.exe") do (
+for %%F in ("release\installer\Midnightcord-Installer.exe") do (
     echo.
     echo  [OK] Build reussi !
-    echo  Fichier : release\installer\Nightcord-Installer.exe (%%~zF octets)
+    echo  Fichier : release\installer\Midnightcord-Installer.exe (%%~zF octets)
     echo.
 )
 

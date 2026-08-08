@@ -42,7 +42,7 @@ function ApiKeyWarningModal({ pluginName, onClose }: { pluginName: string; onClo
 
                     <p style={{ fontSize: 14, color: "#b5bac1", lineHeight: 1.55, margin: 0 }}>
                         You only need to configure it once in the{" "}
-                        <strong style={{ color: "#dbdee1" }}>NightcordAI</strong>
+                        <strong style={{ color: "#dbdee1" }}>MidnightcordAI</strong>
                         {" "}plugin settings. The key is shared across all plugins that use it.
                     </p>
                 </div>
@@ -62,11 +62,11 @@ function ApiKeyWarningModal({ pluginName, onClose }: { pluginName: string; onClo
                         color={Button.Colors.BRAND}
                         onClick={() => {
                             onClose();
-                            const plugin = Plugins.NightcordAI;
+                            const plugin = Plugins.MidnightcordAI;
                             if (plugin) openPluginModal(plugin);
                         }}
                     >
-                        Open NightcordAI Settings
+                        Open MidnightcordAI Settings
                     </Button>
                 </div>
             </ModalFooter>

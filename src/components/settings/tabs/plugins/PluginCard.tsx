@@ -323,14 +323,14 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         </Tooltip>
     );
 
-    const isNightcord = !PluginMeta[plugin.name]?.userPlugin;
-    const iconType = isNightcord ? "nightcord" : "other";
+    const isMidnightcord = !PluginMeta[plugin.name]?.userPlugin;
+    const iconType = isMidnightcord ? "midnightcord" : "other";
 
-    // Le système de like ne s'applique qu'aux plugins Nightcord (pas Vencord/Equicord,
+    // Le système de like ne s'applique qu'aux plugins Midnightcord (pas Vencord/Equicord,
     // pas User Plugins), et jamais aux plugins required (y compris ceux affichés comme
     // required parce qu'une dépendance active en a besoin, d'où le check sur `disabled`).
-    const isNightcordFolderPlugin = PluginMeta[plugin.name]?.folderName?.startsWith("src/nightcordplugins/") ?? false;
-    const canShowLikeBadge = isNightcordFolderPlugin && !plugin.required && !disabled;
+    const isMidnightcordFolderPlugin = PluginMeta[plugin.name]?.folderName?.startsWith("src/midnightcordplugins/") ?? false;
+    const canShowLikeBadge = isMidnightcordFolderPlugin && !plugin.required && !disabled;
 
     function openCreditsModal() {
         openModal(props => (
@@ -340,10 +340,10 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
                     <ModalCloseButton onClick={props.onClose} />
                 </ModalHeader>
                 <ModalContent style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" } as any}>
-                    {isNightcord ? (
+                    {isMidnightcord ? (
                         <a href="https://source.nightcord.st/nightcord/nightcord" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none", color: "var(--text-normal)", fontSize: "20px", fontWeight: 600 }}>
-                            <img src="https://source.nightcord.st/assets/img/logo.svg" alt="Nightcord" style={{ width: 64, height: 64, borderRadius: "50%" }} />
-                            Nightcord
+                            <img src="https://source.nightcord.st/assets/img/logo.svg" alt="Midnightcord" style={{ width: 64, height: 64, borderRadius: "50%" }} />
+                            Midnightcord
                         </a>
                     ) : (
                         plugin.authors?.map(a => {
@@ -385,7 +385,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             infoButton={
                 <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                     {(plugin.name === "DynamicIslande" || plugin.name === "StereoInstaller" || plugin.name === "ClientDiagnostics" || plugin.name === "SecureBookmarks" || plugin.name === "StatusCycler" || plugin.name === "Surveillance" || plugin.name === "MutualScanner") && (
-                        <Tooltip text="This plugin comes from our partner (Illegalcord) then was modified by Nightcord.">
+                        <Tooltip text="This plugin comes from our partner (Illegalcord) then was modified by Midnightcord.">
                             {({ onMouseEnter, onMouseLeave }) => (
                                 <button
                                     role="button"

@@ -1,8 +1,8 @@
 {
-  "name": "nightcord-installer",
-  "productName": "Nightcord Installer",
-  "description": "A simple standalone program which automates the installation, removal and maintenance of Nightcord.",
-  "author": "Nightcord",
+  "name": "midnightcord-installer",
+  "productName": "Midnightcord Installer",
+  "description": "A simple standalone program which automates the installation, removal and maintenance of Midnightcord.",
+  "author": "Midnightcord",
   "version": "1.3.0",
   "license": "MIT",
   "scripts": {
@@ -34,14 +34,14 @@
     "webpack-bundle-analyzer": "^4.4.0"
   },
   "build": {
-    "appId": "app.nightcord.installer",
-    "productName": "Nightcord",
-    "copyright": "Copyright © 2026 Nightcord",
+    "appId": "app.midnightcord.installer",
+    "productName": "Midnightcord",
+    "copyright": "Copyright © 2026 Midnightcord",
     "directories": {
       "output": "../release/installer"
     },
     "win": {
-      "artifactName": "Nightcord-Installer.${ext}",
+      "artifactName": "Midnightcord-Installer.${ext}",
       "icon": "assets/icon.ico",
       "target": {
         "target": "portable",

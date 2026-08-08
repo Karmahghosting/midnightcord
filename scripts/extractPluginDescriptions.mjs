@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const PLUGIN_DIRS = [
     join(ROOT, "src/plugins"),
-    join(ROOT, "src/nightcordplugins"),
+    join(ROOT, "src/midnightcordplugins"),
 ];
 
 const pluginEntries = [];

@@ -80,7 +80,7 @@ const globNativesPlugin = {
         });
 
         build.onLoad({ filter, namespace: "import-natives" }, async () => {
-            const pluginDirs = ["plugins", "userplugins", "nightcordplugins"];
+            const pluginDirs = ["plugins", "userplugins", "midnightcordplugins"];
             let code = "";
             let natives = "\n";
             let i = 0;
@@ -181,7 +181,7 @@ const buildConfigs = ([
     {
         ...nodeCommonOpts,
         entryPoints: [join(dirname(fileURLToPath(import.meta.url)), "../../src/main/index.ts")],
-        outfile: "dist/nightcord/main.js",
+        outfile: "dist/midnightcord/main.js",
         footer: { js: "//# sourceURL=file:///VencordDesktopMain\n" + sourceMapFooter("main") },
         sourcemap,
         plugins: [
@@ -198,7 +198,7 @@ const buildConfigs = ([
     {
         ...commonOpts,
         entryPoints: [join(dirname(fileURLToPath(import.meta.url)), "../../src/Vencord.ts")],
-        outfile: "dist/nightcord/renderer.js",
+        outfile: "dist/midnightcord/renderer.js",
         format: "iife",
         target: ["esnext"],
         footer: { js: "//# sourceURL=file:///VencordDesktopRenderer\n" + sourceMapFooter("renderer") },
@@ -218,7 +218,7 @@ const buildConfigs = ([
     {
         ...nodeCommonOpts,
         entryPoints: [join(dirname(fileURLToPath(import.meta.url)), "../../src/preload.ts")],
-        outfile: "dist/nightcord/preload.js",
+        outfile: "dist/midnightcord/preload.js",
         footer: { js: "//# sourceURL=file:///VencordPreload\n" + sourceMapFooter("preload") },
         sourcemap,
         define: {
@@ -234,16 +234,16 @@ await buildOrWatchAll(buildConfigs);
 
 await Promise.all([
     writeFile("dist/desktop/package.json", JSON.stringify({
-        name: "nightcord",
+        name: "midnightcord",
         main: "patcher.js"
     })),
-    writeFile("dist/nightcord/package.json", JSON.stringify({
-        name: "nightcord",
+    writeFile("dist/midnightcord/package.json", JSON.stringify({
+        name: "midnightcord",
         main: "main.js"
     }))
 ]);
 
 await Promise.all([
     createPackage("dist/desktop", "dist/desktop.asar"),
-    createPackage("dist/nightcord", "dist/nightcord.asar"),
+    createPackage("dist/midnightcord", "dist/midnightcord.asar"),
 ]);

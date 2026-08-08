@@ -1,15 +1,15 @@
 import { readFileSync, writeFileSync } from "fs";
 
 const files = [
-    "src/nightcordplugins/translate/TranslateIcon.tsx",
-    "src/nightcordplugins/translate/TranslateModal.tsx",
-    "src/nightcordplugins/translate/TranslationAccessory.tsx"
+    "src/midnightcordplugins/translate/TranslateIcon.tsx",
+    "src/midnightcordplugins/translate/TranslateModal.tsx",
+    "src/midnightcordplugins/translate/TranslationAccessory.tsx"
 ];
 
 for (const file of files) {
     let content = readFileSync(file, "utf8");
-    if (!content.includes('from "../autoTranslateNightcord"')) {
-        content = 'import { t } from "../autoTranslateNightcord";\n' + content;
+    if (!content.includes('from "../autoTranslateMidnightcord"')) {
+        content = 'import { t } from "../autoTranslateMidnightcord";\n' + content;
     }
 
     content = content.replace(/>\s*You just enabled Auto Translate! Your messages will now be\s*</g, '>{t("You just enabled Auto Translate! Your messages will now be")}<');

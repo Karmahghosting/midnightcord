@@ -192,7 +192,7 @@ let stagedThisSession = false;
 /**
  * Downloads and stages the update silently in the background.
  * No banner, no user interaction needed.
- * nightcord-index.js will apply the staged files on the next restart.
+ * midnightcord-index.js will apply the staged files on the next restart.
  */
 async function silentlyStageUpdate() {
     if (stagedThisSession) return;
@@ -234,7 +234,7 @@ function initTrayIpc() {
             VencordNative.tray.setUpdateState(isOutdated);
 
             if (isOutdated) {
-                showNotice("A Nightcord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
+                showNotice("A Midnightcord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
             } else {
                 showNotice("No updates available, you're on the latest version!", "OK", popNotice);
             }
@@ -249,7 +249,7 @@ function initTrayIpc() {
             await update();
             relaunch();
         } catch (err) {
-            UpdateLogger.error("Failed to repair Nightcord", err);
+            UpdateLogger.error("Failed to repair Midnightcord", err);
         }
     });
 
@@ -285,7 +285,7 @@ async function init() {
                 "Webpack has finished initialising, but some patches haven't been applied yet.",
                 "This might be expected since some Modules are lazy loaded, but please verify",
                 "that all plugins are working as intended.",
-                "You are seeing this warning because this is a Development build of Nightcord.",
+                "You are seeing this warning because this is a Development build of Midnightcord.",
                 "\nThe following patches have not been applied:",
                 "\n\n" + pendingPatches.map(p => `${p.plugin}: ${p.find}`).join("\n")
             );
@@ -302,8 +302,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Reposition Discord's titlebar to the left by default (90px)
     // When stealth mode or compact mode is enabled, it falls back to Discord's default center position.
-    createAndAppendStyle("nightcord-titlebar-position", coreStyleRootNode).textContent = `
-        body:not(.nightcord-stealth):not(.nightcord-compact) [class*="title_c38"] {
+    createAndAppendStyle("midnightcord-titlebar-position", coreStyleRootNode).textContent = `
+        body:not(.midnightcord-stealth):not(.midnightcord-compact) [class*="title_c38"] {
             position: absolute !important;
             left: 90px !important;
             right: auto !important;

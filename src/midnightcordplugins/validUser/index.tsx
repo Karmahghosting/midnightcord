@@ -1,0 +1,254 @@
+/*
+ * Midnightcord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/*
+ * Midnightcord, a modification for Discord's desktop app
+ * Copyright (c) 2023 Vendicated and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+import ErrorBoundary from "@components/ErrorBoundary";
+import { Devs } from "@utils/constants";
+import { isNonNullish } from "@utils/guards";
+import { sleep } from "@utils/misc";
+import { Queue } from "@utils/Queue";
+import definePlugin from "@utils/types";
+import { ProfileBadge } from "@vencord/discord-types";
+import { Constants, FluxDispatcher, RestAPI, UserProfileStore, UserStore, useState } from "@webpack/common";
+import { type ComponentType, type ReactNode } from "react";
+
+// LYING to the type checker here
+const UserFlags = Constants.UserFlags as Record<string, number>;
+const badges: Record<string, ProfileBadge> = {
+    active_developer: { id: "active_developer", description: "Active Developer", icon: "6bdc42827a38498929a4920da12695d9", link: "https://support-dev.discord.com/hc/en-us/articles/10113997751447" },
+    bug_hunter_level_1: { id: "bug_hunter_level_1", description: "Discord Bug Hunter", icon: "2717692c7dca7289b35297368a940dd0", link: "https://support.discord.com/hc/en-us/articles/360046057772-Discord-Bugs" },
+    bug_hunter_level_2: { id: "bug_hunter_level_2", description: "Discord Bug Hunter", icon: "848f79194d4be5ff5f81505cbd0ce1e6", link: "https://support.discord.com/hc/en-us/articles/360046057772-Discord-Bugs" },
+    certified_moderator: { id: "certified_moderator", description: "Moderator Programs Alumni", icon: "fee1624003e2fee35cb398e125dc479b", link: "https://discord.com/safety" },
+    discord_employee: { id: "staff", description: "Discord Staff", icon: "5e74e9b61934fc1f67c65515d1f7e60d", link: "https://discord.com/company" },
+    get staff() { return this.discord_employee; },
+    hypesquad: { id: "hypesquad", description: "HypeSquad Events", icon: "bf01d1073931f921909045f3a39fd264", link: "https://discord.com/hypesquad" },
+    hypesquad_online_house_1: { id: "hypesquad_house_1", description: "HypeSquad Bravery", icon: "8a88d63823d8a71cd5e390baa45efa02", link: "https://discord.com/settings/hypesquad-online" },
+    hypesquad_online_house_2: { id: "hypesquad_house_2", description: "HypeSquad Brilliance", icon: "011940fd013da3f7fb926e4a1cd2e618", link: "https://discord.com/settings/hypesquad-online" },
+    hypesquad_online_house_3: { id: "hypesquad_house_3", description: "HypeSquad Balance", icon: "3aa41de486fa12454c3761e8e223442e", link: "https://discord.com/settings/hypesquad-online" },
+    partner: { id: "partner", description: "Partnered Server Owner", icon: "3f9748e53446a137a052f3454e2de41e", link: "https://discord.com/partners" },
+    premium: { id: "premium", description: "Subscriber", icon: "2ba85e8026a8614b640c2837bcdfe21b", link: "https://discord.com/settings/premium" },
+    premium_early_supporter: { id: "early_supporter", description: "Early Supporter", icon: "7060786766c9c840eb3019e725d2b358", link: "https://discord.com/settings/premium" },
+    verified_developer: { id: "verified_developer", description: "Early Verified Bot Developer", icon: "6df5892e0f35b051f8b61eace34f4967" },
+};
+
+const fetching = new Set<string>();
+const queue = new Queue(5);
+
+interface MentionProps {
+    data: {
+        userId?: string;
+        channelId?: string;
+        content: any;
+    };
+    parse: (content: any, props: MentionProps["props"]) => ReactNode;
+    props: {
+        key: string;
+        formatInline: boolean;
+        noStyleAndInteraction: boolean;
+    };
+    RoleMention: ComponentType<any>;
+    UserMention: ComponentType<any>;
+}
+
+async function getUser(id: string) {
+    let userObj = UserStore.getUser(id);
+    if (userObj)
+        return userObj;
+
+    const user: any = await RestAPI.get({ url: Constants.Endpoints.USER(id) }).then(response => {
+        FluxDispatcher.dispatch({
+            type: "USER_UPDATE",
+            user: response.body,
+        });
+
+        return response.body;
+    });
+
+    // Populate the profile
+    await FluxDispatcher.dispatch(
+        {
+            type: "USER_PROFILE_FETCH_FAILURE",
+            userId: id,
+        }
+    );
+
+    userObj = UserStore.getUser(id);
+    const fakeBadges: ProfileBadge[] = Object.entries(UserFlags)
+        .filter(([_, flag]) => !isNaN(flag) && userObj.hasFlag(flag))
+        .map(([key]) => badges[key.toLowerCase()])
+        .filter(isNonNullish);
+    if (user.premium_type || !user.bot && (user.banner || user.avatar?.startsWith?.("a_")))
+        fakeBadges.push(badges.premium);
+
+    // Fill in what we can deduce
+    const profile = UserProfileStore.getUserProfile(id);
+    if (profile) {
+        profile.accentColor = user.accent_color;
+        profile.badges = fakeBadges;
+        profile.banner = user.banner;
+        profile.premiumType = user.premium_type;
+    }
+
+    return userObj;
+}
+
+/**
+ * Extracts the Discord user ID from the mention data object.
+ * Tries data.userId first, then falls back to scanning data.content for a raw <@id> token.
+ * This is more reliable than parsing the rendered React children.
+ */
+function extractMentionUserId(data: MentionProps["data"]): string | null {
+    // data.userId is the most reliable source when set by Discord's parser
+    if (data.userId) return data.userId;
+
+    // Fallback: scan data.content (can be a string, array of strings, or nested arrays)
+    const scan = (val: any): string | null => {
+        if (typeof val === "string") {
+            return val.match(/<@!?(\d+)>/)?.[1] ?? null;
+        }
+        if (Array.isArray(val)) {
+            for (const item of val) {
+                const found = scan(item);
+                if (found) return found;
+            }
+        }
+        if (val && typeof val === "object") {
+            // Discord content tokens can have a .content property
+            return scan(val.content ?? null);
+        }
+        return null;
+    };
+
+    return scan(data.content);
+}
+
+function MentionWrapper({ data, UserMention, RoleMention, parse, props }: MentionProps) {
+    // Extract the user ID upfront at render time — never rely on parsed children
+    const resolvedId = extractMentionUserId(data);
+
+    // A mention is "ready" when we have the ID AND the user is in the store
+    const [isReady, setIsReady] = useState(() =>
+        resolvedId != null && UserStore.getUser(resolvedId) != null
+    );
+
+    if (isReady && resolvedId)
+        return (
+            <UserMention
+                className="mention"
+                userId={resolvedId}
+                channelId={data.channelId}
+                inlinePreview={props.noStyleAndInteraction}
+                props={props}
+                key={props.key}
+            />
+        );
+
+    // Parses the raw text node array data.content into a ReactNode[]: ["<@userid>"]
+    const children = parse(data.content, props);
+
+    function tryFetch() {
+        if (!resolvedId) return;
+        if (fetching.has(resolvedId)) return;
+
+        // User was cached since last render — just mark ready
+        if (UserStore.getUser(resolvedId)) {
+            setIsReady(true);
+            return;
+        }
+
+        const fetch = () => {
+            fetching.add(resolvedId);
+            queue.unshift(() =>
+                getUser(resolvedId)
+                    .then(() => {
+                        setIsReady(true);
+                        fetching.delete(resolvedId);
+                    })
+                    .catch(e => {
+                        fetching.delete(resolvedId);
+                        if (e?.status === 429) {
+                            queue.unshift(() => sleep(e?.body?.retry_after ?? 1000).then(fetch));
+                        }
+                    })
+                    .finally(() => sleep(300))
+            );
+        };
+
+        fetch();
+    }
+
+    return (
+        // Discord is deranged and renders unknown user mentions as role mentions
+        <RoleMention
+            {...data}
+            props={props}
+            inlinePreview={props.formatInline}
+        >
+            <span onMouseEnter={tryFetch}>
+                {children}
+            </span>
+        </RoleMention>
+    );
+}
+
+export default definePlugin({
+    name: "ValidUser",
+    enabledByDefault: true,
+    description: "Fix mentions for unknown users showing up as '@unknown-user' (hover over a mention to fix it)",
+    authors: [Devs.Ven, Devs.Dolfies],
+    tags: ["MentionCacheFix"],
+
+    patches: [
+        {
+            find: 'className:"mention"',
+            replacement: {
+                // mention = { react: function (data, parse, props) { if (data.userId == null) return RoleMention() else return UserMention()
+                match: /react(?=\(\i,\i,\i\).{0,100}return null==.{0,70}\?\(0,\i\.jsx\)\((\i\.\i),.+?jsx\)\((\i\.\i),\{className:"mention")/,
+                // react: (...args) => OurWrapper(RoleMention, UserMention, ...args), originalReact: theirFunc
+                replace: "react:(...args)=>$self.renderMention($1,$2,...args),originalReact"
+            }
+        },
+        {
+            find: "unknownUserMentionPlaceholder:",
+            replacement: {
+                match: /unknownUserMentionPlaceholder:/,
+                replace: "$&false&&"
+            }
+        }
+    ],
+
+    renderMention(RoleMention, UserMention, data, parse, props) {
+        return (
+            <ErrorBoundary noop>
+                <MentionWrapper
+                    key={"mention" + data.userId}
+                    RoleMention={RoleMention}
+                    UserMention={UserMention}
+                    data={data}
+                    parse={parse}
+                    props={props}
+                />
+            </ErrorBoundary>
+        );
+    },
+});

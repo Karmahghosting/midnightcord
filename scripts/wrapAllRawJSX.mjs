@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import { join, relative } from "path";
 
 const targetPlugins = [
-    "FakeVoice", "antiMoveDeco", "nightcordAI", "ClearGroups", "ClearDMs", "messageCleaner",
+    "FakeVoice", "antiMoveDeco", "midnightcordAI", "ClearGroups", "ClearDMs", "messageCleaner",
     "leaveAllServers", "muteAllServers", "serverCloner", "silentEdit.tsx", "silentDelete",
     "showHiddenThings", "previewMessage", "passcodeLock", "channelWallpaper", "DynamicIslande",
     "fakeFriends", "lastSeen", "pinDms", "reverseImageSearch", "mutualScanner",
@@ -36,7 +36,7 @@ function isRealText(str) {
     if (!str || typeof str !== "string") return false;
     str = str.trim();
     if (str.length < 2) return false;
-    if (str === "Nightcord" || str === "Nightcord AI") return false;
+    if (str === "Midnightcord" || str === "Midnightcord AI") return false;
     if (str.startsWith("http://") || str.startsWith("https://")) return false;
     if (/^[\d.,:\-_\/\\()=?>!#%&*+]+$/.test(str)) return false;
     if (str.includes("Promise") || str.includes("Promise<") || str.includes("=>") || str.includes("className")) return false;
@@ -48,7 +48,7 @@ function isRealText(str) {
 let modifiedFiles = 0;
 
 for (const pluginFolder of targetPlugins) {
-    const pluginPath = join("src/nightcordplugins", pluginFolder);
+    const pluginPath = join("src/midnightcordplugins", pluginFolder);
     const files = getFiles(pluginPath);
 
     for (const file of files) {
@@ -61,10 +61,10 @@ for (const pluginFolder of targetPlugins) {
 
         if (validRawJSX.length > 0) {
             // Check import
-            if (!content.includes('autoTranslateNightcord')) {
-                // Find relative path to autoTranslateNightcord
-                const depth = file.split(/[/\\]/).length - file.split(/[/\\]/).indexOf("nightcordplugins") - 2;
-                const relPath = "../".repeat(Math.max(1, depth)) + "autoTranslateNightcord";
+            if (!content.includes('autoTranslateMidnightcord')) {
+                // Find relative path to autoTranslateMidnightcord
+                const depth = file.split(/[/\\]/).length - file.split(/[/\\]/).indexOf("midnightcordplugins") - 2;
+                const relPath = "../".repeat(Math.max(1, depth)) + "autoTranslateMidnightcord";
                 content = `import { t } from "${relPath}";\n` + content;
             }
 

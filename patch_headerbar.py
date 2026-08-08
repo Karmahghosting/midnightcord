@@ -1,6 +1,6 @@
 ﻿import re
 
-with open(r"C:\Users\zzafi\Documents\GitHub\nightcord\src\api\HeaderBar.tsx", "r", encoding="utf-8") as f:
+with open(r"C:\Users\zzafi\Documents\GitHub\midnightcord\src\api\HeaderBar.tsx", "r", encoding="utf-8") as f:
     content = f.read()
 
 # 1. Ajouter import findComponentByCodeLazy si pas déjà présent
@@ -18,11 +18,11 @@ old_func = '''function HeaderBarButtons() {
         const listener = () => forceUpdate(n => n + 1);
         headerBarListeners.add(listener);
         stealthListeners.add(listener);
-        window.addEventListener("nightcord-stealth-change", listener);
+        window.addEventListener("midnightcord-stealth-change", listener);
         return () => {
             headerBarListeners.delete(listener);
             stealthListeners.delete(listener);
-            window.removeEventListener("nightcord-stealth-change", listener);
+            window.removeEventListener("midnightcord-stealth-change", listener);
         };
     }, []);
 
@@ -49,17 +49,17 @@ function CompactHeaderBarToggle() {
     useEffect(() => {
         const listener = () => forceUpdate(n => n + 1);
         compactListeners.add(listener);
-        window.addEventListener("nightcord-compact-change", listener);
+        window.addEventListener("midnightcord-compact-change", listener);
         return () => {
             compactListeners.delete(listener);
-            window.removeEventListener("nightcord-compact-change", listener);
+            window.removeEventListener("midnightcord-compact-change", listener);
         };
     }, []);
 
     return (
         <HeaderBarButton
             icon={GridVerticalIcon}
-            tooltip="Compact Mode — Click to expand Nightcord buttons"
+            tooltip="Compact Mode — Click to expand Midnightcord buttons"
             onClick={toggleCompactMode}
             selected={false}
         />
@@ -74,14 +74,14 @@ function HeaderBarButtons() {
         headerBarListeners.add(listener);
         stealthListeners.add(listener);
         compactListeners.add(listener);
-        window.addEventListener("nightcord-stealth-change", listener);
-        window.addEventListener("nightcord-compact-change", listener);
+        window.addEventListener("midnightcord-stealth-change", listener);
+        window.addEventListener("midnightcord-compact-change", listener);
         return () => {
             headerBarListeners.delete(listener);
             stealthListeners.delete(listener);
             compactListeners.delete(listener);
-            window.removeEventListener("nightcord-stealth-change", listener);
-            window.removeEventListener("nightcord-compact-change", listener);
+            window.removeEventListener("midnightcord-stealth-change", listener);
+            window.removeEventListener("midnightcord-compact-change", listener);
         };
     }, []);
 
@@ -117,5 +117,5 @@ else:
     idx = content.find("function HeaderBarButtons()")
     print(repr(content[idx:idx+500]))
 
-with open(r"C:\Users\zzafi\Documents\GitHub\nightcord\src\api\HeaderBar.tsx", "w", encoding="utf-8") as f:
+with open(r"C:\Users\zzafi\Documents\GitHub\midnightcord\src\api\HeaderBar.tsx", "w", encoding="utf-8") as f:
     f.write(content)

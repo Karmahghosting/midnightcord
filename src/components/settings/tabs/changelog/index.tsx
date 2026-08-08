@@ -38,7 +38,7 @@ import {
     getNewSettingsSize,
     getUpdatedPlugins,
     initializeChangelog,
-    NIGHTCORD_REPO_URL,
+    MIDNIGHTCORD_REPO_URL,
     saveUpdateSession,
     UpdateSession,
 } from "./changelogManager";
@@ -225,7 +225,7 @@ function UpdateLogCard({
 }
 
 function ChangelogContent() {
-    const repo = NIGHTCORD_REPO_URL;
+    const repo = MIDNIGHTCORD_REPO_URL;
     const repoErr = null;
     const repoPending = false;
     const [changelog, setChangelog] = React.useState<ChangelogEntry[]>([]);
@@ -553,7 +553,7 @@ function ChangelogContent() {
 
             <Heading className={Margins.top20}>{t("Repository")}</Heading>
             <Paragraph className={Margins.bottom8}>
-                {t("This is the GitHub repository where Nightcord fetches updates from.")}
+                {t("This is the GitHub repository where Midnightcord fetches updates from.")}
             </Paragraph>
             <Paragraph color="text-subtle">
                 {repoPending ? (

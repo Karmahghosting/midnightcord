@@ -71,11 +71,11 @@ export async function authorizeCloud() {
     let scopes: string[];
 
     const cloudUrl = getCloudUrl();
-    const isNightcord = cloudUrl.hostname.includes("nightcord");
+    const isMidnightcord = cloudUrl.hostname.includes("midnightcord");
 
     try {
-        if (isNightcord) {
-            // Nightcord API uses /api/oauth2/signing
+        if (isMidnightcord) {
+            // Midnightcord API uses /api/oauth2/signing
             const signingRes = await fetch(new URL("/api/oauth2/signing", cloudUrl));
             const signingData = await signingRes.json();
             // Extract clientId from the authorization URL
@@ -120,7 +120,7 @@ export async function authorizeCloud() {
                 });
                 const data = await res.json();
 
-                // Nightcord returns { token }, Vencord/Equicord returns { secret }
+                // Midnightcord returns { token }, Vencord/Equicord returns { secret }
                 const credential = data.token ?? data.secret;
                 if (credential) {
                     logger.info("Authorized with cloud");

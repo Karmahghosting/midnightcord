@@ -272,7 +272,7 @@ export function openResetDefaultsModal(reset: () => void) {
             onCancel={props.onClose}
         >
             <Paragraph>
-                {t("This will reset all plugins to their default enabled/disabled state (how they are when Nightcord is first installed).")} 
+                {t("This will reset all plugins to their default enabled/disabled state (how they are when Midnightcord is first installed).")}
             </Paragraph>
             <div className={classes(Margins.top16, cl("warning"))}>
                 <WarningIcon color="var(--text-feedback-critical)" />

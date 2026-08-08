@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ========================================================
-echo BUILDER EXTENSION FIREFOX NIGHTCORD
+echo BUILDER EXTENSION FIREFOX MIDNIGHTCORD
 echo ========================================================
 echo.
 echo Liste des plugins ignores lue depuis blacklist.txt

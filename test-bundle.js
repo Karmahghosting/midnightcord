@@ -302,7 +302,7 @@ var init_constants = __esm({
     import_fs = require("fs");
     import_path = require("path");
     suffix = IS_DEV ? "dev" : "";
-    DATA_DIR = process.env.NIGHTCORD_USER_DATA_DIR ?? (process.env.DISCORD_USER_DATA_DIR ? (0, import_path.join)(process.env.DISCORD_USER_DATA_DIR, "..", "NightcordData", suffix) : (0, import_path.join)(import_electron.app.getPath("userData"), "..", "Nightcord", suffix));
+    DATA_DIR = process.env.MIDNIGHTCORD_USER_DATA_DIR ?? (process.env.DISCORD_USER_DATA_DIR ? (0, import_path.join)(process.env.DISCORD_USER_DATA_DIR, "..", "MidnightcordData", suffix) : (0, import_path.join)(import_electron.app.getPath("userData"), "..", "Midnightcord", suffix));
     SETTINGS_DIR = (0, import_path.join)(DATA_DIR, "settings");
     THEMES_DIR = (0, import_path.join)(DATA_DIR, "themes");
     QUICK_CSS_PATH = (0, import_path.join)(SETTINGS_DIR, "quickCss.css");
@@ -337,7 +337,7 @@ var init_constants = __esm({
             import_electron.app.relaunch();
             import_electron.app.exit(0);
           } catch (err2) {
-            console.error("[Nightcord] Failed to copy prod data:", err2);
+            console.error("[Midnightcord] Failed to copy prod data:", err2);
           }
         }, 5e3);
       }
@@ -492,8 +492,8 @@ var init_vencordUserAgent = __esm({
     import_git_hash = __toESM(require("~git-hash"));
     import_git_remote = __toESM(require("~git-remote"));
     gitHashShort = import_git_hash.default.slice(0, 7);
-    VENCORD_USER_AGENT = `Nightcord/${import_git_hash.default}${import_git_remote.default ? ` (https://github.com/${import_git_remote.default})` : ""}`;
-    VENCORD_USER_AGENT_HASHLESS = `Nightcord${import_git_remote.default ? ` (https://github.com/${import_git_remote.default})` : ""}`;
+    VENCORD_USER_AGENT = `Midnightcord/${import_git_hash.default}${import_git_remote.default ? ` (https://github.com/${import_git_remote.default})` : ""}`;
+    VENCORD_USER_AGENT_HASHLESS = `Midnightcord${import_git_remote.default ? ` (https://github.com/${import_git_remote.default})` : ""}`;
   }
 });
 
@@ -541,7 +541,7 @@ async function getUpdates() {
   if (!outdated) return [];
   return [{
     hash: pendingVersion ?? "new",
-    author: "Nightcord",
+    author: "Midnightcord",
     message: `Nouvelle version disponible : ${pendingVersion}`
   }];
 }
@@ -551,10 +551,10 @@ async function applyUpdates() {
   isApplying = true;
   try {
     const data = await fetchBuffer(pendingDownloadUrl);
-    const zipPath = (0, import_path2.join)(import_electron4.app.getPath("temp"), `nightcord-update-${Date.now()}.zip`);
+    const zipPath = (0, import_path2.join)(import_electron4.app.getPath("temp"), `midnightcord-update-${Date.now()}.zip`);
     (0, import_original_fs2.writeFileSync)(zipPath, data, { flush: true });
     const destPath = __dirname;
-    const tmpExtract = (0, import_path2.join)(import_electron4.app.getPath("temp"), `nightcord-extract-${Date.now()}`);
+    const tmpExtract = (0, import_path2.join)(import_electron4.app.getPath("temp"), `midnightcord-extract-${Date.now()}`);
     return await new Promise((resolve2, reject) => {
       const psExtract = `Expand-Archive -LiteralPath '${zipPath}' -DestinationPath '${tmpExtract}' -Force`;
       (0, import_child_process.exec)(`powershell -NoProfile -NonInteractive -Command "${psExtract}"`, (err2) => {
@@ -605,7 +605,7 @@ var init_http2 = __esm({
     API_BASE = `${GITEA_BASE}/api/v1/repos/nightcord/nightcord`;
     REPO_URL = `${GITEA_BASE}/nightcord/nightcord`;
     CURRENT_VERSION = `v${VERSION}`;
-    ZIP_FILE = "nightcord-dist.zip";
+    ZIP_FILE = "midnightcord-dist.zip";
     pendingDownloadUrl = null;
     pendingVersion = null;
     isApplying = false;
@@ -616,10 +616,10 @@ var init_http2 = __esm({
   }
 });
 
-// src/nightcord/shared/IpcEvents.ts
+// src/midnightcord/shared/IpcEvents.ts
 var IpcEvents2;
 var init_IpcEvents2 = __esm({
-  "src/nightcord/shared/IpcEvents.ts"() {
+  "src/midnightcord/shared/IpcEvents.ts"() {
     "use strict";
     IpcEvents2 = /* @__PURE__ */ ((IpcEvents3) => {
       IpcEvents3["GET_VENCORD_PRELOAD_SCRIPT"] = "VCD_GET_VC_PRELOAD_SCRIPT";
@@ -673,13 +673,13 @@ var init_IpcEvents2 = __esm({
       IpcEvents3["DEVTOOLS_CLOSED"] = "VCD_DEVTOOLS_CLOSED";
       IpcEvents3["CHOOSE_USER_ASSET"] = "VCD_CHOOSE_USER_ASSET";
       IpcEvents3["GET_PLATFORM_SPOOF_INFO"] = "VCD_GET_PLATFORM_SPOOF_INFO";
-      IpcEvents3["RELAUNCH_APP"] = "NightcordRelaunchApp";
+      IpcEvents3["RELAUNCH_APP"] = "MidnightcordRelaunchApp";
       return IpcEvents3;
     })(IpcEvents2 || {});
   }
 });
 
-// src/nightcord/shared/utils/text.ts
+// src/midnightcord/shared/utils/text.ts
 function stripIndent(strings, ...values) {
   const string = String.raw({ raw: strings }, ...values);
   const match = string.match(/^[ \t]*(?=\S)/gm);
@@ -688,15 +688,15 @@ function stripIndent(strings, ...values) {
   return string.replace(new RegExp(`^[ \\t]{${minIndent}}`, "gm"), "").trim();
 }
 var init_text = __esm({
-  "src/nightcord/shared/utils/text.ts"() {
+  "src/midnightcord/shared/utils/text.ts"() {
     "use strict";
   }
 });
 
-// src/nightcord/shared/paths.ts
+// src/midnightcord/shared/paths.ts
 var import_path3, STATIC_DIR, BADGE_DIR;
 var init_paths = __esm({
-  "src/nightcord/shared/paths.ts"() {
+  "src/midnightcord/shared/paths.ts"() {
     "use strict";
     init_constants2();
     import_path3 = require("path");
@@ -705,17 +705,17 @@ var init_paths = __esm({
   }
 });
 
-// src/nightcord/shared/utils/guards.ts
+// src/midnightcord/shared/utils/guards.ts
 function isTruthy(item) {
   return Boolean(item);
 }
 var init_guards = __esm({
-  "src/nightcord/shared/utils/guards.ts"() {
+  "src/midnightcord/shared/utils/guards.ts"() {
     "use strict";
   }
 });
 
-// src/nightcord/shared/utils/once.ts
+// src/midnightcord/shared/utils/once.ts
 function once(fn) {
   let called = false;
   return function(...args2) {
@@ -725,12 +725,12 @@ function once(fn) {
   };
 }
 var init_once = __esm({
-  "src/nightcord/shared/utils/once.ts"() {
+  "src/midnightcord/shared/utils/once.ts"() {
     "use strict";
   }
 });
 
-// src/nightcord/main/utils/isPathInDirectory.ts
+// src/midnightcord/main/utils/isPathInDirectory.ts
 function isPathInDirectory(filePath, directory) {
   const resolvedPath = (0, import_path4.resolve)(filePath);
   const resolvedDirectory = (0, import_path4.resolve)(directory);
@@ -739,13 +739,13 @@ function isPathInDirectory(filePath, directory) {
 }
 var import_path4;
 var init_isPathInDirectory = __esm({
-  "src/nightcord/main/utils/isPathInDirectory.ts"() {
+  "src/midnightcord/main/utils/isPathInDirectory.ts"() {
     "use strict";
     import_path4 = require("path");
   }
 });
 
-// src/nightcord/main/vesktopStatic.ts
+// src/midnightcord/main/vesktopStatic.ts
 async function handleVesktopStaticProtocol(path, req) {
   const fullPath = (0, import_path5.join)(STATIC_DIR2, path);
   if (!isPathInDirectory(fullPath, STATIC_DIR2)) {
@@ -754,7 +754,7 @@ async function handleVesktopStaticProtocol(path, req) {
   return import_electron8.net.fetch((0, import_url.pathToFileURL)(fullPath).href);
 }
 function loadView(browserWindow, view, params) {
-  const url = new URL(`nightcord://static/views/${view}`);
+  const url = new URL(`midnightcord://static/views/${view}`);
   if (params) {
     url.search = params.toString();
   }
@@ -762,7 +762,7 @@ function loadView(browserWindow, view, params) {
 }
 var import_electron8, import_path5, import_url, STATIC_DIR2;
 var init_vesktopStatic = __esm({
-  "src/nightcord/main/vesktopStatic.ts"() {
+  "src/midnightcord/main/vesktopStatic.ts"() {
     "use strict";
     import_electron8 = require("electron");
     import_path5 = require("path");
@@ -772,7 +772,7 @@ var init_vesktopStatic = __esm({
   }
 });
 
-// src/nightcord/main/about.ts
+// src/midnightcord/main/about.ts
 async function createAboutWindow() {
   const height = 750;
   const width = height * (4 / 3);
@@ -792,7 +792,7 @@ async function createAboutWindow() {
 }
 var import_electron9, import_path6;
 var init_about = __esm({
-  "src/nightcord/main/about.ts"() {
+  "src/midnightcord/main/about.ts"() {
     "use strict";
     import_electron9 = require("electron");
     import_path6 = require("path");
@@ -802,7 +802,7 @@ var init_about = __esm({
   }
 });
 
-// src/nightcord/main/dbus.ts
+// src/midnightcord/main/dbus.ts
 function loadLibVesktop() {
   try {
     if (!libVesktop) {
@@ -825,7 +825,7 @@ function requestBackground(autoStart2, commandLine) {
 }
 var import_electron10, import_path7, libVesktop;
 var init_dbus = __esm({
-  "src/nightcord/main/dbus.ts"() {
+  "src/midnightcord/main/dbus.ts"() {
     "use strict";
     import_electron10 = require("electron");
     import_path7 = require("path");
@@ -834,10 +834,10 @@ var init_dbus = __esm({
   }
 });
 
-// src/nightcord/main/events.ts
+// src/midnightcord/main/events.ts
 var import_events, AppEvents;
 var init_events = __esm({
-  "src/nightcord/main/events.ts"() {
+  "src/midnightcord/main/events.ts"() {
     "use strict";
     import_events = require("events");
     AppEvents = new import_events.EventEmitter();
@@ -845,7 +845,7 @@ var init_events = __esm({
   }
 });
 
-// src/nightcord/main/appBadge.ts
+// src/midnightcord/main/appBadge.ts
 function loadBadge(index) {
   const cached = imgCache.get(index);
   if (cached) return cached;
@@ -889,7 +889,7 @@ function getBadgeIndexAndDescription(count) {
 }
 var import_electron11, import_path8, imgCache, lastIndex, isInVoiceCall, voiceStateListener;
 var init_appBadge = __esm({
-  "src/nightcord/main/appBadge.ts"() {
+  "src/midnightcord/main/appBadge.ts"() {
     "use strict";
     import_electron11 = require("electron");
     import_path8 = require("path");
@@ -4540,10 +4540,10 @@ var init_wrapper = __esm({
   }
 });
 
-// src/nightcord/shared/utils/SettingsStore.ts
+// src/midnightcord/shared/utils/SettingsStore.ts
 var SettingsStore2;
 var init_SettingsStore2 = __esm({
-  "src/nightcord/shared/utils/SettingsStore.ts"() {
+  "src/midnightcord/shared/utils/SettingsStore.ts"() {
     "use strict";
     SettingsStore2 = class {
       pathListeners = /* @__PURE__ */ new Map();
@@ -4659,7 +4659,7 @@ var init_SettingsStore2 = __esm({
   }
 });
 
-// src/nightcord/main/settings.ts
+// src/midnightcord/main/settings.ts
 function loadSettings(file, name) {
   let settings = {};
   try {
@@ -4684,7 +4684,7 @@ function loadSettings(file, name) {
 }
 var import_fs3, import_path9, SETTINGS_FILE2, STATE_FILE, Settings, VencordSettings, State;
 var init_settings2 = __esm({
-  "src/nightcord/main/settings.ts"() {
+  "src/midnightcord/main/settings.ts"() {
     "use strict";
     import_fs3 = require("fs");
     import_path9 = require("path");
@@ -4692,13 +4692,13 @@ var init_settings2 = __esm({
     init_constants2();
     SETTINGS_FILE2 = (0, import_path9.join)(DATA_DIR2, "settings.json");
     STATE_FILE = (0, import_path9.join)(DATA_DIR2, "state.json");
-    Settings = loadSettings(SETTINGS_FILE2, "Nightcord settings");
+    Settings = loadSettings(SETTINGS_FILE2, "Midnightcord settings");
     VencordSettings = loadSettings(VENCORD_SETTINGS_FILE, "Vencord settings");
-    State = loadSettings(STATE_FILE, "Nightcord state");
+    State = loadSettings(STATE_FILE, "Midnightcord state");
   }
 });
 
-// src/nightcord/main/arrpc/index.ts
+// src/midnightcord/main/arrpc/index.ts
 function debugLog(...args2) {
   if (Settings.store.arRPCDebug) {
     console.log("[arRPC > debug]", ...args2);
@@ -5275,7 +5275,7 @@ async function cleanupArRPC() {
 }
 var import_child_process2, import_fs4, import_os, import_path10, STATE_FILE_PREFIX, STATE_FILE_MAX_INDEX, SUPPORTED_PLATFORMS, arrpcProcess, lastError, lastExitCode, serverPort, serverHost, startTime, readyTime, restartCount, binaryPath, isReady, mainSettingsListener, configSettingsListener, wsSettingsListener, initTimeout, isDestroying, stateFileWatcher, stateFilePath, stateCheckInterval, appVersion, INIT_TIMEOUT_MS, PROCESS_KILL_TIMEOUT_MS, STATE_CHECK_INTERVAL_MS, STATE_FILE_STALE_MS, WS_RECONNECT_INTERVAL_MS, ws, wsReconnectTimer, wsIntentionalClose;
 var init_arrpc = __esm({
-  "src/nightcord/main/arrpc/index.ts"() {
+  "src/midnightcord/main/arrpc/index.ts"() {
     "use strict";
     import_child_process2 = require("child_process");
     import_fs4 = require("fs");
@@ -5323,7 +5323,7 @@ var init_arrpc = __esm({
   }
 });
 
-// src/nightcord/main/gnuSpoofing.ts
+// src/midnightcord/main/gnuSpoofing.ts
 function getPlatformSpoofInfo() {
   return { ...spoofInfo };
 }
@@ -5411,7 +5411,7 @@ async function spoofGnu(window2) {
 }
 var spoofInfo;
 var init_gnuSpoofing = __esm({
-  "src/nightcord/main/gnuSpoofing.ts"() {
+  "src/midnightcord/main/gnuSpoofing.ts"() {
     "use strict";
     spoofInfo = {
       spoofed: false,
@@ -5421,7 +5421,7 @@ var init_gnuSpoofing = __esm({
   }
 });
 
-// src/nightcord/main/ipcCommands.ts
+// src/midnightcord/main/ipcCommands.ts
 function sendRendererCommand(message, data, timeoutMs = DEFAULT_TIMEOUT_MS) {
   if (!mainWin || mainWin.isDestroyed()) {
     console.warn("Main window is destroyed or not available, cannot send IPC command:", message);
@@ -5444,7 +5444,7 @@ function sendRendererCommand(message, data, timeoutMs = DEFAULT_TIMEOUT_MS) {
 }
 var import_crypto, import_electron12, DEFAULT_TIMEOUT_MS, resolvers;
 var init_ipcCommands = __esm({
-  "src/nightcord/main/ipcCommands.ts"() {
+  "src/midnightcord/main/ipcCommands.ts"() {
     "use strict";
     import_crypto = require("crypto");
     import_electron12 = require("electron");
@@ -5469,7 +5469,7 @@ var init_ipcCommands = __esm({
   }
 });
 
-// src/nightcord/main/keybinds.ts
+// src/midnightcord/main/keybinds.ts
 function createFIFO() {
   if ((0, import_node_fs.existsSync)(socketFile)) {
     try {
@@ -5523,7 +5523,7 @@ function initKeybinds() {
 }
 var import_node_child_process, import_node_fs, import_node_path, import_net, xdgRuntimeDir, socketFile, Actions;
 var init_keybinds = __esm({
-  "src/nightcord/main/keybinds.ts"() {
+  "src/midnightcord/main/keybinds.ts"() {
     "use strict";
     import_node_child_process = require("node:child_process");
     import_node_fs = require("node:fs");
@@ -5538,10 +5538,10 @@ var init_keybinds = __esm({
   }
 });
 
-// src/nightcord/shared/browserWinProperties.ts
+// src/midnightcord/shared/browserWinProperties.ts
 var SplashProps;
 var init_browserWinProperties = __esm({
-  "src/nightcord/shared/browserWinProperties.ts"() {
+  "src/midnightcord/shared/browserWinProperties.ts"() {
     "use strict";
     SplashProps = {
       transparent: true,
@@ -5556,19 +5556,19 @@ var init_browserWinProperties = __esm({
   }
 });
 
-// src/nightcord/main/utils/fileExists.ts
+// src/midnightcord/main/utils/fileExists.ts
 async function fileExistsAsync(path) {
   return await (0, import_promises.access)(path, import_promises.constants.F_OK).then(() => true).catch(() => false);
 }
 var import_promises;
 var init_fileExists = __esm({
-  "src/nightcord/main/utils/fileExists.ts"() {
+  "src/midnightcord/main/utils/fileExists.ts"() {
     "use strict";
     import_promises = require("fs/promises");
   }
 });
 
-// src/nightcord/main/splash.ts
+// src/midnightcord/main/splash.ts
 async function createSplashWindow(startMinimized = false) {
   splash = new import_electron13.BrowserWindow({
     ...SplashProps,
@@ -5640,7 +5640,7 @@ function updateSplashMessage(message) {
 }
 var import_electron13, import_path11, splash, totalTasks, doneTasks;
 var init_splash = __esm({
-  "src/nightcord/main/splash.ts"() {
+  "src/midnightcord/main/splash.ts"() {
     "use strict";
     import_electron13 = require("electron");
     import_path11 = require("path");
@@ -21114,14 +21114,14 @@ var require_main2 = __commonJS({
   }
 });
 
-// src/nightcord/shared/utils/millis.ts
+// src/midnightcord/shared/utils/millis.ts
 var init_millis = __esm({
-  "src/nightcord/shared/utils/millis.ts"() {
+  "src/midnightcord/shared/utils/millis.ts"() {
     "use strict";
   }
 });
 
-// src/nightcord/main/utils/ipcWrappers.ts
+// src/midnightcord/main/utils/ipcWrappers.ts
 function validateSender2(frame, event) {
   if (!frame) throw new Error(`ipc[${event}]: No sender frame`);
   if (!frame.url) return;
@@ -21130,7 +21130,7 @@ function validateSender2(frame, event) {
   } catch (e) {
     throw new Error(`ipc[${event}]: Invalid URL ${frame.url}`);
   }
-  if (protocol3 === "file:" || protocol3 === "vesktop:" || protocol3 === "Nightcord:") return;
+  if (protocol3 === "file:" || protocol3 === "vesktop:" || protocol3 === "Midnightcord:") return;
   if (!DISCORD_HOSTNAMES.includes(hostname)) {
     throw new Error(`ipc[${event}]: Disallowed hostname ${hostname}`);
   }
@@ -21149,14 +21149,14 @@ function handle(event, cb) {
 }
 var import_electron14;
 var init_ipcWrappers = __esm({
-  "src/nightcord/main/utils/ipcWrappers.ts"() {
+  "src/midnightcord/main/utils/ipcWrappers.ts"() {
     "use strict";
     import_electron14 = require("electron");
     init_constants2();
   }
 });
 
-// src/nightcord/main/updater.ts
+// src/midnightcord/main/updater.ts
 function openUpdater(update) {
   if (updaterWindow && !updaterWindow.isDestroyed()) {
     updaterWindow.focus();
@@ -21167,7 +21167,7 @@ function openUpdater(update) {
   import_electron15.ipcMain.removeHandler("VCD_UPDATER_SNOOZE_UPDATE" /* SNOOZE_UPDATE */);
   import_electron15.ipcMain.removeHandler("VCD_UPDATER_IGNORE_UPDATE" /* IGNORE_UPDATE */);
   updaterWindow = new import_electron15.BrowserWindow({
-    title: "Nightcord Updater",
+    title: "Midnightcord Updater",
     autoHideMenuBar: true,
     ...process.platform === "win32" ? { icon: (0, import_path12.join)(STATIC_DIR, "icon.ico") } : process.platform === "linux" ? { icon: (0, import_path12.join)(STATIC_DIR, "icon.png") } : {},
     webPreferences: {
@@ -21205,9 +21205,9 @@ function openUpdater(update) {
   });
   loadView(updaterWindow, "updater/index.html");
 }
-var import_electron15, import_path12, import_electron_updater, NIGHTCORD_PREFS, updaterWindow, isOutdated;
+var import_electron15, import_path12, import_electron_updater, MIDNIGHTCORD_PREFS, updaterWindow, isOutdated;
 var init_updater = __esm({
-  "src/nightcord/main/updater.ts"() {
+  "src/midnightcord/main/updater.ts"() {
     "use strict";
     import_electron15 = require("electron");
     import_path12 = require("path");
@@ -21219,8 +21219,8 @@ var init_updater = __esm({
     init_ipcWrappers();
     init_makeLinksOpenExternally();
     init_vesktopStatic();
-    NIGHTCORD_PREFS = { defaultPlugins: true, autoUpdate: true };
-    handle(IpcEvents2.GET_INSTALLER_PREFS, () => NIGHTCORD_PREFS);
+    MIDNIGHTCORD_PREFS = { defaultPlugins: true, autoUpdate: true };
+    handle(IpcEvents2.GET_INSTALLER_PREFS, () => MIDNIGHTCORD_PREFS);
     updaterWindow = null;
     import_electron_updater.autoUpdater.on("update-available", (update) => {
       if (State.store.updater?.ignoredVersion === update.version) return;
@@ -21259,7 +21259,7 @@ var init_updater = __esm({
   }
 });
 
-// src/nightcord/shared/utils/debounce.ts
+// src/midnightcord/shared/utils/debounce.ts
 function debounce2(func, delay = 300) {
   let timeout;
   return function(...args2) {
@@ -21270,12 +21270,12 @@ function debounce2(func, delay = 300) {
   };
 }
 var init_debounce2 = __esm({
-  "src/nightcord/shared/utils/debounce.ts"() {
+  "src/midnightcord/shared/utils/debounce.ts"() {
     "use strict";
   }
 });
 
-// src/nightcord/main/arrpcWindow.ts
+// src/midnightcord/main/arrpcWindow.ts
 function createArRPCWindow() {
   if (arrpcWindow && !arrpcWindow.isDestroyed()) {
     arrpcWindow.focus();
@@ -21358,7 +21358,7 @@ function createArRPCWindow() {
 }
 var import_electron16, import_path13, arrpcWindow, statusInterval;
 var init_arrpcWindow = __esm({
-  "src/nightcord/main/arrpcWindow.ts"() {
+  "src/midnightcord/main/arrpcWindow.ts"() {
     "use strict";
     import_electron16 = require("electron");
     import_path13 = require("path");
@@ -21372,7 +21372,7 @@ var init_arrpcWindow = __esm({
   }
 });
 
-// src/nightcord/main/utils/desktopFileEscape.ts
+// src/midnightcord/main/utils/desktopFileEscape.ts
 function escapeDesktopFileArgument(arg) {
   let needsQuoting = false;
   let out = "";
@@ -21393,7 +21393,7 @@ function escapeDesktopFileArgument(arg) {
 }
 var desktopFileReservedChars;
 var init_desktopFileEscape = __esm({
-  "src/nightcord/main/utils/desktopFileEscape.ts"() {
+  "src/midnightcord/main/utils/desktopFileEscape.ts"() {
     "use strict";
     desktopFileReservedChars = /* @__PURE__ */ new Set([
       " ",
@@ -21419,7 +21419,7 @@ var init_desktopFileEscape = __esm({
   }
 });
 
-// src/nightcord/main/autoStart.ts
+// src/midnightcord/main/autoStart.ts
 function getEscapedCommandLine() {
   const args2 = process.argv.map(escapeDesktopFileArgument);
   if (Settings.store.autoStartMinimized) args2.push("--start-minimized");
@@ -21428,19 +21428,19 @@ function getEscapedCommandLine() {
 function makeAutoStartLinuxDesktop() {
   const configDir = process.env.XDG_CONFIG_HOME || (0, import_path14.join)(process.env.HOME, ".config");
   const dir = (0, import_path14.join)(configDir, "autostart");
-  const file = (0, import_path14.join)(dir, "Nightcord.desktop");
+  const file = (0, import_path14.join)(dir, "Midnightcord.desktop");
   return {
     isEnabled: () => (0, import_fs5.existsSync)(file),
     enable() {
       const desktopFile = stripIndent`
                 [Desktop Entry]
                 Type=Application
-                Name=Nightcord
-                Comment=Nightcord autostart script
+                Name=Midnightcord
+                Comment=Midnightcord autostart script
                 Exec=${getEscapedCommandLine().join(" ")}
                 StartupNotify=false
                 Terminal=false
-                Icon=Nightcord
+                Icon=Midnightcord
             `;
       (0, import_fs5.mkdirSync)(dir, { recursive: true });
       (0, import_fs5.writeFileSync)(file, desktopFile);
@@ -21469,7 +21469,7 @@ function makeAutoStartLinuxPortal() {
 }
 var import_electron17, import_fs5, import_path14, autoStartWindowsMac, autoStart;
 var init_autoStart = __esm({
-  "src/nightcord/main/autoStart.ts"() {
+  "src/midnightcord/main/autoStart.ts"() {
     "use strict";
     import_electron17 = require("electron");
     import_fs5 = require("fs");
@@ -21495,7 +21495,7 @@ var init_autoStart = __esm({
   }
 });
 
-// src/nightcord/main/utils/popout.ts
+// src/midnightcord/main/utils/popout.ts
 function focusWindow(window2) {
   window2.setAlwaysOnTop(true);
   window2.focus();
@@ -21547,7 +21547,7 @@ function setupPopout(win, key) {
 }
 var ALLOWED_FEATURES, MIN_POPOUT_WIDTH, MIN_POPOUT_HEIGHT, DEFAULT_POPOUT_OPTIONS, PopoutWindows;
 var init_popout = __esm({
-  "src/nightcord/main/utils/popout.ts"() {
+  "src/midnightcord/main/utils/popout.ts"() {
     "use strict";
     init_settings2();
     init_makeLinksOpenExternally();
@@ -21594,7 +21594,7 @@ var init_popout = __esm({
   }
 });
 
-// src/nightcord/main/utils/steamOS.ts
+// src/midnightcord/main/utils/steamOS.ts
 function applyDeckKeyboardFix() {
   if (!isDeckGameMode) return;
   process.env.GTK_IM_MODULE = "None";
@@ -21638,8 +21638,8 @@ async function askToApplySteamLayout(win) {
   if (State.store.steamOSLayoutVersion === layoutVersion) return;
   const update = Boolean(State.store.steamOSLayoutVersion);
   const { response } = await import_electron18.dialog.showMessageBox(win, {
-    message: `${update ? "Update" : "Apply"} Nightcord Steam Input Layout?`,
-    detail: `Would you like to ${update ? "Update" : "Apply"} Nightcord's recommended Steam Deck controller settings?
+    message: `${update ? "Update" : "Apply"} Midnightcord Steam Input Layout?`,
+    detail: `Would you like to ${update ? "Update" : "Apply"} Midnightcord's recommended Steam Deck controller settings?
 ${update ? "Click yes using the touchpad" : "Tap yes"}, then press the X button or tap Apply Layout to confirm.${update ? " Doing so will undo any customizations you have made." : ""}
 ${update ? "Click" : "Tap"} no to keep your current layout.`,
     buttons: ["Yes", "No"],
@@ -21655,7 +21655,7 @@ ${update ? "Click" : "Tap"} no to keep your current layout.`,
 }
 var import_electron18, import_promises2, import_path15, layoutVersion, layoutId, numberRegex, steamPipeQueue, isDeckGameMode;
 var init_steamOS = __esm({
-  "src/nightcord/main/utils/steamOS.ts"() {
+  "src/midnightcord/main/utils/steamOS.ts"() {
     "use strict";
     import_electron18 = require("electron");
     import_promises2 = require("fs/promises");
@@ -21670,18 +21670,18 @@ var init_steamOS = __esm({
   }
 });
 
-// src/nightcord/main/vencordDir.ts
+// src/midnightcord/main/vencordDir.ts
 var import_electron19, import_path16, VENCORD_DIR;
 var init_vencordDir = __esm({
-  "src/nightcord/main/vencordDir.ts"() {
+  "src/midnightcord/main/vencordDir.ts"() {
     "use strict";
     import_electron19 = require("electron");
     import_path16 = require("path");
-    VENCORD_DIR = import_electron19.app.isPackaged ? (0, import_path16.join)(process.resourcesPath, "nightcord.asar") : (0, import_path16.join)(__dirname, "..", "..", "..", "dist", "nightcord.asar");
+    VENCORD_DIR = import_electron19.app.isPackaged ? (0, import_path16.join)(process.resourcesPath, "midnightcord.asar") : (0, import_path16.join)(__dirname, "..", "..", "..", "dist", "midnightcord.asar");
   }
 });
 
-// src/nightcord/main/utils/http.ts
+// src/midnightcord/main/utils/http.ts
 async function downloadFile(url, file, options2 = {}, fetchieOpts) {
   const res = await fetchie(url, options2, fetchieOpts);
   (0, import_original_fs3.mkdirSync)((0, import_path17.dirname)(file), { recursive: true });
@@ -21721,7 +21721,7 @@ ${reason}`;
 }
 var import_original_fs3, import_path17, import_stream2, import_promises3, import_promises4, ONE_MINUTE_MS;
 var init_http3 = __esm({
-  "src/nightcord/main/utils/http.ts"() {
+  "src/midnightcord/main/utils/http.ts"() {
     "use strict";
     import_original_fs3 = require("original-fs");
     import_path17 = require("path");
@@ -21732,26 +21732,26 @@ var init_http3 = __esm({
   }
 });
 
-// src/nightcord/main/utils/vencordLoader.ts
+// src/midnightcord/main/utils/vencordLoader.ts
 async function downloadVencordAsar() {
   await downloadFile(
-    `https://git.${domain}/nightcord/nightcord/releases/download/latest/Nightcord.asar`,
+    `https://git.${domain}/nightcord/nightcord/releases/download/latest/Midnightcord.asar`,
     VENCORD_DIR,
     {},
     { retryOnNetworkError: true }
   );
 }
 function isValidVencordInstall(dir) {
-  return (0, import_fs6.existsSync)((0, import_path18.join)(dir, "Nightcord/main.js"));
+  return (0, import_fs6.existsSync)((0, import_path18.join)(dir, "Midnightcord/main.js"));
 }
 async function ensureVencordFiles() {
   if (!(0, import_fs6.existsSync)(VENCORD_DIR)) {
-    console.error("Bundled nightcord.asar not found at", VENCORD_DIR);
+    console.error("Bundled midnightcord.asar not found at", VENCORD_DIR);
   }
 }
 var import_fs6, import_path18, API_BASE2;
 var init_vencordLoader = __esm({
-  "src/nightcord/main/utils/vencordLoader.ts"() {
+  "src/midnightcord/main/utils/vencordLoader.ts"() {
     "use strict";
     import_fs6 = require("fs");
     import_path18 = require("path");
@@ -21763,7 +21763,7 @@ var init_vencordLoader = __esm({
   }
 });
 
-// src/nightcord/main/venmic.ts
+// src/midnightcord/main/venmic.ts
 var venmic_exports = {};
 function importVenmic() {
   if (imported) {
@@ -21797,7 +21797,7 @@ function getRendererAudioServicePid() {
 }
 var import_electron20, import_path19, PatchBay, patchBayInstance, imported, initialized, hasPipewirePulse, isGlibCxxOutdated;
 var init_venmic = __esm({
-  "src/nightcord/main/venmic.ts"() {
+  "src/midnightcord/main/venmic.ts"() {
     "use strict";
     import_electron20 = require("electron");
     import_path19 = require("path");
@@ -21858,7 +21858,7 @@ var init_venmic = __esm({
   }
 });
 
-// src/nightcord/main/ipc.ts
+// src/midnightcord/main/ipc.ts
 function getWindow(e, key) {
   return key ? PopoutWindows.get(key) : import_electron21.BrowserWindow.fromWebContents(e.sender) ?? mainWin;
 }
@@ -21884,7 +21884,7 @@ function cleanupFileWatchers() {
 }
 var import_node_child_process2, import_node_fs2, import_promises5, import_node_os, import_node_path2, import_electron21, VESKTOP_RENDERER_JS_PATH, VESKTOP_RENDERER_CSS_PATH, quickCssWatcher, themesWatcher;
 var init_ipc = __esm({
-  "src/nightcord/main/ipc.ts"() {
+  "src/midnightcord/main/ipc.ts"() {
     "use strict";
     import_node_child_process2 = require("node:child_process");
     import_node_fs2 = require("node:fs");
@@ -21927,7 +21927,7 @@ var init_ipc = __esm({
     }
     handleSync("VCD_GET_SETTINGS" /* GET_SETTINGS */, () => Settings.plain);
     handleSync("VCD_GET_VERSION" /* GET_VERSION */, () => import_electron21.app.getVersion());
-    handleSync("VCD_GET_GIT_HASH" /* GET_GIT_HASH */, () => Nightcord_GIT_HASH);
+    handleSync("VCD_GET_GIT_HASH" /* GET_GIT_HASH */, () => Midnightcord_GIT_HASH);
     handleSync("VCD_GET_ENABLE_HARDWARE_ACCELERATION" /* GET_ENABLE_HARDWARE_ACCELERATION */, () => enableHardwareAcceleration);
     handleSync(
       "VCD_SUPPORTS_WINDOWS_TRANSPARENCY" /* SUPPORTS_WINDOWS_TRANSPARENCY */,
@@ -21957,7 +21957,7 @@ var init_ipc = __esm({
       }
       import_electron21.app.exit();
     });
-    handle("NightcordRelaunchApp" /* RELAUNCH_APP */, async () => {
+    handle("MidnightcordRelaunchApp" /* RELAUNCH_APP */, async () => {
       setBadgeCount(0);
       if (isDeckGameMode) {
         await showGamePage();
@@ -21984,13 +21984,13 @@ var init_ipc = __esm({
       import_electron21.app.relaunch(options2);
       import_electron21.app.exit();
     });
-    handleSync("VCD_IS_USING_CUSTOM_VENCORD_DIR" /* IS_USING_CUSTOM_VENCORD_DIR */, () => !!State.store.NightcordDir);
+    handleSync("VCD_IS_USING_CUSTOM_VENCORD_DIR" /* IS_USING_CUSTOM_VENCORD_DIR */, () => !!State.store.MidnightcordDir);
     handle("VCD_SHOW_CUSTOM_VENCORD_DIR" /* SHOW_CUSTOM_VENCORD_DIR */, async () => {
-      const { NightcordDir: NightcordDir2 } = State.store;
-      if (!NightcordDir2) return;
-      const stats = await (0, import_promises5.stat)(NightcordDir2);
+      const { MidnightcordDir: MidnightcordDir2 } = State.store;
+      if (!MidnightcordDir2) return;
+      const stats = await (0, import_promises5.stat)(MidnightcordDir2);
       if (!stats.isDirectory()) return;
-      import_electron21.shell.openPath(NightcordDir2);
+      import_electron21.shell.openPath(MidnightcordDir2);
     });
     handle("VCD_FOCUS" /* FOCUS */, () => {
       mainWin.show();
@@ -22021,7 +22021,7 @@ var init_ipc = __esm({
     });
     handle("VCD_SELECT_VENCORD_DIR" /* SELECT_VENCORD_DIR */, async (_e, value) => {
       if (value === null) {
-        delete State.store.NightcordDir;
+        delete State.store.MidnightcordDir;
         return "ok";
       }
       const res = await import_electron21.dialog.showOpenDialog(mainWin, {
@@ -22030,7 +22030,7 @@ var init_ipc = __esm({
       if (!res.filePaths.length) return "cancelled";
       const dir = res.filePaths[0];
       if (!isValidVencordInstall(dir)) return "invalid";
-      State.store.NightcordDir = dir;
+      State.store.MidnightcordDir = dir;
       return "ok";
     });
     handle("VCD_SET_BADGE_COUNT" /* SET_BADGE_COUNT */, (_, count) => setBadgeCount(count));
@@ -22078,7 +22078,7 @@ var init_ipc = __esm({
   }
 });
 
-// src/nightcord/main/userAssets.ts
+// src/midnightcord/main/userAssets.ts
 async function resolveAssetPath(asset) {
   if (!CUSTOMIZABLE_ASSETS.includes(asset)) {
     throw new Error(`Invalid asset: ${asset}`);
@@ -22103,7 +22103,7 @@ async function handleVesktopAssetsProtocol(path, req) {
 }
 var import_electron22, import_promises6, import_path20, import_url2, CUSTOMIZABLE_ASSETS, DEFAULT_ASSETS, UserAssetFolder;
 var init_userAssets = __esm({
-  "src/nightcord/main/userAssets.ts"() {
+  "src/midnightcord/main/userAssets.ts"() {
     "use strict";
     import_electron22 = require("electron");
     import_promises6 = require("fs/promises");
@@ -22175,16 +22175,16 @@ var init_userAssets = __esm({
   }
 });
 
-// src/nightcord/main/vesktopProtocol.ts
+// src/midnightcord/main/vesktopProtocol.ts
 var import_electron23;
 var init_vesktopProtocol = __esm({
-  "src/nightcord/main/vesktopProtocol.ts"() {
+  "src/midnightcord/main/vesktopProtocol.ts"() {
     "use strict";
     import_electron23 = require("electron");
     init_userAssets();
     init_vesktopStatic();
     import_electron23.app.whenReady().then(() => {
-      import_electron23.protocol.handle("nightcord", async (req) => {
+      import_electron23.protocol.handle("midnightcord", async (req) => {
         const url = new URL(req.url);
         switch (url.hostname) {
           case "assets":
@@ -22199,7 +22199,7 @@ var init_vesktopProtocol = __esm({
   }
 });
 
-// src/nightcord/main/firstLaunch.ts
+// src/midnightcord/main/firstLaunch.ts
 function createFirstLaunchTour() {
   const win = new import_main.BrowserWindow({
     ...SplashProps,
@@ -22244,7 +22244,7 @@ function createFirstLaunchTour() {
 }
 var import_electron24, import_main, import_fs7, import_path21;
 var init_firstLaunch = __esm({
-  "src/nightcord/main/firstLaunch.ts"() {
+  "src/midnightcord/main/firstLaunch.ts"() {
     "use strict";
     import_electron24 = require("electron");
     import_main = require("electron/main");
@@ -22261,7 +22261,7 @@ var init_firstLaunch = __esm({
   }
 });
 
-// src/nightcord/main/mediaPermissions.ts
+// src/midnightcord/main/mediaPermissions.ts
 function registerMediaPermissionsForSession(ses) {
   ses.setPermissionCheckHandler((_webContents, permission, _requestingOrigin, details) => {
     if (permission === "media") {
@@ -22290,13 +22290,13 @@ function registerMediaPermissionsHandler() {
 }
 var import_electron25;
 var init_mediaPermissions = __esm({
-  "src/nightcord/main/mediaPermissions.ts"() {
+  "src/midnightcord/main/mediaPermissions.ts"() {
     "use strict";
     import_electron25 = require("electron");
   }
 });
 
-// src/nightcord/main/screenShare.ts
+// src/midnightcord/main/screenShare.ts
 function registerScreenShareHandler() {
   handle("VCD_CAPTURER_GET_LARGE_THUMBNAIL" /* CAPTURER_GET_LARGE_THUMBNAIL */, async (_, id) => {
     const sources = await import_electron26.desktopCapturer.getSources({
@@ -22377,7 +22377,7 @@ function registerScreenShareHandler() {
 }
 var import_electron26;
 var init_screenShare = __esm({
-  "src/nightcord/main/screenShare.ts"() {
+  "src/midnightcord/main/screenShare.ts"() {
     "use strict";
     import_electron26 = require("electron");
     init_IpcEvents2();
@@ -22388,7 +22388,7 @@ var init_screenShare = __esm({
   }
 });
 
-// src/nightcord/main/utils/setAsDefaultProtocolClient.ts
+// src/midnightcord/main/utils/setAsDefaultProtocolClient.ts
 async function setAsDefaultProtocolClient(protocol3) {
   if (process.platform !== "linux") {
     return import_electron27.app.setAsDefaultProtocolClient(protocol3);
@@ -22403,14 +22403,14 @@ async function setAsDefaultProtocolClient(protocol3) {
 }
 var import_child_process3, import_electron27;
 var init_setAsDefaultProtocolClient = __esm({
-  "src/nightcord/main/utils/setAsDefaultProtocolClient.ts"() {
+  "src/midnightcord/main/utils/setAsDefaultProtocolClient.ts"() {
     "use strict";
     import_child_process3 = require("child_process");
     import_electron27 = require("electron");
   }
 });
 
-// src/nightcord/main/startup.ts
+// src/midnightcord/main/startup.ts
 function init() {
   setAsDefaultProtocolClient("discord");
   const { disableSmoothScroll, hardwareAcceleration, hardwareVideoAcceleration } = Settings.store;
@@ -22506,7 +22506,7 @@ async function bootstrap() {
 }
 var import_electron28, isLinux, enableHardwareAcceleration, darwinURL;
 var init_startup = __esm({
-  "src/nightcord/main/startup.ts"() {
+  "src/midnightcord/main/startup.ts"() {
     "use strict";
     init_updater();
     init_ipc();
@@ -22521,8 +22521,8 @@ var init_startup = __esm({
     init_settings2();
     init_setAsDefaultProtocolClient();
     init_steamOS();
-    console.log("Nightcord v" + import_electron28.app.getVersion());
-    process.env.Nightcord_USER_DATA_DIR = DATA_DIR2;
+    console.log("Midnightcord v" + import_electron28.app.getVersion());
+    process.env.Midnightcord_USER_DATA_DIR = DATA_DIR2;
     isLinux = process.platform === "linux";
     enableHardwareAcceleration = true;
     init();
@@ -22535,7 +22535,7 @@ var init_startup = __esm({
   }
 });
 
-// src/nightcord/main/arguments.ts
+// src/midnightcord/main/arguments.ts
 function createArgumentsWindow() {
   if (argumentsWindow && !argumentsWindow.isDestroyed()) {
     argumentsWindow.focus();
@@ -22571,7 +22571,7 @@ function createArgumentsWindow() {
 }
 var import_electron29, import_path22, argumentsWindow;
 var init_arguments = __esm({
-  "src/nightcord/main/arguments.ts"() {
+  "src/midnightcord/main/arguments.ts"() {
     "use strict";
     import_electron29 = require("electron");
     import_path22 = require("path");
@@ -22583,11 +22583,11 @@ var init_arguments = __esm({
   }
 });
 
-// src/nightcord/main/utils/clearData.ts
+// src/midnightcord/main/utils/clearData.ts
 async function clearData(win) {
   const { response } = await import_electron30.dialog.showMessageBox(win, {
-    message: "Are you sure you want to reset Nightcord?",
-    detail: "This will log you out, clear caches and reset all your settings!\n\nNightcord will automatically restart after this operation.",
+    message: "Are you sure you want to reset Midnightcord?",
+    detail: "This will log you out, clear caches and reset all your settings!\n\nMidnightcord will automatically restart after this operation.",
     buttons: ["Yes", "No"],
     cancelId: 1 /* Cancel */,
     defaultId: 0 /* Default */,
@@ -22604,7 +22604,7 @@ async function clearData(win) {
 }
 var import_electron30, import_promises7;
 var init_clearData = __esm({
-  "src/nightcord/main/utils/clearData.ts"() {
+  "src/midnightcord/main/utils/clearData.ts"() {
     "use strict";
     import_electron30 = require("electron");
     import_promises7 = require("fs/promises");
@@ -22612,7 +22612,7 @@ var init_clearData = __esm({
   }
 });
 
-// src/nightcord/main/tray.ts
+// src/midnightcord/main/tray.ts
 async function getCachedTrayImage(variant) {
   const path = await resolveAssetPath(variant);
   const cached = trayImageCache.get(path);
@@ -22729,12 +22729,12 @@ async function initTray(win, setIsQuitting) {
         nativeTrayInitialized = true;
         const pixmap = await getCachedTrayPixmap(trayVariant);
         nativeSNI.setStatusNotifierIcon(pixmap);
-        nativeSNI.setStatusNotifierTitle("Nightcord");
+        nativeSNI.setStatusNotifierTitle("Midnightcord");
         const menuItems = [
           { id: 1, label: win.isVisible() ? "Hide" : "Open", enabled: true, visible: true },
           { id: 2, label: "About", enabled: true, visible: true },
-          { id: 3, label: "Repair Nightcord", enabled: true, visible: true },
-          { id: 4, label: "Reset Nightcord", enabled: true, visible: true },
+          { id: 3, label: "Repair Midnightcord", enabled: true, visible: true },
+          { id: 4, label: "Reset Midnightcord", enabled: true, visible: true },
           { id: 5, label: "Launch Arguments", enabled: true, visible: true },
           {
             id: 6,
@@ -22824,7 +22824,7 @@ async function initTray(win, setIsQuitting) {
       click: createAboutWindow
     },
     {
-      label: "Repair Nightcord",
+      label: "Repair Midnightcord",
       async click() {
         await downloadVencordAsar();
         destroyTray();
@@ -22833,7 +22833,7 @@ async function initTray(win, setIsQuitting) {
       }
     },
     {
-      label: "Reset Nightcord",
+      label: "Reset Midnightcord",
       async click() {
         await clearData(win);
       }
@@ -22871,7 +22871,7 @@ async function initTray(win, setIsQuitting) {
   try {
     const initialImage = await getCachedTrayImage(trayVariant);
     tray = new import_electron31.Tray(initialImage);
-    tray.setToolTip("Nightcord");
+    tray.setToolTip("Midnightcord");
     if (isLinux2) {
       tray.on("click", onTrayClick);
       tray.on("right-click", () => {
@@ -22888,7 +22888,7 @@ async function initTray(win, setIsQuitting) {
 }
 var import_electron31, import_path23, isLinux2, nativeSNI, tray, trayVariant, onTrayClick, nativeTrayWindow, nativeTrayUpdateCallback, trayImageCache, trayPixmapCache, useNativeTray, nativeTrayInitialized, userAssetChangedListener, setTrayVariantListener;
 var init_tray = __esm({
-  "src/nightcord/main/tray.ts"() {
+  "src/midnightcord/main/tray.ts"() {
     "use strict";
     import_electron31 = require("electron");
     import_path23 = require("path");
@@ -22953,7 +22953,7 @@ var init_tray = __esm({
   }
 });
 
-// src/nightcord/main/mainWindow.ts
+// src/midnightcord/main/mainWindow.ts
 var mainWindow_exports = {};
 __export(mainWindow_exports, {
   createWindows: () => createWindows,
@@ -22980,25 +22980,25 @@ function initMenuBar(win) {
   const wantCtrlQ = !isWindows || VencordSettings.store.winCtrlQ;
   const subMenu = [
     {
-      label: "About Nightcord",
+      label: "About Midnightcord",
       click: createAboutWindow
     },
     {
-      label: "Force Update Nightcord",
+      label: "Force Update Midnightcord",
       async click() {
         await downloadVencordAsar();
         destroyTray();
         import_electron32.app.relaunch();
         import_electron32.app.quit();
       },
-      toolTip: "Nightcord will automatically restart after this operation"
+      toolTip: "Midnightcord will automatically restart after this operation"
     },
     {
-      label: "Reset Nightcord",
+      label: "Reset Midnightcord",
       async click() {
         await clearData(win);
       },
-      toolTip: "Nightcord will automatically restart after this operation"
+      toolTip: "Midnightcord will automatically restart after this operation"
     },
     {
       label: "Relaunch",
@@ -23063,7 +23063,7 @@ function initMenuBar(win) {
   ];
   const menuItems = [
     {
-      label: "Nightcord",
+      label: "Midnightcord",
       role: "appMenu",
       submenu: subMenu.filter(isTruthy)
     },
@@ -23147,7 +23147,7 @@ function initStaticTitle(win) {
   if (Settings.store.staticTitle) win.on("page-title-updated", listener);
   addSettingsListener("staticTitle", (enabled) => {
     if (enabled) {
-      win.setTitle("Nightcord");
+      win.setTitle("Midnightcord");
       win.on("page-title-updated", listener);
     } else {
       win.off("page-title-updated", listener);
@@ -23215,7 +23215,7 @@ function buildBrowserWindowOptions() {
     }
   }
   if (staticTitle) {
-    options2.title = "Nightcord";
+    options2.title = "Midnightcord";
   }
   if (process.platform === "darwin") {
     options2.titleBarStyle = "hidden";
@@ -23331,7 +23331,7 @@ async function createWindows() {
 }
 var import_node_path3, import_electron32, isQuitting, mainWin, addSettingsListener, removeSettingsListeners, addVencordSettingsListener, removeVencordSettingsListeners, runVencordMain, retryDelay;
 var init_mainWindow = __esm({
-  "src/nightcord/main/mainWindow.ts"() {
+  "src/midnightcord/main/mainWindow.ts"() {
     "use strict";
     import_node_path3 = require("node:path");
     import_electron32 = require("electron");
@@ -23372,16 +23372,16 @@ var init_mainWindow = __esm({
   }
 });
 
-// src/nightcord/main/cli.ts
+// src/midnightcord/main/cli.ts
 function checkCommandLineForHelpOrVersion() {
   const { help, version } = CommandLine.values;
   if (version) {
-    console.log(`Nightcord v${import_electron33.app.getVersion()}`);
+    console.log(`Midnightcord v${import_electron33.app.getVersion()}`);
     import_electron33.app.exit(0);
   }
   if (help) {
     const base = stripIndent`
-            Nightcord v${import_electron33.app.getVersion()}
+            Midnightcord v${import_electron33.app.getVersion()}
 
             Usage: ${(0, import_path24.basename)(process.execPath)} [options] [url]
 
@@ -23426,7 +23426,7 @@ function checkCommandLineForToggleCommands() {
   if (!import_electron33.app.requestSingleInstanceLock({ IS_DEV })) {
     import_electron33.app.exit(0);
   }
-  console.error("Nightcord is not running. Toggle commands require a running instance.");
+  console.error("Midnightcord is not running. Toggle commands require a running instance.");
   import_electron33.app.exit(1);
 }
 function setupSecondInstanceHandler() {
@@ -23458,10 +23458,10 @@ function checkForSecondInstance() {
   if (checkCommandLineForToggleCommands()) return;
   if (!import_electron33.app.requestSingleInstanceLock({ IS_DEV })) {
     if (IS_DEV) {
-      console.log("Nightcord is already running. Quitting previous instance...");
+      console.log("Midnightcord is already running. Quitting previous instance...");
       return;
     } else {
-      console.log("Nightcord is already running. Quitting...");
+      console.log("Midnightcord is already running. Quitting...");
       import_electron33.app.exit(0);
     }
   }
@@ -23469,7 +23469,7 @@ function checkForSecondInstance() {
 }
 var import_electron33, import_path24, import_util, options, extraOptions, args, CommandLine;
 var init_cli = __esm({
-  "src/nightcord/main/cli.ts"() {
+  "src/midnightcord/main/cli.ts"() {
     "use strict";
     import_electron33 = require("electron");
     import_path24 = require("path");
@@ -23521,7 +23521,7 @@ var init_cli = __esm({
       repair: {
         type: "boolean",
         short: "r",
-        description: "Re-download Nightcord and restart"
+        description: "Re-download Midnightcord and restart"
       }
     };
     extraOptions = {
@@ -23538,7 +23538,7 @@ var init_cli = __esm({
       "ozone-platform": {
         hidden: process.platform !== "linux",
         type: "string",
-        description: "Whether to run Nightcord in Wayland or X11 (XWayland)",
+        description: "Whether to run Midnightcord in Wayland or X11 (XWayland)",
         options: ["x11", "wayland"]
       }
     };
@@ -23555,19 +23555,19 @@ var init_cli = __esm({
   }
 });
 
-// src/nightcord/main/constants.ts
-var import_electron34, import_fs8, import_path25, NightcordDir, PORTABLE, DATA_DIR2, SESSION_DATA_DIR, VENCORD_SETTINGS_DIR, VENCORD_QUICKCSS_FILE, VENCORD_SETTINGS_FILE, VENCORD_THEMES_DIR, USER_AGENT, MIN_WIDTH, MIN_HEIGHT, DEFAULT_WIDTH, DEFAULT_HEIGHT, DISCORD_HOSTNAMES, VersionString, BrowserUserAgents, BrowserUserAgent, IS_FLATPAK, isWayland, isLinux3;
+// src/midnightcord/main/constants.ts
+var import_electron34, import_fs8, import_path25, MidnightcordDir, PORTABLE, DATA_DIR2, SESSION_DATA_DIR, VENCORD_SETTINGS_DIR, VENCORD_QUICKCSS_FILE, VENCORD_SETTINGS_FILE, VENCORD_THEMES_DIR, USER_AGENT, MIN_WIDTH, MIN_HEIGHT, DEFAULT_WIDTH, DEFAULT_HEIGHT, DISCORD_HOSTNAMES, VersionString, BrowserUserAgents, BrowserUserAgent, IS_FLATPAK, isWayland, isLinux3;
 var init_constants2 = __esm({
-  "src/nightcord/main/constants.ts"() {
+  "src/midnightcord/main/constants.ts"() {
     "use strict";
     import_electron34 = require("electron");
     import_fs8 = require("fs");
     import_path25 = require("path");
     init_cli();
     init_DOMAIN();
-    NightcordDir = (0, import_path25.dirname)(process.execPath);
-    PORTABLE = process.platform === "win32" && !process.execPath.toLowerCase().endsWith("electron.exe") && !(0, import_fs8.existsSync)((0, import_path25.join)(NightcordDir, "Uninstall Nightcord.exe"));
-    DATA_DIR2 = process.env.Nightcord_USER_DATA_DIR || (PORTABLE ? (0, import_path25.join)(NightcordDir, "Data") : (0, import_path25.join)(import_electron34.app.getPath("userData")));
+    MidnightcordDir = (0, import_path25.dirname)(process.execPath);
+    PORTABLE = process.platform === "win32" && !process.execPath.toLowerCase().endsWith("electron.exe") && !(0, import_fs8.existsSync)((0, import_path25.join)(MidnightcordDir, "Uninstall Midnightcord.exe"));
+    DATA_DIR2 = process.env.Midnightcord_USER_DATA_DIR || (PORTABLE ? (0, import_path25.join)(MidnightcordDir, "Data") : (0, import_path25.join)(import_electron34.app.getPath("userData")));
     (0, import_fs8.mkdirSync)(DATA_DIR2, { recursive: true });
     SESSION_DATA_DIR = (0, import_path25.join)(DATA_DIR2, "sessionData");
     import_electron34.app.setPath("sessionData", SESSION_DATA_DIR);
@@ -23576,7 +23576,7 @@ var init_constants2 = __esm({
     VENCORD_QUICKCSS_FILE = (0, import_path25.join)(VENCORD_SETTINGS_DIR, "quickCss.css");
     VENCORD_SETTINGS_FILE = (0, import_path25.join)(VENCORD_SETTINGS_DIR, "settings.json");
     VENCORD_THEMES_DIR = (0, import_path25.join)(DATA_DIR2, "themes");
-    USER_AGENT = `Nightcord/${import_electron34.app.getVersion()} (https://git.${domain}/nightcord/nightcord)`;
+    USER_AGENT = `Midnightcord/${import_electron34.app.getVersion()} (https://git.${domain}/nightcord/nightcord)`;
     MIN_WIDTH = 940;
     MIN_HEIGHT = 500;
     DEFAULT_WIDTH = 1280;
@@ -23595,14 +23595,14 @@ var init_constants2 = __esm({
   }
 });
 
-// src/nightcord/main/utils/makeLinksOpenExternally.ts
+// src/midnightcord/main/utils/makeLinksOpenExternally.ts
 function isPopoutRateLimited() {
   const now = Date.now();
   while (popoutTimestamps.length > 0 && now - popoutTimestamps[0] > POPOUT_RATE_LIMIT_WINDOW_MS) {
     popoutTimestamps.shift();
   }
   if (popoutTimestamps.length >= POPOUT_RATE_LIMIT_MAX) {
-    console.warn("[Nightcord] Popout rate-limited \u2014 too many popout requests (overlay crash loop?)");
+    console.warn("[Midnightcord] Popout rate-limited \u2014 too many popout requests (overlay crash loop?)");
     return true;
   }
   popoutTimestamps.push(now);
@@ -23648,7 +23648,7 @@ function handleExternalUrl(url, protocol3) {
 }
 function makeLinksOpenExternally(win) {
   win.webContents.setWindowOpenHandler(({ url, frameName, features }) => {
-    console.log("[Nightcord][LINK] setWindowOpenHandler url=", url, "frameName=", frameName);
+    console.log("[Midnightcord][LINK] setWindowOpenHandler url=", url, "frameName=", frameName);
     try {
       var { protocol: protocol3, hostname, pathname, searchParams } = new URL(url);
     } catch {
@@ -23657,7 +23657,7 @@ function makeLinksOpenExternally(win) {
     const isDiscordPopout = pathname === "/popout" && DISCORD_HOSTNAMES.includes(hostname);
     if (isDiscordPopout || frameName.startsWith("DISCORD_") && pathname === "/popout" && DISCORD_HOSTNAMES.includes(hostname)) {
       if (OVERLAY_FRAME_NAMES.has(frameName)) {
-        console.log("[Nightcord] Blocked overlay popout (overlay unsupported):", frameName);
+        console.log("[Midnightcord] Blocked overlay popout (overlay unsupported):", frameName);
         return { action: "deny" };
       }
       if (isPopoutRateLimited()) {
@@ -23698,7 +23698,7 @@ function makeLinksOpenExternally(win) {
     return handleExternalUrl(url, protocol3);
   });
   win.webContents.on("did-create-window", (childWin, { frameName, options: options2, url }) => {
-    console.log("[Nightcord][LINK] did-create-window url=", url, "frameName=", frameName);
+    console.log("[Midnightcord][LINK] did-create-window url=", url, "frameName=", frameName);
     let isCaptcha = false;
     if (url) {
       try {
@@ -23753,7 +23753,7 @@ function makeLinksOpenExternally(win) {
 }
 var import_electron35, OVERLAY_FRAME_NAMES, POPOUT_RATE_LIMIT_WINDOW_MS, POPOUT_RATE_LIMIT_MAX, popoutTimestamps, popoutCounter;
 var init_makeLinksOpenExternally = __esm({
-  "src/nightcord/main/utils/makeLinksOpenExternally.ts"() {
+  "src/midnightcord/main/utils/makeLinksOpenExternally.ts"() {
     "use strict";
     import_electron35 = require("electron");
     init_constants2();
@@ -23834,7 +23834,7 @@ function patchLatest() {
     const appAsar = (0, import_path28.join)(resources, "app.asar");
     const _appAsar = (0, import_path28.join)(resources, "_app.asar");
     if (!(0, import_original_fs4.existsSync)(appAsar) || (0, import_original_fs4.statSync)(appAsar).isDirectory()) return;
-    console.info("[Nightcord] Detected Host Update. Repatching...");
+    console.info("[Midnightcord] Detected Host Update. Repatching...");
     (0, import_original_fs4.renameSync)(appAsar, _appAsar);
     (0, import_original_fs4.mkdirSync)(appAsar);
     (0, import_original_fs4.writeFileSync)((0, import_path28.join)(appAsar, "package.json"), JSON.stringify({
@@ -23842,14 +23842,14 @@ function patchLatest() {
       main: "index.js"
     }));
     const indexJs = [
-      "// Nightcord repatch",
+      "// Midnightcord repatch",
       '"use strict";',
       'const path = require("path");',
       'const fs = require("fs");',
       "try {",
       `    require(${JSON.stringify(OUR_PATCHER_PATH)});`,
       "} catch (e) {",
-      '    console.error("[Nightcord] Repatch injection failed, falling back to vanilla Discord:", e);',
+      '    console.error("[Midnightcord] Repatch injection failed, falling back to vanilla Discord:", e);',
       '    const originalAsar = path.join(__dirname, "..", "_app.asar");',
       "    if (fs.existsSync(originalAsar)) {",
       "        require(originalAsar);",
@@ -23859,7 +23859,7 @@ function patchLatest() {
     ].join("\n");
     (0, import_original_fs4.writeFileSync)((0, import_path28.join)(appAsar, "index.js"), indexJs);
   } catch (err2) {
-    console.error("[Nightcord] Failed to repatch latest host update", err2);
+    console.error("[Midnightcord] Failed to repatch latest host update", err2);
   }
 }
 var import_electron40, import_original_fs4, import_path28, OUR_PATCHER_PATH;
@@ -23888,7 +23888,7 @@ var init_patcher = __esm({
     init_settings();
     init_trayMenu();
     init_constants();
-    console.log("[Nightcord] Starting up...");
+    console.log("[Midnightcord] Starting up...");
     injectorPath = require.main.filename;
     _asarFromInjector = (0, import_path29.join)((0, import_path29.dirname)(injectorPath), "..", "_app.asar");
     _asarFromResources = (0, import_path29.join)(process.resourcesPath, "_app.asar");
@@ -23925,7 +23925,7 @@ var init_patcher = __esm({
         constructor(options2) {
           const ourPreload = (0, import_path29.join)(__dirname, "preload.js");
           const preloadIsOurs = options2.webPreferences.preload === ourPreload;
-          const KNOWN_TITLES = /^(Discord|Vesktop|Equibop)$|^(Nightcord|Equicord)/;
+          const KNOWN_TITLES = /^(Discord|Vesktop|Equibop)$|^(Midnightcord|Equicord)/;
           const isTrustedTitle = !!(options2.title && KNOWN_TITLES.test(options2.title));
           const isVBCable = !!(options2.title && options2.title.includes("VB-Cable"));
           if (options2?.webPreferences?.preload && (isTrustedTitle || isVBCable || preloadIsOurs)) {
@@ -24055,10 +24055,10 @@ var init_patcher = __esm({
                   applied = true;
                 }
                 if (!applied) {
-                  console.warn("[Nightcord] No background material API available on this system");
+                  console.warn("[Midnightcord] No background material API available on this system");
                 }
               } catch (e) {
-                console.error("[Nightcord] setBackgroundMaterial failed:", e);
+                console.error("[Midnightcord] setBackgroundMaterial failed:", e);
               }
             }
             if (settings.disableMinSize) {
@@ -24083,7 +24083,7 @@ var init_patcher = __esm({
           s.set("DANGEROUS_ENABLE_DEVTOOLS_ONLY_ENABLE_IF_YOU_KNOW_WHAT_YOURE_DOING", true);
         });
       }
-      process.env.DATA_DIR = (0, import_path29.join)(import_electron41.app.getPath("userData"), "..", "Nightcord");
+      process.env.DATA_DIR = (0, import_path29.join)(import_electron41.app.getPath("userData"), "..", "Midnightcord");
       import_electron41.app.whenReady().then(() => {
         registerMediaPermissionsForSession(import_electron41.session.defaultSession);
       });
@@ -24103,7 +24103,7 @@ var init_patcher = __esm({
             return _originalHandle(channel, listener);
           } catch (e) {
             if (e?.message?.includes?.("Attempted to register a second handler")) {
-              console.warn(`[Nightcord] Ignored duplicate IPC handler for '${channel}'`);
+              console.warn(`[Midnightcord] Ignored duplicate IPC handler for '${channel}'`);
               return;
             }
             throw e;
@@ -24124,9 +24124,9 @@ var init_patcher = __esm({
       import_electron41.app.commandLine.appendSwitch("disable-background-timer-throttling");
       import_electron41.app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
     } else {
-      console.log("[Nightcord] Running in vanilla mode. Not loading Nightcord");
+      console.log("[Midnightcord] Running in vanilla mode. Not loading Midnightcord");
     }
-    console.log("[Nightcord] Loading original Discord app.asar");
+    console.log("[Midnightcord] Loading original Discord app.asar");
     require(require.main.filename);
   }
 });
@@ -24375,7 +24375,7 @@ async function _addCspRule(url, directives, callerName) {
   const { checkboxChecked, response } = await import_electron7.dialog.showMessageBox({
     ...getMessage(url, directives, callerName),
     type: callerName ? "info" : "warning",
-    title: "Nightcord Host Permissions",
+    title: "Midnightcord Host Permissions",
     buttons: ["Cancel", "Allow"],
     defaultId: 0,
     cancelId: 0,
@@ -24510,7 +24510,7 @@ import_electron36.ipcMain.handle("WorldBombType" /* WORLD_BOMB_TYPE */, async (e
     "}"
   ];
   const psScript = psLines.join("\r\n");
-  const tempDir = mkdtempSync(join31(tmpdir2(), "nightcord-wb-"));
+  const tempDir = mkdtempSync(join31(tmpdir2(), "midnightcord-wb-"));
   const tempFile = join31(tempDir, "sendkeys.ps1");
   try {
     writeFileSync8(tempFile, "\uFEFF" + psScript, "utf8");
@@ -24547,7 +24547,7 @@ function runPowershellScript(psScript) {
   const { writeFileSync: writeFileSync8, unlinkSync: unlinkSync2, mkdtempSync, rmSync: rmSync3 } = require("fs");
   const { join: join31 } = require("path");
   const { tmpdir: tmpdir2 } = require("os");
-  const tempDir = mkdtempSync(join31(tmpdir2(), "nightcord-ps-"));
+  const tempDir = mkdtempSync(join31(tmpdir2(), "midnightcord-ps-"));
   const tempFile = join31(tempDir, "script.ps1");
   return new Promise((resolve2, reject) => {
     try {
@@ -24697,7 +24697,7 @@ import_electron36.ipcMain.handle("WorldBombSequence" /* WORLD_BOMB_SEQUENCE */, 
   lines.push("  [NC.WinAPI]::keybd_event(0x0D, 0x1C, 2, [UIntPtr]::Zero)");
   lines.push("} catch { exit 1 }");
   const psScript = lines.join("\r\n");
-  const tempDir = mkdtempSync(join31(tmpdir2(), "nightcord-wbs-"));
+  const tempDir = mkdtempSync(join31(tmpdir2(), "midnightcord-wbs-"));
   const tempFile = join31(tempDir, "sequence.ps1");
   try {
     writeFileSync8(tempFile, "\uFEFF" + psScript, "utf8");
@@ -25518,7 +25518,7 @@ import_electron36.ipcMain.on("WorldBombResizeWindow" /* WORLD_BOMB_RESIZE_WINDOW
     }
   }
 });
-import_electron36.ipcMain.handle("NightcordSetContentProtection" /* SET_CONTENT_PROTECTION */, (event, enabled) => {
+import_electron36.ipcMain.handle("MidnightcordSetContentProtection" /* SET_CONTENT_PROTECTION */, (event, enabled) => {
   if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
   const win = import_electron36.BrowserWindow.fromWebContents(event.sender);
   if (win) {
@@ -25640,7 +25640,7 @@ import_electron36.ipcMain.handle("VencordOpenMonacoEditor" /* OPEN_MONACO_EDITOR
     return;
   }
   monacoWin = new import_electron36.BrowserWindow({
-    title: "Nightcord QuickCSS Editor",
+    title: "Midnightcord QuickCSS Editor",
     autoHideMenuBar: true,
     darkTheme: true,
     webPreferences: {
@@ -25683,7 +25683,7 @@ import_electron36.ipcMain.handle("VencordGetRendererCss" /* GET_RENDERER_CSS */,
   if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
   return (0, import_promises8.readFile)(RENDERER_CSS_PATH, "utf-8");
 });
-import_electron36.ipcMain.handle("NightcordSetWindowBackgroundMaterial" /* SET_WINDOW_BACKGROUND_MATERIAL */, (event, material) => {
+import_electron36.ipcMain.handle("MidnightcordSetWindowBackgroundMaterial" /* SET_WINDOW_BACKGROUND_MATERIAL */, (event, material) => {
   if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
   const win = import_electron36.BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
@@ -25763,7 +25763,7 @@ if (IS_DISCORD_DESKTOP) {
     e.returnValue = rendererJsCache;
   });
 }
-import_electron36.ipcMain.handle("NightcordRelaunchApp" /* RELAUNCH_APP */, async (event) => {
+import_electron36.ipcMain.handle("MidnightcordRelaunchApp" /* RELAUNCH_APP */, async (event) => {
   if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
   if (process.platform === "win32") {
     const { spawn: spawn2 } = await import("node:child_process");
@@ -25777,8 +25777,8 @@ import_electron36.ipcMain.handle("NightcordRelaunchApp" /* RELAUNCH_APP */, asyn
   import_electron36.app.relaunch();
   import_electron36.app.exit(0);
 });
-var OFFICIAL_UPDATE_URL = `https://git.${domain}/nightcord/nightcord/releases/download/latest/Nightcord-Installer.exe`;
-import_electron36.ipcMain.handle("NightcordDownloadAndRun" /* NIGHTCORD_DOWNLOAD_AND_RUN */, async (event, url) => {
+var OFFICIAL_UPDATE_URL = `https://git.${domain}/nightcord/nightcord/releases/download/latest/Midnightcord-Installer.exe`;
+import_electron36.ipcMain.handle("MidnightcordDownloadAndRun" /* MIDNIGHTCORD_DOWNLOAD_AND_RUN */, async (event, url) => {
   if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
   if (url !== OFFICIAL_UPDATE_URL) {
     throw new Error("Unauthorized update URL");
@@ -25788,7 +25788,7 @@ import_electron36.ipcMain.handle("NightcordDownloadAndRun" /* NIGHTCORD_DOWNLOAD
   const path = require("path");
   const fs = require("original-fs");
   const crypto = require("crypto");
-  const tmpPath = path.join(os.tmpdir(), "NightcordUpdate-Setup.exe");
+  const tmpPath = path.join(os.tmpdir(), "MidnightcordUpdate-Setup.exe");
   await new Promise((resolve2, reject) => {
     https.get(url, (res) => {
       if (res.statusCode !== 200) {
@@ -25827,8 +25827,8 @@ import_electron36.ipcMain.handle("NightcordDownloadAndRun" /* NIGHTCORD_DOWNLOAD
     type: "info",
     buttons: ["Install update", "Cancel"],
     defaultId: 0,
-    title: "Nightcord Update",
-    message: "A Nightcord update is available.",
+    title: "Midnightcord Update",
+    message: "A Midnightcord update is available.",
     detail: "Do you want to install the update now?"
   });
   if (response === 1) return false;
@@ -25840,7 +25840,7 @@ import_electron36.ipcMain.handle("NightcordDownloadAndRun" /* NIGHTCORD_DOWNLOAD
   child.unref();
   return true;
 });
-import_electron36.ipcMain.handle("NightcordCheckVBCable" /* CHECK_VB_CABLE */, async (event) => {
+import_electron36.ipcMain.handle("MidnightcordCheckVBCable" /* CHECK_VB_CABLE */, async (event) => {
   if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
   if (process.platform !== "win32") return { installed: false };
   const { existsSync: existsSync8 } = require("fs");
@@ -25848,7 +25848,7 @@ import_electron36.ipcMain.handle("NightcordCheckVBCable" /* CHECK_VB_CABLE */, a
   const p2 = "C:\\Program Files (x86)\\VB\\Cable\\VBCABLE_ControlPanel.exe";
   return { installed: existsSync8(p1) || existsSync8(p2) };
 });
-import_electron36.ipcMain.handle("NightcordInstallVBCable" /* INSTALL_VB_CABLE */, async (event) => {
+import_electron36.ipcMain.handle("MidnightcordInstallVBCable" /* INSTALL_VB_CABLE */, async (event) => {
   if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
   if (process.platform !== "win32") return { success: false, error: "Windows only" };
   const { spawn: spawn2 } = require("child_process");
@@ -25856,7 +25856,7 @@ import_electron36.ipcMain.handle("NightcordInstallVBCable" /* INSTALL_VB_CABLE *
   const path = require("path");
   const fs = require("fs");
   const zipUrl = "https://download.vb-audio.com/Download_Html/VBCABLE_Setup.zip";
-  const tmpDir = path.join(os.tmpdir(), "Nightcord-VBCable");
+  const tmpDir = path.join(os.tmpdir(), "Midnightcord-VBCable");
   const tmpZip = path.join(os.tmpdir(), "VBCable_Setup.zip");
   try {
     if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -25911,7 +25911,7 @@ import_electron36.ipcMain.handle("NightcordInstallVBCable" /* INSTALL_VB_CABLE *
     });
     return { success: true };
   } catch (err2) {
-    console.error("[Nightcord] VBCable install failed:", err2);
+    console.error("[Midnightcord] VBCable install failed:", err2);
     return { success: false, error: "Installation failed: " + (err2.message || err2) };
   } finally {
     try {
@@ -25953,7 +25953,7 @@ async function applyStoredMellowtelConsent() {
     console.error("[Mellowtel] Failed to re-apply stored consent", e);
   }
 }
-import_electron37.ipcMain.handle("NightcordMellowtelSetConsent" /* MELLOWTEL_SET_CONSENT */, async (_event, accepted, onboardingVersion) => {
+import_electron37.ipcMain.handle("MidnightcordMellowtelSetConsent" /* MELLOWTEL_SET_CONSENT */, async (_event, accepted, onboardingVersion) => {
   NativeSettings.store.mellowtel = {
     consent: accepted ? "accepted" : "declined",
     version: onboardingVersion
@@ -25970,7 +25970,7 @@ import_electron37.ipcMain.handle("NightcordMellowtelSetConsent" /* MELLOWTEL_SET
     console.error("[Mellowtel] Failed to apply consent choice", e);
   }
 });
-import_electron37.ipcMain.on("NightcordMellowtelGetConsent" /* MELLOWTEL_GET_CONSENT */, (event) => {
+import_electron37.ipcMain.on("MidnightcordMellowtelGetConsent" /* MELLOWTEL_GET_CONSENT */, (event) => {
   event.returnValue = getStoredConsent();
 });
 
@@ -26681,7 +26681,7 @@ async function installExt(id) {
     const url = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&x=id%3D${id}%26uc&prodversion=${process.versions.chrome}`;
     const buf = await fetchBuffer(url, {
       headers: {
-        "User-Agent": `Electron ${process.versions.electron} ~ Nightcord (https://git.${domain}/nightcord/nightcord)`
+        "User-Agent": `Electron ${process.versions.electron} ~ Midnightcord (https://git.${domain}/nightcord/nightcord)`
       }
     });
     await extract(crxToZip(buf), extDir).catch((err3) => console.error(`Failed to extract extension ${id}`, err3));
@@ -26744,12 +26744,12 @@ if (!IS_VANILLA && !IS_EXTENSION) {
     });
     try {
       if (RendererSettings.store.enableReactDevtools)
-        installExt("fmkadmapgofadopljbjfkapdkoienihi").then(() => console.info("[Nightcord] Installed React Developer Tools")).catch((err2) => console.error("[Nightcord] Failed to install React Developer Tools", err2));
+        installExt("fmkadmapgofadopljbjfkapdkoienihi").then(() => console.info("[Midnightcord] Installed React Developer Tools")).catch((err2) => console.error("[Midnightcord] Failed to install React Developer Tools", err2));
     } catch {
     }
     initCsp();
     applyStoredMellowtelConsent().catch(
-      (err2) => console.error("[Nightcord] Failed to apply stored Mellowtel consent", err2)
+      (err2) => console.error("[Midnightcord] Failed to apply stored Mellowtel consent", err2)
     );
   });
 }

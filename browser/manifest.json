@@ -1,9 +1,9 @@
 {
     "manifest_version": 3,
     "minimum_chrome_version": "111",
-    "name": "Nightcord Web",
+    "name": "Midnightcord Web",
     "description": "The other cutest Discord mod now in your browser",
-    "author": "Nightcord",
+    "author": "Midnightcord",
     "homepage_url": "https://source.nightcord.st/nightcord/nightcord",
     "icons": {
         "128": "icon.png"

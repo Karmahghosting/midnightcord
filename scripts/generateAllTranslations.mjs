@@ -4,10 +4,10 @@ import { readFileSync, writeFileSync } from "fs";
 const strings = JSON.parse(readFileSync("scripts/extractedStrings.json", "utf8"));
 console.log(`Loaded ${strings.length} strings to translate.`);
 
-// Read current autoTranslateNightcord index.ts
-const atcContent = readFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", "utf8");
+// Read current autoTranslateMidnightcord index.ts
+const atcContent = readFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", "utf8");
 
-// Parse existing entries in autoTranslateNightcord
+// Parse existing entries in autoTranslateMidnightcord
 const existingEntries = {};
 const entryRegex = /"((?:[^"\\]|\\.)*)":\s*\{\s*en:\s*"((?:[^"\\]|\\.)*)",\s*es:\s*"((?:[^"\\]|\\.)*)",\s*ru:\s*"((?:[^"\\]|\\.)*)",\s*zh:\s*"((?:[^"\\]|\\.)*)"\s*\}/g;
 let match;
@@ -20,11 +20,11 @@ while ((match = entryRegex.exec(atcContent)) !== null) {
     };
 }
 
-console.log(`Existing entries in autoTranslateNightcord: ${Object.keys(existingEntries).length}`);
+console.log(`Existing entries in autoTranslateMidnightcord: ${Object.keys(existingEntries).length}`);
 
 // Find strings that are not in existingEntries or have missing/corrupt translations
 const missingStrings = strings.filter(s => {
-    if (s === "Nightcord" || s === "Nightcord AI") return false;
+    if (s === "Midnightcord" || s === "Midnightcord AI") return false;
     const existing = existingEntries[s];
     if (!existing) return true;
     if (!existing.es || !existing.ru || !existing.zh) return true;
@@ -78,9 +78,9 @@ async function main() {
 
     console.log(`Total translated entries ready: ${Object.keys(newTranslations).length}`);
 
-    // Format new autoTranslateNightcord index.ts
+    // Format new autoTranslateMidnightcord index.ts
     let newContent = `/*
- * Nightcord, a Discord client mod
+ * Midnightcord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -103,10 +103,10 @@ export const translations: TranslationMap = {\n`;
     newContent += `};
 
 export default definePlugin({
-    name: "AutoTranslateNightcord",
+    name: "AutoTranslateMidnightcord",
     enabledByDefault: true,
     required: true,
-    description: "Automatic translation for Nightcord.",
+    description: "Automatic translation for Midnightcord.",
     authors: [{ name: "Trigger", id: 0n }],
     options: {
         autoTranslate: {
@@ -140,8 +140,8 @@ export function useTranslation() {
 }
 `;
 
-    writeFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", newContent, "utf8");
-    console.log("Successfully updated autoTranslateNightcord/index.ts!");
+    writeFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", newContent, "utf8");
+    console.log("Successfully updated autoTranslateMidnightcord/index.ts!");
 }
 
 main();

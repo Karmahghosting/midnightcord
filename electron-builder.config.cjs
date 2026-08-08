@@ -3,10 +3,10 @@ const { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSyn
 const { createHash } = require("crypto");
 const { join } = require("path");
 
-// ─── Configuration de Build Nightcord ─────────────────────────────────────────
+// ─── Configuration de Build Midnightcord ─────────────────────────────────────────
 
-function killNightcord() {
-    const releaseDir = join(__dirname, "release", "nightcord-dist");
+function killMidnightcord() {
+    const releaseDir = join(__dirname, "release", "midnightcord-dist");
     const releaseExe = join(releaseDir, "Discord.exe");
 
     try {
@@ -40,19 +40,19 @@ function findDiscordApp() {
 }
 
 function buildEquicord() {
-    console.log("[build] Compilation de Nightcord...");
+    console.log("[build] Compilation de Midnightcord...");
     execSync("node --require=./scripts/suppressExperimentalWarnings.js scripts/build/build.mjs --standalone", { stdio: "inherit" });
 }
 
-function buildNightcordFromDiscord(discordApp) {
+function buildMidnightcordFromDiscord(discordApp) {
     const discordRes = join(discordApp, "resources");
-    const outDir = join(__dirname, "release", "nightcord-dist");
+    const outDir = join(__dirname, "release", "midnightcord-dist");
 
     if (existsSync(outDir)) {
         try { rmSync(outDir, { recursive: true, force: true }); } catch (e) { }
     }
 
-    console.log("[nightcord] Copie des binaires Discord...");
+    console.log("[midnightcord] Copie des binaires Discord...");
     mkdirSync(outDir, { recursive: true });
 
     for (const f of readdirSync(discordApp)) {
@@ -92,7 +92,7 @@ function buildNightcordFromDiscord(discordApp) {
         cpSync(bootstrapSrc, bootstrapDst, { recursive: true });
     }
 
-    console.log("[nightcord] Préparation de _app.asar...");
+    console.log("[midnightcord] Préparation de _app.asar...");
     let appAsarSrc = join(discordRes, "_app.asar");
     if (!existsSync(appAsarSrc)) appAsarSrc = join(discordRes, "app.asar");
     
@@ -136,9 +136,9 @@ require(path.join(__dirname, "dist", "desktop", "patcher.js"));
         if (existsSync(join(equicordDist, f))) cpSync(join(equicordDist, f), join(outDist, f));
     }
 
-    const nightcordPreload = join(__dirname, "nightcord-preload.js");
-    if (existsSync(nightcordPreload)) {
-        cpSync(nightcordPreload, join(outDist, "preload.js"));
+    const midnightcordPreload = join(__dirname, "midnightcord-preload.js");
+    if (existsSync(midnightcordPreload)) {
+        cpSync(midnightcordPreload, join(outDist, "preload.js"));
     }
 
     // FFmpeg et YT-DLP (cherche dans le dossier local ou PATH)
@@ -152,29 +152,29 @@ require(path.join(__dirname, "dist", "desktop", "patcher.js"));
     // native.ts cherche via process.resourcesPath, qui pointe vers outDir/resources (asar: false)
     const macCursorsSrc = join(__dirname, "mac");
     if (existsSync(macCursorsSrc)) {
-        console.log("[nightcord] Copie des curseurs macOS...");
+        console.log("[midnightcord] Copie des curseurs macOS...");
         cpSync(macCursorsSrc, join(outRes, "mac"), { recursive: true });
     } else {
-        console.warn("[nightcord] ATTENTION: dossier 'mac' introuvable a la racine, le plugin CursorMacOS ne fonctionnera pas dans le build package.");
+        console.warn("[midnightcord] ATTENTION: dossier 'mac' introuvable a la racine, le plugin CursorMacOS ne fonctionnera pas dans le build package.");
     }
 
     const discordExe = join(outDir, "Discord.exe");
     const injectScript = join(__dirname, "inject-discord.ps1");
     if (existsSync(injectScript)) cpSync(injectScript, join(outDir, "inject-discord.ps1"));
 
-    const iconSrc = join(__dirname, "nightcord.ico");
+    const iconSrc = join(__dirname, "midnightcord.ico");
     if (existsSync(iconSrc)) {
         cpSync(iconSrc, join(outDir, "app.ico"));
         // Rcedit pour le branding
         try {
             const rcedit = join(__dirname, "node_modules", ".bin", "rcedit.cmd");
             if (existsSync(rcedit)) {
-                execSync(`"${rcedit}" "${discordExe}" --set-icon "${iconSrc}" --set-version-string "ProductName" "Nightcord" --set-version-string "FileDescription" "Nightcord"`, { stdio: "ignore" });
+                execSync(`"${rcedit}" "${discordExe}" --set-icon "${iconSrc}" --set-version-string "ProductName" "Midnightcord" --set-version-string "FileDescription" "Midnightcord"`, { stdio: "ignore" });
             }
         } catch (e) { }
     }
 
-    console.log(`[nightcord] Build terminé -> ${outDir}`);
+    console.log(`[midnightcord] Build terminé -> ${outDir}`);
 }
 
 function obfuscateDesktop() {
@@ -190,23 +190,23 @@ function obfuscateDesktop() {
 
 // ─── Execution du build ───────────────────────────────────────────────────────
 
-killNightcord();
+killMidnightcord();
 const discord = findDiscordApp();
 buildEquicord();
 // obfuscateDesktop(); // Optionnel pour l'open source
-buildNightcordFromDiscord(discord);
+buildMidnightcordFromDiscord(discord);
 
 module.exports = {
-    appId: "com.nightcord.app",
-    productName: "Nightcord",
-    copyright: "Copyright 2026 Nightcord",
+    appId: "com.midnightcord.app",
+    productName: "Midnightcord",
+    copyright: "Copyright 2026 Midnightcord",
     extraMetadata: { main: "index.js" },
     asar: false,
     files: ["index.js", "dist/desktop/**/*", "!**/*.map", "!**/*.ts"],
     directories: { output: "release", buildResources: "desktop/assets" },
     win: {
         target: [{ target: "dir", arch: ["x64"] }],
-        icon: "nightcord.ico",
+        icon: "midnightcord.ico",
         requestedExecutionLevel: "asInvoker"
     }
 };

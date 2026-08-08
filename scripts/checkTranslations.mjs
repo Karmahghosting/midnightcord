@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "fs";
 
-const content = readFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", "utf8");
+const content = readFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", "utf8");
 
 // Count ? chars in ru/zh values
 const lines = content.split("\n");

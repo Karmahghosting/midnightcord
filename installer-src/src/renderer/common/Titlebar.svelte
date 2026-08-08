@@ -15,7 +15,7 @@
             path: "/api/v1/repos/nightcord/nightcord/releases/latest",
             method: "GET",
             rejectUnauthorized: false,
-            headers: {"User-Agent": "nightcord-installer"}
+            headers: {"User-Agent": "midnightcord-installer"}
         };
 
         const req = https.request(options, (res) => {
@@ -40,7 +40,7 @@
 </script>
 
 <header class="titlebar {macButtons === true ? "type-mac" : "type-standard"}">
-    <span class="title">Nightcord Installer v{displayVersion}</span>
+    <span class="title">Midnightcord Installer v{displayVersion}</span>
     <div class="window-controls">
         {#if macButtons === true}
             <button tabindex="-1" on:click={quit} id="close">

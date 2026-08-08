@@ -1,5 +1,5 @@
 {
-  description = "Nightcord development shell";
+  description = "Midnightcord development shell";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
@@ -35,7 +35,7 @@
           shellHook = ''
             export npm_config_update_notifier=false
             export ELECTRON_SKIP_BINARY_DOWNLOAD=1
-            echo "Nightcord dev shell active (Node $(node -v))"
+            echo "Midnightcord dev shell active (Node $(node -v))"
           '';
         };
       });

@@ -1,5 +1,5 @@
 @echo off
-title Nightcord — Dev Rebuild + Inject
+title Midnightcord — Dev Rebuild + Inject
 cd /d "%~dp0"
 
 echo.
@@ -61,7 +61,7 @@ if exist "%DISCORD_PATH%\Update.exe" (
 
 echo.
 echo  ================================================
-echo   Nightcord mis a jour et injecte avec succes !
+echo   Midnightcord mis a jour et injecte avec succes !
 echo  ================================================
 echo.
 timeout /t 3 /nobreak >nul

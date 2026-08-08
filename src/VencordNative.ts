@@ -47,7 +47,7 @@ export default {
         update: () => invoke<IpcRes<boolean>>(IpcEvents.UPDATE),
         rebuild: () => invoke<IpcRes<boolean>>(IpcEvents.BUILD),
         getRepo: () => invoke<IpcRes<string>>(IpcEvents.GET_REPO),
-        downloadAndRun: (url: string) => invoke<boolean>(IpcEvents.NIGHTCORD_DOWNLOAD_AND_RUN, url),
+        downloadAndRun: (url: string) => invoke<boolean>(IpcEvents.MIDNIGHTCORD_DOWNLOAD_AND_RUN, url),
     },
 
     settings: {
@@ -99,7 +99,7 @@ export default {
         getSources: () => invoke<Array<{ id: string; name: string; }>>(IpcEvents.GET_DESKTOP_SOURCES),
     },
 
-    nightcord: {
+    midnightcord: {
         getInstallerPrefs: () => sendSync<{defaultPlugins: boolean, autoUpdate: boolean}>(IpcEvents.GET_INSTALLER_PREFS),
         checkVBCable: () => invoke<{ installed: boolean; }>(IpcEvents.CHECK_VB_CABLE),
         installVBCable: () => invoke<{ success: boolean; error?: string; }>(IpcEvents.INSTALL_VB_CABLE),

@@ -57,8 +57,8 @@
             "@webpack/wreq.d": [
                 "./webpack/wreq.d"
             ],
-            "@nightcordplugins/*": [
-                "./nightcordplugins/*"
+            "@midnightcordplugins/*": [
+                "./midnightcordplugins/*"
             ],
             "@equicordplugins/*": [
                 "./plugins/*"
@@ -67,14 +67,14 @@
                 "./illegalcordplugins/*"
             ],
             "main/*": [
-                "./nightcord/main/*"
+                "./midnightcord/main/*"
             ],
             "shared/*": [
-                "./nightcord/shared/*",
+                "./midnightcord/shared/*",
                 "./shared/*"
             ],
             "renderer/*": [
-                "./nightcord/renderer/*"
+                "./midnightcord/renderer/*"
             ]
         },
         "plugins": [

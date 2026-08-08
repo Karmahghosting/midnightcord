@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 
-// Get all keys from autoTranslateNightcord
-const atc = readFileSync("src/nightcordplugins/autoTranslateNightcord/index.ts", "utf8");
+// Get all keys from autoTranslateMidnightcord
+const atc = readFileSync("src/midnightcordplugins/autoTranslateMidnightcord/index.ts", "utf8");
 const atcKeys = new Set();
 const regex1 = /^\s*"([^"]+)":\s*\{/gm;
 let m;

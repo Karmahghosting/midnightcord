@@ -1,0 +1,16 @@
+/* Stealth Mode - hide Midnightcord plugin UI (but NOT settings access) */
+
+/* Plugin buttons: header bar, channel toolbar, chat bar, user area */
+body.midnightcord-stealth .vc-header-bar-btns,
+body.midnightcord-stealth .vc-channel-toolbar-btns,
+body.midnightcord-stealth .vc-chat-bar-btns,
+body.midnightcord-stealth .vc-user-area-btns,
+
+/* Titlebar injected elements */
+body.midnightcord-stealth #midnightcord-titlebar-btn,
+body.midnightcord-stealth #midnightcord-titlebar-link-style,
+
+/* MidnightcordAI nav button */
+body.midnightcord-stealth .nai-nav-item {
+    display: none !important;
+}

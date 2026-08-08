@@ -1,6 +1,6 @@
 // @ts-check
 /*
- * Nightcord — Post-build obfuscation
+ * Midnightcord — Post-build obfuscation
  * Applied to generated .js BEFORE .asar packaging and electron-builder.
  * Automatically disabled in --dev / --watch mode.
  */
@@ -10,7 +10,7 @@ import { statSync } from "fs";
 import { join } from "path";
 
 // ─── Target files ───────────────────────────────────────────────────────────
-// dist/js/   → buildDesktop (Nightcord app itself)
+// dist/js/   → buildDesktop (Midnightcord app itself)
 const DESKTOP_JS_FILES = [
     "dist/js/main.js",
     "dist/js/preload.js",
@@ -19,7 +19,7 @@ const DESKTOP_JS_FILES = [
     "dist/js/renderer.js",
 ];
 
-// dist/desktop/ and dist/nightcord/ → build.mjs (vencord asar)
+// dist/desktop/ and dist/midnightcord/ → build.mjs (vencord asar)
 const ASAR_JS_FILES = [
     "patcher.js",
     "preload.js",
@@ -85,7 +85,7 @@ export async function obfuscateDistJs() {
 // ─── Export: for build.mjs ───────────────────────────────────────────────────
 /**
  * Obfuscates .js files in a dist/ directory before createPackage() into .asar.
- * @param {string} dir  e.g. "dist/desktop" or "dist/nightcord"
+ * @param {string} dir  e.g. "dist/desktop" or "dist/midnightcord"
  */
 export async function obfuscateDir(dir) {
     console.log(`\n[obfuscate] === Obfuscation ${dir}/ ===`);

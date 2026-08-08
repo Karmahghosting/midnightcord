@@ -207,7 +207,7 @@ export async function parseFile(fileName: string) {
                             if (!d) throw fail(`couldn't look up author ${getName(e)}`);
                             return d;
                         }
-                        // Support inline { name: "...", id: 0n } style used in Nightcord plugins
+                        // Support inline { name: "...", id: 0n } style used in Midnightcord plugins
                         if (isObjectLiteralExpression(e)) {
                             const nameProp = getObjectProp(e, "name");
                             const idProp = getObjectProp(e, "id");
@@ -261,7 +261,7 @@ export async function parseFile(fileName: string) {
             .join(posixSep)
             .replace(/\/index\.([jt]sx?)$/, "")
             .replace(/^src\/plugins\//, "")
-            .replace(/^src\/nightcordplugins\//, "");
+            .replace(/^src\/midnightcordplugins\//, "");
 
         return [data] as const;
     }

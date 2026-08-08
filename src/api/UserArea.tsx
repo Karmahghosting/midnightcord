@@ -68,10 +68,10 @@ function UserAreaButtons({ props }: { props: UserAreaRenderProps; }) {
     useEffect(() => {
         const listener = () => forceUpdate(n => n + 1);
         addStealthListener(listener);
-        window.addEventListener("nightcord-stealth-change", listener);
+        window.addEventListener("midnightcord-stealth-change", listener);
         return () => {
             removeStealthListener(listener);
-            window.removeEventListener("nightcord-stealth-change", listener);
+            window.removeEventListener("midnightcord-stealth-change", listener);
         };
     }, []);
 

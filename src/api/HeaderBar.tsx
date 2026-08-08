@@ -10,7 +10,7 @@ import { classes } from "@utils/misc";
 import { find, filters, findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
 import { Clickable, Tooltip, useEffect, useState, Popout, useRef, showToast, Toasts } from "@webpack/common";
 import type { ComponentType, JSX, MouseEventHandler, ReactNode } from "react";
-import { openNightcordModal } from "@nightcordplugins/compactMode/NightcordModal";
+import { openMidnightcordModal } from "@midnightcordplugins/compactMode/MidnightcordModal";
 import { Settings } from "@api/Settings";
 
 const logger = new Logger("HeaderBarAPI");
@@ -87,7 +87,7 @@ export function HeaderBarButton(props: HeaderBarButtonProps & { ref?: React.RefO
             {({ onMouseEnter, onMouseLeave }) => (
                 <Clickable
                     {...{ innerRef: ref } as any}
-                    className={classes(HeaderBarClasses.clickable, "nightcord-header-btn", className)}
+                    className={classes(HeaderBarClasses.clickable, "midnightcord-header-btn", className)}
                     style={{ width: iconSize, boxSizing: "content-box", justifyContent: "center", cursor: "pointer" }}
                     onClick={onClick}
                     onContextMenu={onContextMenu}
@@ -140,19 +140,19 @@ export function removeChannelToolbarButton(id: string) {
 // ══════════════════════════════════════════════════════════════════
 
 let _stealthActive = false;
-try { _stealthActive = localStorage.getItem("Nightcord_stealthMode") === "1"; } catch { }
+try { _stealthActive = localStorage.getItem("Midnightcord_stealthMode") === "1"; } catch { }
 
 export function isStealthModeEnabled(): boolean {
     return _stealthActive;
 }
 
 function persistStealth(v: boolean) {
-    try { v ? localStorage.setItem("Nightcord_stealthMode", "1") : localStorage.removeItem("Nightcord_stealthMode"); } catch { }
+    try { v ? localStorage.setItem("Midnightcord_stealthMode", "1") : localStorage.removeItem("Midnightcord_stealthMode"); } catch { }
 }
 
 const NON_REACT_SELECTORS = [
-    "#nightcord-titlebar-btn",
-    "#nightcord-titlebar-link-style",
+    "#midnightcord-titlebar-btn",
+    "#midnightcord-titlebar-link-style",
     ".nai-nav-item",
 ];
 
@@ -167,7 +167,7 @@ function hideNonReactElements(hide: boolean) {
 }
 
 export function syncStealthBodyClass() {
-    try { if (_stealthActive) document.body?.classList.add("nightcord-stealth"); else document.body?.classList.remove("nightcord-stealth"); } catch { }
+    try { if (_stealthActive) document.body?.classList.add("midnightcord-stealth"); else document.body?.classList.remove("midnightcord-stealth"); } catch { }
     hideNonReactElements(_stealthActive);
 }
 
@@ -176,13 +176,13 @@ export function toggleStealthMode() {
     persistStealth(_stealthActive);
     hideNonReactElements(_stealthActive);
     _notifyStealthChange();
-    try { if (_stealthActive) document.body?.classList.add("nightcord-stealth"); else document.body?.classList.remove("nightcord-stealth"); } catch { }
+    try { if (_stealthActive) document.body?.classList.add("midnightcord-stealth"); else document.body?.classList.remove("midnightcord-stealth"); } catch { }
     return _stealthActive;
 }
 
 if (_stealthActive) {
     try { hideNonReactElements(true); } catch { }
-    try { document.body?.classList.add("nightcord-stealth"); } catch { }
+    try { document.body?.classList.add("midnightcord-stealth"); } catch { }
 }
 
 try {
@@ -229,7 +229,7 @@ try {
         if (document.body) startObserver();
         else document.addEventListener("DOMContentLoaded", startObserver);
     }
-    window.addEventListener("nightcord-stealth-change", () => {
+    window.addEventListener("midnightcord-stealth-change", () => {
         if (_stealthActive) startObserver();
         else stopObserver();
     });
@@ -238,7 +238,7 @@ try {
 const stealthListeners = new Set<() => void>();
 export function _notifyStealthChange() {
     stealthListeners.forEach(fn => fn());
-    window.dispatchEvent(new Event("nightcord-stealth-change"));
+    window.dispatchEvent(new Event("midnightcord-stealth-change"));
 }
 export function addStealthListener(fn: () => void) { stealthListeners.add(fn); }
 export function removeStealthListener(fn: () => void) { stealthListeners.delete(fn); }
@@ -249,19 +249,19 @@ export function removeStealthListener(fn: () => void) { stealthListeners.delete(
 // ══════════════════════════════════════════════════════════════════
 
 let _compactActive = false;
-try { _compactActive = localStorage.getItem("Nightcord_compactMode") === "1"; } catch { }
+try { _compactActive = localStorage.getItem("Midnightcord_compactMode") === "1"; } catch { }
 
 export function isCompactModeEnabled(): boolean {
     return _compactActive;
 }
 
 function persistCompact(v: boolean) {
-    try { v ? localStorage.setItem("Nightcord_compactMode", "1") : localStorage.removeItem("Nightcord_compactMode"); } catch { }
+    try { v ? localStorage.setItem("Midnightcord_compactMode", "1") : localStorage.removeItem("Midnightcord_compactMode"); } catch { }
 }
 
 export function syncCompactBodyClass() {
     try {
-        const stored = localStorage.getItem("Nightcord_compactMode");
+        const stored = localStorage.getItem("Midnightcord_compactMode");
         if (stored === "1" && !_compactActive) {
             _compactActive = true;
         } else if (stored !== "1" && _compactActive) {
@@ -271,9 +271,9 @@ export function syncCompactBodyClass() {
 
     try {
         if (_compactActive) {
-            document.body?.classList.add("nightcord-compact");
+            document.body?.classList.add("midnightcord-compact");
         } else {
-            document.body?.classList.remove("nightcord-compact");
+            document.body?.classList.remove("midnightcord-compact");
         }
     } catch { }
 
@@ -284,18 +284,18 @@ export function toggleCompactMode() {
     _compactActive = !_compactActive;
     persistCompact(_compactActive);
     _notifyCompactChange();
-    try { if (_compactActive) document.body?.classList.add("nightcord-compact"); else document.body?.classList.remove("nightcord-compact"); } catch { }
+    try { if (_compactActive) document.body?.classList.add("midnightcord-compact"); else document.body?.classList.remove("midnightcord-compact"); } catch { }
     return _compactActive;
 }
 
 if (_compactActive) {
-    try { document.body?.classList.add("nightcord-compact"); } catch { }
+    try { document.body?.classList.add("midnightcord-compact"); } catch { }
 }
 
 export const compactListeners = new Set<() => void>();
 export function _notifyCompactChange() {
     compactListeners.forEach(fn => fn());
-    window.dispatchEvent(new Event("nightcord-compact-change"));
+    window.dispatchEvent(new Event("midnightcord-compact-change"));
 }
 export function addCompactListener(fn: () => void) { compactListeners.add(fn); }
 export function removeCompactListener(fn: () => void) { compactListeners.delete(fn); }
@@ -350,13 +350,13 @@ function CompactSettingsPopout({ closePopout }: { closePopout: () => void; }) {
         const listener = () => forceUpdate(n => n + 1);
         compactListeners.add(listener);
         stealthListeners.add(listener);
-        window.addEventListener("nightcord-compact-change", listener);
-        window.addEventListener("nightcord-stealth-change", listener);
+        window.addEventListener("midnightcord-compact-change", listener);
+        window.addEventListener("midnightcord-stealth-change", listener);
         return () => {
             compactListeners.delete(listener);
             stealthListeners.delete(listener);
-            window.removeEventListener("nightcord-compact-change", listener);
-            window.removeEventListener("nightcord-stealth-change", listener);
+            window.removeEventListener("midnightcord-compact-change", listener);
+            window.removeEventListener("midnightcord-stealth-change", listener);
         };
     }, []);
 
@@ -382,7 +382,7 @@ function CompactSettingsPopout({ closePopout }: { closePopout: () => void; }) {
             <div className="nc-settings-popout-row" onClick={() => toggleStealthMode()}>
                 <div className="nc-settings-popout-row-info">
                     <div className="nc-settings-popout-row-name">Stealth Mode</div>
-                    <div className="nc-settings-popout-row-desc">Hide all Nightcord UI elements</div>
+                    <div className="nc-settings-popout-row-desc">Hide all Midnightcord UI elements</div>
                 </div>
                 <div className={`nc-settings-popout-toggle ${stealth ? "nc-on" : ""}`} onClick={e => { e.stopPropagation(); toggleStealthMode(); }}>
                     <div className="nc-settings-popout-toggle-knob" />
@@ -419,10 +419,10 @@ function CompactHeaderBarToggle() {
     useEffect(() => {
         const listener = () => forceUpdate(n => n + 1);
         compactListeners.add(listener);
-        window.addEventListener("nightcord-compact-change", listener);
+        window.addEventListener("midnightcord-compact-change", listener);
         return () => {
             compactListeners.delete(listener);
-            window.removeEventListener("nightcord-compact-change", listener);
+            window.removeEventListener("midnightcord-compact-change", listener);
         };
     }, []);
 
@@ -450,8 +450,8 @@ function CompactHeaderBarToggle() {
             </Popout>
             <HeaderBarButton
                 icon={GearIcon}
-                tooltip="Nightcord Settings"
-                onClick={() => openNightcordModal()}
+                tooltip="Midnightcord Settings"
+                onClick={() => openMidnightcordModal()}
             />
         </div>
     );
@@ -465,10 +465,10 @@ function CompactChannelToolbarToggle() {
     useEffect(() => {
         const listener = () => forceUpdate(n => n + 1);
         compactListeners.add(listener);
-        window.addEventListener("nightcord-compact-change", listener);
+        window.addEventListener("midnightcord-compact-change", listener);
         return () => {
             compactListeners.delete(listener);
-            window.removeEventListener("nightcord-compact-change", listener);
+            window.removeEventListener("midnightcord-compact-change", listener);
         };
     }, []);
 
@@ -508,14 +508,14 @@ function HeaderBarButtons() {
         headerBarListeners.add(listener);
         stealthListeners.add(listener);
         compactListeners.add(listener);
-        window.addEventListener("nightcord-stealth-change", listener);
-        window.addEventListener("nightcord-compact-change", listener);
+        window.addEventListener("midnightcord-stealth-change", listener);
+        window.addEventListener("midnightcord-compact-change", listener);
         return () => {
             headerBarListeners.delete(listener);
             stealthListeners.delete(listener);
             compactListeners.delete(listener);
-            window.removeEventListener("nightcord-stealth-change", listener);
-            window.removeEventListener("nightcord-compact-change", listener);
+            window.removeEventListener("midnightcord-stealth-change", listener);
+            window.removeEventListener("midnightcord-compact-change", listener);
         };
     }, []);
 
@@ -554,14 +554,14 @@ function ChannelToolbarButtons() {
         channelToolbarListeners.add(listener);
         stealthListeners.add(listener);
         compactListeners.add(listener);
-        window.addEventListener("nightcord-stealth-change", listener);
-        window.addEventListener("nightcord-compact-change", listener);
+        window.addEventListener("midnightcord-stealth-change", listener);
+        window.addEventListener("midnightcord-compact-change", listener);
         return () => {
             channelToolbarListeners.delete(listener);
             stealthListeners.delete(listener);
             compactListeners.delete(listener);
-            window.removeEventListener("nightcord-stealth-change", listener);
-            window.removeEventListener("nightcord-compact-change", listener);
+            window.removeEventListener("midnightcord-stealth-change", listener);
+            window.removeEventListener("midnightcord-compact-change", listener);
         };
     }, []);
 
@@ -595,8 +595,8 @@ function ChannelToolbarButtons() {
 /** @internal Injected by HeaderBarAPI patch (do NOT call directly) */
 export function _addHeaderBarButtons() {
     return [
-        <style key="nightcord-headerbar-style">{`
-            .nightcord-header-btn {
+        <style key="midnightcord-headerbar-style">{`
+            .midnightcord-header-btn {
                 display: flex;
                 align-items: center;
                 margin: 0 2px;
@@ -605,7 +605,7 @@ export function _addHeaderBarButtons() {
                 color: var(--interactive-normal, oklab(0.745437 0.00131872 -0.00849736)) !important;
                 transition: background-color 0.15s ease-out, color 0.15s ease-out;
             }
-            .nightcord-header-btn:hover {
+            .midnightcord-header-btn:hover {
                 background-color: var(--background-modifier-hover, rgba(78, 80, 88, 0.3));
                 color: var(--interactive-hover, oklab(0.89908 -0.00192902 -0.01033)) !important;
             }

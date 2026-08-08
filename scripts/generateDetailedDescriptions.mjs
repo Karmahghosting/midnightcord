@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const pluginsDir = path.join(process.cwd(), 'src', 'nightcordplugins');
+const pluginsDir = path.join(process.cwd(), 'src', 'midnightcordplugins');
 const outputFile = path.join(process.cwd(), 'src', 'api', 'detailedPluginDescriptions.ts');
 
 const pluginDirs = fs.readdirSync(pluginsDir).filter(f => fs.statSync(path.join(pluginsDir, f)).isDirectory() && !f.startsWith('_'));
@@ -31,7 +31,7 @@ for (const p of pluginDirs) {
         
         let detailedDesc = `${shortDesc} `;
         
-        // Add some specific instructions based on common Nightcord plugin features
+        // Add some specific instructions based on common Midnightcord plugin features
         if (content.includes('ContextMenu')) {
             detailedDesc += `To use this feature, simply right-click on the relevant element (like a user, message, or image) to open the context menu and find the new options. `;
         }
@@ -49,7 +49,7 @@ for (const p of pluginDirs) {
     }
 }
 
-// Also let's handle Vencord plugins by just providing a fallback in the component, but we can do it here for nightcord plugins.
+// Also let's handle Vencord plugins by just providing a fallback in the component, but we can do it here for midnightcord plugins.
 
 const fileContent = `// Auto-generated detailed descriptions for plugins
 export const detailedPluginDescriptions: Record<string, string> = ${JSON.stringify(detailedDescriptions, null, 4)};

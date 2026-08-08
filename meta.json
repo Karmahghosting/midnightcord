@@ -284,17 +284,17 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/shared/IpcEvents.ts": {
+    "src/midnightcord/shared/IpcEvents.ts": {
       "bytes": 3540,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/shared/utils/text.ts": {
+    "src/midnightcord/shared/utils/text.ts": {
       "bytes": 528,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/shared/utils/SettingsStore.ts": {
+    "src/midnightcord/shared/utils/SettingsStore.ts": {
       "bytes": 5325,
       "imports": [
         {
@@ -305,7 +305,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/settings.ts": {
+    "src/midnightcord/main/settings.ts": {
       "bytes": 1498,
       "imports": [
         {
@@ -319,19 +319,19 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/utils/SettingsStore.ts",
+          "path": "src/midnightcord/shared/utils/SettingsStore.ts",
           "kind": "import-statement",
           "original": "shared/utils/SettingsStore"
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/vencordDir.ts": {
+    "src/midnightcord/main/vencordDir.ts": {
       "bytes": 420,
       "imports": [
         {
@@ -347,7 +347,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/http.ts": {
+    "src/midnightcord/main/utils/http.ts": {
       "bytes": 1833,
       "imports": [
         {
@@ -378,7 +378,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/vencordLoader.ts": {
+    "src/midnightcord/main/utils/vencordLoader.ts": {
       "bytes": 1418,
       "imports": [
         {
@@ -392,17 +392,17 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "../constants"
         },
         {
-          "path": "src/nightcord/main/vencordDir.ts",
+          "path": "src/midnightcord/main/vencordDir.ts",
           "kind": "import-statement",
           "original": "../vencordDir"
         },
         {
-          "path": "src/nightcord/main/utils/http.ts",
+          "path": "src/midnightcord/main/utils/http.ts",
           "kind": "import-statement",
           "original": "./http"
         },
@@ -414,11 +414,11 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/shared/paths.ts": {
+    "src/midnightcord/shared/paths.ts": {
       "bytes": 429,
       "imports": [
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "main/constants"
         },
@@ -430,17 +430,17 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/shared/utils/guards.ts": {
+    "src/midnightcord/shared/utils/guards.ts": {
       "bytes": 367,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/shared/utils/once.ts": {
+    "src/midnightcord/shared/utils/once.ts": {
       "bytes": 522,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/main/utils/isPathInDirectory.ts": {
+    "src/midnightcord/main/utils/isPathInDirectory.ts": {
       "bytes": 551,
       "imports": [
         {
@@ -451,7 +451,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/vesktopStatic.ts": {
+    "src/midnightcord/main/vesktopStatic.ts": {
       "bytes": 939,
       "imports": [
         {
@@ -470,14 +470,14 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/utils/isPathInDirectory.ts",
+          "path": "src/midnightcord/main/utils/isPathInDirectory.ts",
           "kind": "import-statement",
           "original": "./utils/isPathInDirectory"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/about.ts": {
+    "src/midnightcord/main/about.ts": {
       "bytes": 1009,
       "imports": [
         {
@@ -491,24 +491,24 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
           "original": "./utils/makeLinksOpenExternally"
         },
         {
-          "path": "src/nightcord/main/vesktopStatic.ts",
+          "path": "src/midnightcord/main/vesktopStatic.ts",
           "kind": "import-statement",
           "original": "./vesktopStatic"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/dbus.ts": {
+    "src/midnightcord/main/dbus.ts": {
       "bytes": 1058,
       "imports": [
         {
@@ -522,14 +522,14 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/events.ts": {
+    "src/midnightcord/main/events.ts": {
       "bytes": 797,
       "imports": [
         {
@@ -545,7 +545,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/appBadge.ts": {
+    "src/midnightcord/main/appBadge.ts": {
       "bytes": 2294,
       "imports": [
         {
@@ -559,22 +559,22 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/dbus.ts",
+          "path": "src/midnightcord/main/dbus.ts",
           "kind": "import-statement",
           "original": "./dbus"
         },
         {
-          "path": "src/nightcord/main/events.ts",
+          "path": "src/midnightcord/main/events.ts",
           "kind": "import-statement",
           "original": "./events"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "./mainWindow"
         }
@@ -953,7 +953,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/arrpc/index.ts": {
+    "src/midnightcord/main/arrpc/index.ts": {
       "bytes": 23278,
       "imports": [
         {
@@ -977,12 +977,12 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
@@ -992,19 +992,19 @@
           "original": "ws"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "../mainWindow"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "../settings"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/gnuSpoofing.ts": {
+    "src/midnightcord/main/gnuSpoofing.ts": {
       "bytes": 4606,
       "imports": [
         {
@@ -1015,7 +1015,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/ipcCommands.ts": {
+    "src/midnightcord/main/ipcCommands.ts": {
       "bytes": 2227,
       "imports": [
         {
@@ -1029,19 +1029,19 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "./mainWindow"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/keybinds.ts": {
+    "src/midnightcord/main/keybinds.ts": {
       "bytes": 2034,
       "imports": [
         {
@@ -1065,24 +1065,24 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "./mainWindow"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/shared/browserWinProperties.ts": {
+    "src/midnightcord/shared/browserWinProperties.ts": {
       "bytes": 427,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/main/utils/fileExists.ts": {
+    "src/midnightcord/main/utils/fileExists.ts": {
       "bytes": 343,
       "imports": [
         {
@@ -1093,7 +1093,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/splash.ts": {
+    "src/midnightcord/main/splash.ts": {
       "bytes": 3778,
       "imports": [
         {
@@ -1107,32 +1107,32 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/browserWinProperties.ts",
+          "path": "src/midnightcord/shared/browserWinProperties.ts",
           "kind": "import-statement",
           "original": "shared/browserWinProperties"
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/fileExists.ts",
+          "path": "src/midnightcord/main/utils/fileExists.ts",
           "kind": "import-statement",
           "original": "./utils/fileExists"
         },
         {
-          "path": "src/nightcord/main/vesktopStatic.ts",
+          "path": "src/midnightcord/main/vesktopStatic.ts",
           "kind": "import-statement",
           "original": "./vesktopStatic"
         }
@@ -4523,12 +4523,12 @@
       ],
       "format": "cjs"
     },
-    "src/nightcord/shared/utils/millis.ts": {
+    "src/midnightcord/shared/utils/millis.ts": {
       "bytes": 254,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/main/utils/ipcWrappers.ts": {
+    "src/midnightcord/main/utils/ipcWrappers.ts": {
       "bytes": 1391,
       "imports": [
         {
@@ -4537,7 +4537,7 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "main/constants"
         },
@@ -4549,7 +4549,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/updater.ts": {
+    "src/midnightcord/main/updater.ts": {
       "bytes": 4413,
       "imports": [
         {
@@ -4568,49 +4568,49 @@
           "original": "electron-updater"
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/shared/utils/millis.ts",
+          "path": "src/midnightcord/shared/utils/millis.ts",
           "kind": "import-statement",
           "original": "shared/utils/millis"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/ipcWrappers.ts",
+          "path": "src/midnightcord/main/utils/ipcWrappers.ts",
           "kind": "import-statement",
           "original": "./utils/ipcWrappers"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
           "original": "./utils/makeLinksOpenExternally"
         },
         {
-          "path": "src/nightcord/main/vesktopStatic.ts",
+          "path": "src/midnightcord/main/vesktopStatic.ts",
           "kind": "import-statement",
           "original": "./vesktopStatic"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/shared/utils/debounce.ts": {
+    "src/midnightcord/shared/utils/debounce.ts": {
       "bytes": 622,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/main/arrpcWindow.ts": {
+    "src/midnightcord/main/arrpcWindow.ts": {
       "bytes": 3775,
       "imports": [
         {
@@ -4624,39 +4624,39 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/arrpc/index.ts",
+          "path": "src/midnightcord/main/arrpc/index.ts",
           "kind": "import-statement",
           "original": "./arrpc"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
           "original": "./utils/makeLinksOpenExternally"
         },
         {
-          "path": "src/nightcord/main/vesktopStatic.ts",
+          "path": "src/midnightcord/main/vesktopStatic.ts",
           "kind": "import-statement",
           "original": "./vesktopStatic"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/desktopFileEscape.ts": {
+    "src/midnightcord/main/utils/desktopFileEscape.ts": {
       "bytes": 1366,
       "imports": [],
       "format": "esm"
     },
-    "src/nightcord/main/autoStart.ts": {
+    "src/midnightcord/main/autoStart.ts": {
       "bytes": 3237,
       "imports": [
         {
@@ -4675,34 +4675,34 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/utils/text.ts",
+          "path": "src/midnightcord/shared/utils/text.ts",
           "kind": "import-statement",
           "original": "shared/utils/text"
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/dbus.ts",
+          "path": "src/midnightcord/main/dbus.ts",
           "kind": "import-statement",
           "original": "./dbus"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/desktopFileEscape.ts",
+          "path": "src/midnightcord/main/utils/desktopFileEscape.ts",
           "kind": "import-statement",
           "original": "./utils/desktopFileEscape"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/popout.ts": {
+    "src/midnightcord/main/utils/popout.ts": {
       "bytes": 3114,
       "imports": [
         {
@@ -4711,19 +4711,19 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "main/settings"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
           "original": "./makeLinksOpenExternally"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/steamOS.ts": {
+    "src/midnightcord/main/utils/steamOS.ts": {
       "bytes": 3599,
       "imports": [
         {
@@ -4742,19 +4742,19 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "../constants"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "../settings"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/venmic.ts": {
+    "src/midnightcord/main/venmic.ts": {
       "bytes": 3741,
       "imports": [
         {
@@ -4768,24 +4768,24 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/ipc.ts": {
+    "src/midnightcord/main/ipc.ts": {
       "bytes": 9129,
       "imports": [
         {
@@ -4819,92 +4819,92 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/shared/utils/debounce.ts",
+          "path": "src/midnightcord/shared/utils/debounce.ts",
           "kind": "import-statement",
           "original": "shared/utils/debounce"
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "../shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/main/appBadge.ts",
+          "path": "src/midnightcord/main/appBadge.ts",
           "kind": "import-statement",
           "original": "./appBadge"
         },
         {
-          "path": "src/nightcord/main/arrpcWindow.ts",
+          "path": "src/midnightcord/main/arrpcWindow.ts",
           "kind": "import-statement",
           "original": "./arrpcWindow"
         },
         {
-          "path": "src/nightcord/main/autoStart.ts",
+          "path": "src/midnightcord/main/autoStart.ts",
           "kind": "import-statement",
           "original": "./autoStart"
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/events.ts",
+          "path": "src/midnightcord/main/events.ts",
           "kind": "import-statement",
           "original": "./events"
         },
         {
-          "path": "src/nightcord/main/gnuSpoofing.ts",
+          "path": "src/midnightcord/main/gnuSpoofing.ts",
           "kind": "import-statement",
           "original": "./gnuSpoofing"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "./mainWindow"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/startup.ts",
+          "path": "src/midnightcord/main/startup.ts",
           "kind": "import-statement",
           "original": "./startup"
         },
         {
-          "path": "src/nightcord/main/utils/ipcWrappers.ts",
+          "path": "src/midnightcord/main/utils/ipcWrappers.ts",
           "kind": "import-statement",
           "original": "./utils/ipcWrappers"
         },
         {
-          "path": "src/nightcord/main/utils/popout.ts",
+          "path": "src/midnightcord/main/utils/popout.ts",
           "kind": "import-statement",
           "original": "./utils/popout"
         },
         {
-          "path": "src/nightcord/main/utils/steamOS.ts",
+          "path": "src/midnightcord/main/utils/steamOS.ts",
           "kind": "import-statement",
           "original": "./utils/steamOS"
         },
         {
-          "path": "src/nightcord/main/utils/vencordLoader.ts",
+          "path": "src/midnightcord/main/utils/vencordLoader.ts",
           "kind": "import-statement",
           "original": "./utils/vencordLoader"
         },
         {
-          "path": "src/nightcord/main/vencordDir.ts",
+          "path": "src/midnightcord/main/vencordDir.ts",
           "kind": "import-statement",
           "original": "./vencordDir"
         },
         {
-          "path": "src/nightcord/main/venmic.ts",
+          "path": "src/midnightcord/main/venmic.ts",
           "kind": "dynamic-import",
           "original": "./venmic"
         },
@@ -4916,7 +4916,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/userAssets.ts": {
+    "src/midnightcord/main/userAssets.ts": {
       "bytes": 3406,
       "imports": [
         {
@@ -4935,12 +4935,12 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
@@ -4950,34 +4950,34 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/events.ts",
+          "path": "src/midnightcord/main/events.ts",
           "kind": "import-statement",
           "original": "./events"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "./mainWindow"
         },
         {
-          "path": "src/nightcord/main/utils/fileExists.ts",
+          "path": "src/midnightcord/main/utils/fileExists.ts",
           "kind": "import-statement",
           "original": "./utils/fileExists"
         },
         {
-          "path": "src/nightcord/main/utils/ipcWrappers.ts",
+          "path": "src/midnightcord/main/utils/ipcWrappers.ts",
           "kind": "import-statement",
           "original": "./utils/ipcWrappers"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/vesktopProtocol.ts": {
+    "src/midnightcord/main/vesktopProtocol.ts": {
       "bytes": 750,
       "imports": [
         {
@@ -4986,19 +4986,19 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/userAssets.ts",
+          "path": "src/midnightcord/main/userAssets.ts",
           "kind": "import-statement",
           "original": "./userAssets"
         },
         {
-          "path": "src/nightcord/main/vesktopStatic.ts",
+          "path": "src/midnightcord/main/vesktopStatic.ts",
           "kind": "import-statement",
           "original": "./vesktopStatic"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/firstLaunch.ts": {
+    "src/midnightcord/main/firstLaunch.ts": {
       "bytes": 2675,
       "imports": [
         {
@@ -5022,49 +5022,49 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/browserWinProperties.ts",
+          "path": "src/midnightcord/shared/browserWinProperties.ts",
           "kind": "import-statement",
           "original": "shared/browserWinProperties"
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/autoStart.ts",
+          "path": "src/midnightcord/main/autoStart.ts",
           "kind": "import-statement",
           "original": "./autoStart"
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "./mainWindow"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
           "original": "./utils/makeLinksOpenExternally"
         },
         {
-          "path": "src/nightcord/main/vesktopStatic.ts",
+          "path": "src/midnightcord/main/vesktopStatic.ts",
           "kind": "import-statement",
           "original": "./vesktopStatic"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/mediaPermissions.ts": {
+    "src/midnightcord/main/mediaPermissions.ts": {
       "bytes": 1253,
       "imports": [
         {
@@ -5075,7 +5075,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/screenShare.ts": {
+    "src/midnightcord/main/screenShare.ts": {
       "bytes": 4097,
       "imports": [
         {
@@ -5084,34 +5084,34 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/gnuSpoofing.ts",
+          "path": "src/midnightcord/main/gnuSpoofing.ts",
           "kind": "import-statement",
           "original": "./gnuSpoofing"
         },
         {
-          "path": "src/nightcord/main/ipcCommands.ts",
+          "path": "src/midnightcord/main/ipcCommands.ts",
           "kind": "import-statement",
           "original": "./ipcCommands"
         },
         {
-          "path": "src/nightcord/main/utils/ipcWrappers.ts",
+          "path": "src/midnightcord/main/utils/ipcWrappers.ts",
           "kind": "import-statement",
           "original": "./utils/ipcWrappers"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/setAsDefaultProtocolClient.ts": {
+    "src/midnightcord/main/utils/setAsDefaultProtocolClient.ts": {
       "bytes": 1124,
       "imports": [
         {
@@ -5127,26 +5127,26 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/startup.ts": {
+    "src/midnightcord/main/startup.ts": {
       "bytes": 5672,
       "imports": [
         {
-          "path": "src/nightcord/main/updater.ts",
+          "path": "src/midnightcord/main/updater.ts",
           "kind": "import-statement",
           "original": "./updater"
         },
         {
-          "path": "src/nightcord/main/ipc.ts",
+          "path": "src/midnightcord/main/ipc.ts",
           "kind": "import-statement",
           "original": "./ipc"
         },
         {
-          "path": "src/nightcord/main/userAssets.ts",
+          "path": "src/midnightcord/main/userAssets.ts",
           "kind": "import-statement",
           "original": "./userAssets"
         },
         {
-          "path": "src/nightcord/main/vesktopProtocol.ts",
+          "path": "src/midnightcord/main/vesktopProtocol.ts",
           "kind": "import-statement",
           "original": "./vesktopProtocol"
         },
@@ -5156,49 +5156,49 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/firstLaunch.ts",
+          "path": "src/midnightcord/main/firstLaunch.ts",
           "kind": "import-statement",
           "original": "./firstLaunch"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "import-statement",
           "original": "./mainWindow"
         },
         {
-          "path": "src/nightcord/main/mediaPermissions.ts",
+          "path": "src/midnightcord/main/mediaPermissions.ts",
           "kind": "import-statement",
           "original": "./mediaPermissions"
         },
         {
-          "path": "src/nightcord/main/screenShare.ts",
+          "path": "src/midnightcord/main/screenShare.ts",
           "kind": "import-statement",
           "original": "./screenShare"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/setAsDefaultProtocolClient.ts",
+          "path": "src/midnightcord/main/utils/setAsDefaultProtocolClient.ts",
           "kind": "import-statement",
           "original": "./utils/setAsDefaultProtocolClient"
         },
         {
-          "path": "src/nightcord/main/utils/steamOS.ts",
+          "path": "src/midnightcord/main/utils/steamOS.ts",
           "kind": "import-statement",
           "original": "./utils/steamOS"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/arguments.ts": {
+    "src/midnightcord/main/arguments.ts": {
       "bytes": 1700,
       "imports": [
         {
@@ -5212,29 +5212,29 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
           "original": "./utils/makeLinksOpenExternally"
         },
         {
-          "path": "src/nightcord/main/vesktopStatic.ts",
+          "path": "src/midnightcord/main/vesktopStatic.ts",
           "kind": "import-statement",
           "original": "./vesktopStatic"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/clearData.ts": {
+    "src/midnightcord/main/utils/clearData.ts": {
       "bytes": 1089,
       "imports": [
         {
@@ -5248,14 +5248,14 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "main/constants"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/tray.ts": {
+    "src/midnightcord/main/tray.ts": {
       "bytes": 12887,
       "imports": [
         {
@@ -5269,54 +5269,54 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/main/about.ts",
+          "path": "src/midnightcord/main/about.ts",
           "kind": "import-statement",
           "original": "./about"
         },
         {
-          "path": "src/nightcord/main/arguments.ts",
+          "path": "src/midnightcord/main/arguments.ts",
           "kind": "import-statement",
           "original": "./arguments"
         },
         {
-          "path": "src/nightcord/main/arrpc/index.ts",
+          "path": "src/midnightcord/main/arrpc/index.ts",
           "kind": "import-statement",
           "original": "./arrpc"
         },
         {
-          "path": "src/nightcord/main/events.ts",
+          "path": "src/midnightcord/main/events.ts",
           "kind": "import-statement",
           "original": "./events"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/userAssets.ts",
+          "path": "src/midnightcord/main/userAssets.ts",
           "kind": "import-statement",
           "original": "./userAssets"
         },
         {
-          "path": "src/nightcord/main/utils/clearData.ts",
+          "path": "src/midnightcord/main/utils/clearData.ts",
           "kind": "import-statement",
           "original": "./utils/clearData"
         },
         {
-          "path": "src/nightcord/main/utils/vencordLoader.ts",
+          "path": "src/midnightcord/main/utils/vencordLoader.ts",
           "kind": "import-statement",
           "original": "./utils/vencordLoader"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/mainWindow.ts": {
+    "src/midnightcord/main/mainWindow.ts": {
       "bytes": 19406,
       "imports": [
         {
@@ -5330,119 +5330,119 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/shared/paths.ts",
+          "path": "src/midnightcord/shared/paths.ts",
           "kind": "import-statement",
           "original": "shared/paths"
         },
         {
-          "path": "src/nightcord/shared/utils/guards.ts",
+          "path": "src/midnightcord/shared/utils/guards.ts",
           "kind": "import-statement",
           "original": "shared/utils/guards"
         },
         {
-          "path": "src/nightcord/shared/utils/once.ts",
+          "path": "src/midnightcord/shared/utils/once.ts",
           "kind": "import-statement",
           "original": "shared/utils/once"
         },
         {
-          "path": "src/nightcord/main/about.ts",
+          "path": "src/midnightcord/main/about.ts",
           "kind": "import-statement",
           "original": "./about"
         },
         {
-          "path": "src/nightcord/main/appBadge.ts",
+          "path": "src/midnightcord/main/appBadge.ts",
           "kind": "import-statement",
           "original": "./appBadge"
         },
         {
-          "path": "src/nightcord/main/arrpc/index.ts",
+          "path": "src/midnightcord/main/arrpc/index.ts",
           "kind": "import-statement",
           "original": "./arrpc"
         },
         {
-          "path": "src/nightcord/main/cli.ts",
+          "path": "src/midnightcord/main/cli.ts",
           "kind": "import-statement",
           "original": "./cli"
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "./constants"
         },
         {
-          "path": "src/nightcord/main/events.ts",
+          "path": "src/midnightcord/main/events.ts",
           "kind": "import-statement",
           "original": "./events"
         },
         {
-          "path": "src/nightcord/main/gnuSpoofing.ts",
+          "path": "src/midnightcord/main/gnuSpoofing.ts",
           "kind": "import-statement",
           "original": "./gnuSpoofing"
         },
         {
-          "path": "src/nightcord/main/ipcCommands.ts",
+          "path": "src/midnightcord/main/ipcCommands.ts",
           "kind": "import-statement",
           "original": "./ipcCommands"
         },
         {
-          "path": "src/nightcord/main/keybinds.ts",
+          "path": "src/midnightcord/main/keybinds.ts",
           "kind": "import-statement",
           "original": "./keybinds"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/splash.ts",
+          "path": "src/midnightcord/main/splash.ts",
           "kind": "import-statement",
           "original": "./splash"
         },
         {
-          "path": "src/nightcord/main/startup.ts",
+          "path": "src/midnightcord/main/startup.ts",
           "kind": "import-statement",
           "original": "./startup"
         },
         {
-          "path": "src/nightcord/main/tray.ts",
+          "path": "src/midnightcord/main/tray.ts",
           "kind": "import-statement",
           "original": "./tray"
         },
         {
-          "path": "src/nightcord/main/utils/clearData.ts",
+          "path": "src/midnightcord/main/utils/clearData.ts",
           "kind": "import-statement",
           "original": "./utils/clearData"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
           "original": "./utils/makeLinksOpenExternally"
         },
         {
-          "path": "src/nightcord/main/utils/steamOS.ts",
+          "path": "src/midnightcord/main/utils/steamOS.ts",
           "kind": "import-statement",
           "original": "./utils/steamOS"
         },
         {
-          "path": "src/nightcord/main/utils/vencordLoader.ts",
+          "path": "src/midnightcord/main/utils/vencordLoader.ts",
           "kind": "import-statement",
           "original": "./utils/vencordLoader"
         },
         {
-          "path": "src/nightcord/main/vencordDir.ts",
+          "path": "src/midnightcord/main/vencordDir.ts",
           "kind": "import-statement",
           "original": "./vencordDir"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/cli.ts": {
+    "src/midnightcord/main/cli.ts": {
       "bytes": 7647,
       "imports": [
         {
@@ -5456,12 +5456,12 @@
           "external": true
         },
         {
-          "path": "src/nightcord/shared/IpcEvents.ts",
+          "path": "src/midnightcord/shared/IpcEvents.ts",
           "kind": "import-statement",
           "original": "shared/IpcEvents"
         },
         {
-          "path": "src/nightcord/shared/utils/text.ts",
+          "path": "src/midnightcord/shared/utils/text.ts",
           "kind": "import-statement",
           "original": "shared/utils/text"
         },
@@ -5471,29 +5471,29 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "dynamic-import",
           "original": "./settings"
         },
         {
-          "path": "src/nightcord/main/utils/vencordLoader.ts",
+          "path": "src/midnightcord/main/utils/vencordLoader.ts",
           "kind": "dynamic-import",
           "original": "./utils/vencordLoader"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "dynamic-import",
           "original": "./mainWindow"
         },
         {
-          "path": "src/nightcord/main/mainWindow.ts",
+          "path": "src/midnightcord/main/mainWindow.ts",
           "kind": "dynamic-import",
           "original": "./mainWindow"
         }
       ],
       "format": "esm"
     },
-    "src/nightcord/main/constants.ts": {
+    "src/midnightcord/main/constants.ts": {
       "bytes": 2487,
       "imports": [
         {
@@ -5512,7 +5512,7 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/cli.ts",
+          "path": "src/midnightcord/main/cli.ts",
           "kind": "import-statement",
           "original": "./cli"
         },
@@ -5524,7 +5524,7 @@
       ],
       "format": "esm"
     },
-    "src/nightcord/main/utils/makeLinksOpenExternally.ts": {
+    "src/midnightcord/main/utils/makeLinksOpenExternally.ts": {
       "bytes": 9192,
       "imports": [
         {
@@ -5533,22 +5533,22 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/constants.ts",
+          "path": "src/midnightcord/main/constants.ts",
           "kind": "import-statement",
           "original": "main/constants"
         },
         {
-          "path": "src/nightcord/main/settings.ts",
+          "path": "src/midnightcord/main/settings.ts",
           "kind": "import-statement",
           "original": "../settings"
         },
         {
-          "path": "src/nightcord/main/utils/popout.ts",
+          "path": "src/midnightcord/main/utils/popout.ts",
           "kind": "import-statement",
           "original": "./popout"
         },
         {
-          "path": "src/nightcord/main/utils/steamOS.ts",
+          "path": "src/midnightcord/main/utils/steamOS.ts",
           "kind": "import-statement",
           "original": "./steamOS"
         }
@@ -5624,9 +5624,9 @@
           "original": "./utils/constants"
         },
         {
-          "path": "src/nightcord/main/utils/makeLinksOpenExternally.ts",
+          "path": "src/midnightcord/main/utils/makeLinksOpenExternally.ts",
           "kind": "import-statement",
-          "original": "../nightcord/main/utils/makeLinksOpenExternally"
+          "original": "../midnightcord/main/utils/makeLinksOpenExternally"
         },
         {
           "path": "child_process",
@@ -5950,9 +5950,9 @@
           "external": true
         },
         {
-          "path": "src/nightcord/main/mediaPermissions.ts",
+          "path": "src/midnightcord/main/mediaPermissions.ts",
           "kind": "import-statement",
-          "original": "../nightcord/main/mediaPermissions"
+          "original": "../midnightcord/main/mediaPermissions"
         },
         {
           "path": "src/main/settings.ts",
@@ -7344,37 +7344,37 @@
         "src/main/updater/http.ts": {
           "bytesInOutput": 4258
         },
-        "src/nightcord/shared/IpcEvents.ts": {
+        "src/midnightcord/shared/IpcEvents.ts": {
           "bytesInOutput": 3743
         },
-        "src/nightcord/shared/utils/text.ts": {
+        "src/midnightcord/shared/utils/text.ts": {
           "bytesInOutput": 437
         },
-        "src/nightcord/shared/paths.ts": {
+        "src/midnightcord/shared/paths.ts": {
           "bytesInOutput": 357
         },
-        "src/nightcord/shared/utils/guards.ts": {
+        "src/midnightcord/shared/utils/guards.ts": {
           "bytesInOutput": 149
         },
-        "src/nightcord/shared/utils/once.ts": {
+        "src/midnightcord/shared/utils/once.ts": {
           "bytesInOutput": 249
         },
-        "src/nightcord/main/utils/isPathInDirectory.ts": {
+        "src/midnightcord/main/utils/isPathInDirectory.ts": {
           "bytesInOutput": 577
         },
-        "src/nightcord/main/vesktopStatic.ts": {
+        "src/midnightcord/main/vesktopStatic.ts": {
           "bytesInOutput": 902
         },
-        "src/nightcord/main/about.ts": {
+        "src/midnightcord/main/about.ts": {
           "bytesInOutput": 878
         },
-        "src/nightcord/main/dbus.ts": {
+        "src/midnightcord/main/dbus.ts": {
           "bytesInOutput": 876
         },
-        "src/nightcord/main/events.ts": {
+        "src/midnightcord/main/events.ts": {
           "bytesInOutput": 243
         },
-        "src/nightcord/main/appBadge.ts": {
+        "src/midnightcord/main/appBadge.ts": {
           "bytesInOutput": 1991
         },
         "node_modules/.pnpm/ws@8.20.0/node_modules/ws/lib/constants.js": {
@@ -7419,31 +7419,31 @@
         "node_modules/.pnpm/ws@8.20.0/node_modules/ws/wrapper.mjs": {
           "bytesInOutput": 729
         },
-        "src/nightcord/shared/utils/SettingsStore.ts": {
+        "src/midnightcord/shared/utils/SettingsStore.ts": {
           "bytesInOutput": 4113
         },
-        "src/nightcord/main/settings.ts": {
+        "src/midnightcord/main/settings.ts": {
           "bytesInOutput": 1303
         },
-        "src/nightcord/main/arrpc/index.ts": {
+        "src/midnightcord/main/arrpc/index.ts": {
           "bytesInOutput": 20642
         },
-        "src/nightcord/main/gnuSpoofing.ts": {
+        "src/midnightcord/main/gnuSpoofing.ts": {
           "bytesInOutput": 2880
         },
-        "src/nightcord/main/ipcCommands.ts": {
+        "src/midnightcord/main/ipcCommands.ts": {
           "bytesInOutput": 1599
         },
-        "src/nightcord/main/keybinds.ts": {
+        "src/midnightcord/main/keybinds.ts": {
           "bytesInOutput": 2086
         },
-        "src/nightcord/shared/browserWinProperties.ts": {
+        "src/midnightcord/shared/browserWinProperties.ts": {
           "bytesInOutput": 339
         },
-        "src/nightcord/main/utils/fileExists.ts": {
+        "src/midnightcord/main/utils/fileExists.ts": {
           "bytesInOutput": 329
         },
-        "src/nightcord/main/splash.ts": {
+        "src/midnightcord/main/splash.ts": {
           "bytesInOutput": 3325
         },
         "node_modules/.pnpm/universalify@2.0.1/node_modules/universalify/index.js": {
@@ -7923,88 +7923,88 @@
         "node_modules/.pnpm/electron-updater@6.8.3/node_modules/electron-updater/out/main.js": {
           "bytesInOutput": 4651
         },
-        "src/nightcord/shared/utils/millis.ts": {
+        "src/midnightcord/shared/utils/millis.ts": {
           "bytesInOutput": 97
         },
-        "src/nightcord/main/utils/ipcWrappers.ts": {
+        "src/midnightcord/main/utils/ipcWrappers.ts": {
           "bytesInOutput": 1050
         },
-        "src/nightcord/main/updater.ts": {
+        "src/midnightcord/main/updater.ts": {
           "bytesInOutput": 4744
         },
-        "src/nightcord/shared/utils/debounce.ts": {
+        "src/midnightcord/shared/utils/debounce.ts": {
           "bytesInOutput": 291
         },
-        "src/nightcord/main/arrpcWindow.ts": {
+        "src/midnightcord/main/arrpcWindow.ts": {
           "bytesInOutput": 3238
         },
-        "src/nightcord/main/utils/desktopFileEscape.ts": {
+        "src/midnightcord/main/utils/desktopFileEscape.ts": {
           "bytesInOutput": 824
         },
-        "src/nightcord/main/autoStart.ts": {
+        "src/midnightcord/main/autoStart.ts": {
           "bytesInOutput": 2645
         },
-        "src/nightcord/main/utils/popout.ts": {
+        "src/midnightcord/main/utils/popout.ts": {
           "bytesInOutput": 2673
         },
-        "src/nightcord/main/utils/steamOS.ts": {
+        "src/midnightcord/main/utils/steamOS.ts": {
           "bytesInOutput": 2772
         },
-        "src/nightcord/main/vencordDir.ts": {
+        "src/midnightcord/main/vencordDir.ts": {
           "bytesInOutput": 430
         },
-        "src/nightcord/main/utils/http.ts": {
+        "src/midnightcord/main/utils/http.ts": {
           "bytesInOutput": 1723
         },
-        "src/nightcord/main/utils/vencordLoader.ts": {
+        "src/midnightcord/main/utils/vencordLoader.ts": {
           "bytesInOutput": 860
         },
-        "src/nightcord/main/venmic.ts": {
+        "src/midnightcord/main/venmic.ts": {
           "bytesInOutput": 3591
         },
-        "src/nightcord/main/ipc.ts": {
+        "src/midnightcord/main/ipc.ts": {
           "bytesInOutput": 9747
         },
-        "src/nightcord/main/userAssets.ts": {
+        "src/midnightcord/main/userAssets.ts": {
           "bytesInOutput": 3383
         },
-        "src/nightcord/main/vesktopProtocol.ts": {
+        "src/midnightcord/main/vesktopProtocol.ts": {
           "bytesInOutput": 702
         },
-        "src/nightcord/main/firstLaunch.ts": {
+        "src/midnightcord/main/firstLaunch.ts": {
           "bytesInOutput": 2259
         },
-        "src/nightcord/main/mediaPermissions.ts": {
+        "src/midnightcord/main/mediaPermissions.ts": {
           "bytesInOutput": 1140
         },
-        "src/nightcord/main/screenShare.ts": {
+        "src/midnightcord/main/screenShare.ts": {
           "bytesInOutput": 2880
         },
-        "src/nightcord/main/utils/setAsDefaultProtocolClient.ts": {
+        "src/midnightcord/main/utils/setAsDefaultProtocolClient.ts": {
           "bytesInOutput": 737
         },
-        "src/nightcord/main/startup.ts": {
+        "src/midnightcord/main/startup.ts": {
           "bytesInOutput": 5203
         },
-        "src/nightcord/main/arguments.ts": {
+        "src/midnightcord/main/arguments.ts": {
           "bytesInOutput": 1486
         },
-        "src/nightcord/main/utils/clearData.ts": {
+        "src/midnightcord/main/utils/clearData.ts": {
           "bytesInOutput": 1039
         },
-        "src/nightcord/main/tray.ts": {
+        "src/midnightcord/main/tray.ts": {
           "bytesInOutput": 10742
         },
-        "src/nightcord/main/mainWindow.ts": {
+        "src/midnightcord/main/mainWindow.ts": {
           "bytesInOutput": 13848
         },
-        "src/nightcord/main/cli.ts": {
+        "src/midnightcord/main/cli.ts": {
           "bytesInOutput": 6724
         },
-        "src/nightcord/main/constants.ts": {
+        "src/midnightcord/main/constants.ts": {
           "bytesInOutput": 2728
         },
-        "src/nightcord/main/utils/makeLinksOpenExternally.ts": {
+        "src/midnightcord/main/utils/makeLinksOpenExternally.ts": {
           "bytesInOutput": 6129
         },
         "src/shared/onceDefined.ts": {

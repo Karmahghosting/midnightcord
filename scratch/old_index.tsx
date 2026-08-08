@@ -646,7 +646,7 @@ function DynamicIslandPlayer() {
 
 // ÔöÇÔöÇÔöÇ Rich Presence ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 
-const RPC_APP_ID = "1108588077900898414"; // Shared Nightcord music/media app ID
+const RPC_APP_ID = "1108588077900898414"; // Shared Midnightcord music/media app ID
 const RPC_SOCKET_ID = "youtube_in_discord";
 let _rpcLastTitle = "";
 let _rpcLastPlaying = false;

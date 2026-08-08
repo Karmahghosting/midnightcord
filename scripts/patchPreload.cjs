@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Script de patch post-build pour Nightcord
+ * Script de patch post-build pour Midnightcord
  * Patche le preload.js pour fonctionner sans contextIsolation
  */
 

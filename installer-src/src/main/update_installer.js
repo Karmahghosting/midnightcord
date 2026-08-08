@@ -7,14 +7,14 @@ const {domain} = require("../../../DOMAIN.json");
 const getJSON = phin.defaults({
     method: "GET",
     parse: "json",
-    headers: {"User-Agent": `Nightcord Installer/${version}`},
+    headers: {"User-Agent": `Midnightcord Installer/${version}`},
     followRedirects: true
 });
 
 /* eslint-disable no-console */
 export default async function () {
     const downloadUrl = `https://source.${domain}/api/v1/repos/nightcord/nightcord/releases/latest`;
-    console.info(`Nightcord Installer ${version}`);
+    console.info(`Midnightcord Installer ${version}`);
 
     try {
         const response = await getJSON(downloadUrl);
@@ -26,7 +26,7 @@ export default async function () {
 
             const result = await dialog.showMessageBox({
                 title: "New Installer Version Available",
-                message: `A new version of the Nightcord installer is available. Click "Download" to download the newest version.`,
+                message: `A new version of the Midnightcord installer is available. Click "Download" to download the newest version.`,
                 buttons: ["Download", "Later"],
                 defaultId: 0,
                 cancelId: 1

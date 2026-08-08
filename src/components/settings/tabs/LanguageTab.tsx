@@ -1,6 +1,6 @@
 /*
- * Nightcord, a Discord client mod
- * Copyright (c) 2026 Nightcord contributors
+ * Midnightcord, a Discord client mod
+ * Copyright (c) 2026 Midnightcord contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -42,7 +42,7 @@ function syncDiscordLocale(lang: Language) {
                 // Try "locale" if "localization" fails
                 Promise.resolve(UserSettingsProtoUtils.updateAsync("locale", (pref: any) => {
                     if (pref) pref.locale = { value: targetLocale };
-                }, 0)).catch(e => console.error("[Nightcord] Failed to update locale proto:", e));
+                }, 0)).catch(e => console.error("[Midnightcord] Failed to update locale proto:", e));
             });
         }
 
@@ -52,7 +52,7 @@ function syncDiscordLocale(lang: Language) {
             api.patch({
                 url: "/users/@me/settings",
                 body: { locale: targetLocale }
-            }).catch((e: any) => console.error("[Nightcord] Failed to PATCH settings:", e));
+            }).catch((e: any) => console.error("[Midnightcord] Failed to PATCH settings:", e));
         }
 
         // 3. LocaleActionCreators (updates Discord client UI language instantly)
@@ -61,7 +61,7 @@ function syncDiscordLocale(lang: Language) {
             localeModule.setLocale(targetLocale);
         }
     } catch (e) {
-        console.error("[Nightcord] Failed to sync Discord language:", e);
+        console.error("[Midnightcord] Failed to sync Discord language:", e);
     }
 }
 
@@ -98,7 +98,7 @@ function LanguageTab() {
         
         Alerts.show({
             title: t("Restart required!"),
-            body: t("Nightcord language has been changed. Discord must be restarted for all translations to take effect. Restart now?"),
+            body: t("Midnightcord language has been changed. Discord must be restarted for all translations to take effect. Restart now?"),
             confirmText: t("Restart now"),
             cancelText: t("Later"),
             onConfirm: () => location.reload()
@@ -109,11 +109,11 @@ function LanguageTab() {
         <SettingsTab>
             <Heading className={Margins.top16}>{t("Interface Language")}</Heading>
             <Paragraph className={Margins.bottom16}>
-                {t("Choose the language for Nightcord's interface. Plugin names and Discord's own UI are not affected.")}
+                {t("Choose the language for Midnightcord's interface. Plugin names and Discord's own UI are not affected.")}
             </Paragraph>
 
             <Notice.Info className={Margins.bottom20}>
-                {t("Translations are community-maintained and may be incomplete. If you'd like to help translate Nightcord, contributions are welcome!")}
+                {t("Translations are community-maintained and may be incomplete. If you'd like to help translate Midnightcord, contributions are welcome!")}
             </Notice.Info>
 
             {/* Dropdown sélectif — même composant/pattern que "Cloud Backend" dans CloudTab */}
@@ -135,7 +135,7 @@ function LanguageTab() {
             <div className={Margins.top16}>
                 <FormSwitch
                     title={t("Synchronize Discord Language")}
-                    description={t("Automatically change Discord's client language when changing Nightcord language.")}
+                    description={t("Automatically change Discord's client language when changing Midnightcord language.")}
                     value={settings.syncDiscordLanguage ?? false}
                     onChange={v => {
                         settings.syncDiscordLanguage = v;
