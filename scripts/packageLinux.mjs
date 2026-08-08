@@ -10,6 +10,7 @@ const require = createRequire(import.meta.url);
 const config = require(join(rootDir, "electron-builder.linux.cjs"));
 
 const isDir = process.argv.includes("--dir");
+const isRpmOnly = process.argv.includes("--rpm");
 const requestedArch = process.argv.includes("--arm64")
     ? "arm64"
     : process.argv.includes("--x64")
@@ -33,7 +34,7 @@ try {
     const options = {
         projectDir: stagingDir,
         config,
-        linux: [],
+        linux: isRpmOnly ? ["rpm"] : [],
         dir: isDir,
         x64: requestedArch === "x64",
         arm64: requestedArch === "arm64"

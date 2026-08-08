@@ -1,5 +1,5 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -111,8 +111,6 @@ export async function searchSoundCloud(
     }
 }
 
-
-
 // ─── Résolution de l'URL de stream ───────────────────────────────────────────
 
 export async function resolveStreamUrl(_: any, url: string, clientId: string): Promise<string | null> {
@@ -166,9 +164,9 @@ export async function resolveTrack(
 
 // ─── Listening Together ─────────────────────────────────────────────────────────────────
 // Electron : intercept navigation events on BrowserWindow
-// Browser extension : intercept clicks on <a> tags pointing to nightcord.st/listen
+// Browser extension : intercept clicks on <a> tags pointing to the local midnightcord listen protocol
 
-const LISTEN_URL_PREFIX = "https://nightcord.st/listen?";
+const LISTEN_URL_PREFIX = "midnightcord://listen?";
 
 export function setupListeningTogetherHandler(_?: any): void {
     // no-op

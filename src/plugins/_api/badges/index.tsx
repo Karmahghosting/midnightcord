@@ -17,7 +17,6 @@
 */
 
 import "./fixDiscordBadgePadding.css";
-import {domain} from "../../../../DOMAIN.json"
 
 import { _getBadges, BadgePosition, BadgeUserArgs, ProfileBadge } from "@api/Badges";
 import { loadOwnHiddenBadgeSources } from "@api/BadgeVisibility";
@@ -31,7 +30,7 @@ import { ContextMenuApi, FluxDispatcher, Menu, Toasts, UserStore } from "@webpac
 
 import Plugins, { PluginMeta } from "~plugins";
 
-import { EquicordDonorModal, EquicordTranslatorModal, VencordDonorModal, GenericBadgeModal } from "./modals";
+import { EquicordTranslatorModal, GenericBadgeModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
@@ -97,7 +96,7 @@ async function loadBadges(url: string, noCache = false) {
 async function loadAllBadges(noCache = false) {
     const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache).catch(() => ({}));
     const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache).catch(() => ({}));
-    const midnightcordBadges = await loadBadges(`https://api.${domain}/badges`, noCache).catch(() => ({}));
+    const midnightcordBadges = {};
     const illegalcordBadges = await loadBadges("https://raw.githubusercontent.com/ImHisako/ImHisako/refs/heads/main/Images/badges.json", noCache).catch(() => ({}));
 
     DonorBadges = vencordBadges;
@@ -387,5 +386,3 @@ export default definePlugin({
         } satisfies ProfileBadge));
     }
 });
-
-

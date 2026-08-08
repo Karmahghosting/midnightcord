@@ -66,9 +66,6 @@ export const enum IpcEvents {
     SET_THUMBAR_BUTTONS = "SoundCordSetThumbarButtons",
     THUMBAR_BUTTON_CLICK = "SoundCordThumbarButtonClick",
 
-    // Midnightcord Updater â€” tÃ©lÃ©charge un exe depuis une URL et le lance
-    MIDNIGHTCORD_DOWNLOAD_AND_RUN = "MidnightcordDownloadAndRun",
-
     // VB-Audio Virtual Cable (Windows only)
     CHECK_VB_CABLE = "MidnightcordCheckVBCable",
     INSTALL_VB_CABLE = "MidnightcordInstallVBCable",

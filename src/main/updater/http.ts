@@ -4,66 +4,93 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { createHash } from "node:crypto";
+
 import { fetchBuffer, fetchJson } from "@main/utils/http";
 import { IpcEvents } from "@shared/IpcEvents";
-import { VENCORD_USER_AGENT } from "@shared/vencordUserAgent";
-import { exec } from "child_process";
 import { app, ipcMain } from "electron";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "original-fs";
-import { join } from "path";
-import { domain } from "../../../DOMAIN.json";
+import { unzipSync } from "fflate";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "original-fs";
+import { dirname, join, resolve, sep } from "path";
+
 import { serializeErrors } from "./common";
 
-const GITEA_BASE = `https://source.${domain}`;
-const API_BASE = `${GITEA_BASE}/api/v1/repos/nightcord/nightcord`;
-const REPO_URL = `${GITEA_BASE}/nightcord/nightcord`;
+const REPOSITORY = "Karmahghosting/midnightcord";
+const API_BASE = `https://api.github.com/repos/${REPOSITORY}`;
+const REPO_URL = `https://github.com/${REPOSITORY}`;
+const MAX_ARCHIVE_SIZE = 150 * 1024 * 1024;
+const MAX_EXTRACTED_SIZE = 300 * 1024 * 1024;
+
 declare const VERSION: string;
 const CURRENT_VERSION = `v${VERSION}`;
-const ZIP_FILE = "midnightcord-dist.zip";
 
-/**
- * Marker file written into __dirname when an update has been staged.
- * midnightcord-index.js reads this on next startup (before any file is locked)
- * and performs the actual file-swap then.
- */
 export const PENDING_UPDATE_MARKER = join(__dirname, "midnightcord-pending-update.json");
 const STAGING_DIR = join(app.getPath("temp"), "midnightcord-pending-update");
 
 let pendingDownloadUrl: string | null = null;
+let pendingChecksumUrl: string | null = null;
 let pendingVersion: string | null = null;
 let isApplying = false;
 
-async function githubGet<T = any>(endpoint: string): Promise<T> {
-    return fetchJson<T>(API_BASE + endpoint, {
-        headers: {
-            Accept: "application/json",
-            "User-Agent": VENCORD_USER_AGENT
-        }
-    });
+function requestHeaders() {
+    const headers: Record<string, string> = {
+        Accept: "application/vnd.github+json",
+        "User-Agent": `Midnightcord-Updater/${VERSION}`,
+        "X-GitHub-Api-Version": "2022-11-28"
+    };
+
+    const token = process.env.MIDNIGHTCORD_GITHUB_TOKEN?.trim();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
 }
 
-function isNewer(a: string, b: string): boolean {
-    const parse = (v: string) => v.replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
-    const av = parse(a), bv = parse(b);
-    for (let i = 0; i < Math.max(av.length, bv.length); i++) {
-        if ((bv[i] ?? 0) > (av[i] ?? 0)) return true;
-        if ((bv[i] ?? 0) < (av[i] ?? 0)) return false;
+async function githubGet<T = any>(endpoint: string): Promise<T> {
+    return fetchJson<T>(API_BASE + endpoint, { headers: requestHeaders() });
+}
+
+function isNewer(current: string, candidate: string): boolean {
+    const parse = (version: string) => version.replace(/^v/, "").split(".").map(part => Number.parseInt(part, 10) || 0);
+    const currentParts = parse(current);
+    const candidateParts = parse(candidate);
+
+    for (let index = 0; index < Math.max(currentParts.length, candidateParts.length); index++) {
+        if ((candidateParts[index] ?? 0) > (currentParts[index] ?? 0)) return true;
+        if ((candidateParts[index] ?? 0) < (currentParts[index] ?? 0)) return false;
     }
     return false;
 }
 
+function assertReleaseAssetUrl(value: string): string {
+    const url = new URL(value);
+    const expectedPrefix = `/${REPOSITORY}/releases/download/`;
+    if (url.protocol !== "https:" || url.hostname !== "github.com" || !url.pathname.startsWith(expectedPrefix)) {
+        throw new Error("GitHub returned an unexpected update asset URL");
+    }
+    return url.toString();
+}
+
 async function fetchUpdates(): Promise<boolean> {
-    const data = await githubGet("/releases/latest");
-    const latestTag: string = data.tag_name ?? "";
+    const release = await githubGet<any>("/releases/latest");
+    const latestTag = String(release.tag_name ?? "");
 
-    if (!latestTag || !isNewer(CURRENT_VERSION, latestTag)) return false;
+    if (!/^v?\d+\.\d+\.\d+$/.test(latestTag) || !isNewer(CURRENT_VERSION, latestTag)) return false;
 
-    const asset = (data.assets as any[])?.find(
-        (a: any) => a.name === ZIP_FILE
-    );
-    if (!asset) return false;
+    const version = latestTag.replace(/^v/, "");
+    const archiveName = `Midnightcord-Update-${version}.zip`;
+    const checksumName = archiveName + ".sha256";
+    const assets = Array.isArray(release.assets) ? release.assets : [];
+    const archive = assets.find((asset: any) => asset.name === archiveName);
+    const checksum = assets.find((asset: any) => asset.name === checksumName);
 
-    pendingDownloadUrl = asset.browser_download_url;
+    if (!archive?.browser_download_url || !checksum?.browser_download_url) {
+        throw new Error(`Release ${latestTag} has no verified native update payload`);
+    }
+    if (Number(archive.size) <= 0 || Number(archive.size) > MAX_ARCHIVE_SIZE) {
+        throw new Error("Native update payload has an invalid size");
+    }
+
+    pendingDownloadUrl = assertReleaseAssetUrl(archive.browser_download_url);
+    pendingChecksumUrl = assertReleaseAssetUrl(checksum.browser_download_url);
     pendingVersion = latestTag;
     return true;
 }
@@ -78,51 +105,84 @@ async function getUpdates() {
     }];
 }
 
-/**
- * Step 1 — download the zip and stage it to a temp folder.
- * Does NOT touch any running files. Returns true when the zip is staged.
- */
+function extractVerifiedUpdate(data: Buffer) {
+    const files = unzipSync(data);
+    const entries = Object.entries(files);
+    const extractedSize = entries.reduce((total, [, content]) => total + content.byteLength, 0);
+    if (extractedSize <= 0 || extractedSize > MAX_EXTRACTED_SIZE) {
+        throw new Error("Native update payload expands to an invalid size");
+    }
+
+    rmSync(STAGING_DIR, { recursive: true, force: true });
+    mkdirSync(STAGING_DIR, { recursive: true });
+    const stagingRoot = resolve(STAGING_DIR) + sep;
+
+    for (const [archivePath, content] of entries) {
+        const normalized = archivePath.replaceAll("\\", "/");
+        if (!normalized || normalized.startsWith("/") || /^[A-Za-z]:/.test(normalized)) {
+            throw new Error("Native update payload contains an invalid path");
+        }
+
+        const outputPath = resolve(STAGING_DIR, normalized);
+        if (!outputPath.startsWith(stagingRoot)) {
+            throw new Error("Native update payload contains a path traversal");
+        }
+        if (normalized.endsWith("/")) {
+            mkdirSync(outputPath, { recursive: true });
+            continue;
+        }
+
+        mkdirSync(dirname(outputPath), { recursive: true });
+        writeFileSync(outputPath, content, { flush: true });
+    }
+
+    for (const required of ["patcher.js", "preload.js", "renderer.js", "package.json", "midnightcord-update.json"]) {
+        if (!existsSync(join(STAGING_DIR, required))) {
+            throw new Error(`Native update payload is missing ${required}`);
+        }
+    }
+
+    const manifest = JSON.parse(readFileSync(join(STAGING_DIR, "midnightcord-update.json"), "utf8"));
+    if (`v${manifest.version}` !== pendingVersion) {
+        throw new Error("Native update payload version does not match the GitHub release");
+    }
+}
+
 async function stageUpdate(): Promise<boolean> {
-    if (!pendingDownloadUrl) return false;
-    if (isApplying) return false;
+    if (!pendingDownloadUrl || !pendingChecksumUrl || !pendingVersion || isApplying) return false;
     isApplying = true;
 
     try {
-        const data = await fetchBuffer(pendingDownloadUrl);
+        const headers = requestHeaders();
+        const [data, checksumData] = await Promise.all([
+            fetchBuffer(pendingDownloadUrl, { headers }),
+            fetchBuffer(pendingChecksumUrl, { headers })
+        ]);
+        if (data.byteLength <= 0 || data.byteLength > MAX_ARCHIVE_SIZE) {
+            throw new Error("Downloaded native update has an invalid size");
+        }
 
-        // Save zip to temp
-        const zipPath = join(app.getPath("temp"), `midnightcord-update-${Date.now()}.zip`);
-        writeFileSync(zipPath, data, { flush: true });
+        const expectedHash = checksumData.toString("utf8").trim().split(/\s+/)[0]?.toLowerCase();
+        const actualHash = createHash("sha256").update(data).digest("hex");
+        if (!expectedHash || !/^[a-f0-9]{64}$/.test(expectedHash) || actualHash !== expectedHash) {
+            throw new Error("Native update SHA256 verification failed");
+        }
 
-        // Clean any stale staging dir first
-        try { rmSync(STAGING_DIR, { recursive: true, force: true }); } catch { }
-        mkdirSync(STAGING_DIR, { recursive: true });
+        extractVerifiedUpdate(data);
+        writeFileSync(PENDING_UPDATE_MARKER, JSON.stringify({
+            version: pendingVersion,
+            stagingDir: STAGING_DIR,
+            destDir: __dirname,
+            createdAt: Date.now()
+        }), { flush: true });
 
-        // Extract zip into STAGING_DIR (no running files touched)
-        const psExtract = `Expand-Archive -LiteralPath '${zipPath}' -DestinationPath '${STAGING_DIR}' -Force`;
-
-        return await new Promise<boolean>((resolve, reject) => {
-            exec(`powershell -NoProfile -NonInteractive -Command "${psExtract}"`, err => {
-                // Cleanup zip regardless
-                try { rmSync(zipPath, { force: true }); } catch { }
-
-                if (err) {
-                    return reject(new Error("ZIP extraction failed: " + err.message));
-                }
-
-                // Write marker so midnightcord-index.js knows to apply on next boot
-                writeFileSync(PENDING_UPDATE_MARKER, JSON.stringify({
-                    version: pendingVersion,
-                    stagingDir: STAGING_DIR,
-                    destDir: __dirname,
-                    createdAt: Date.now()
-                }));
-
-                pendingDownloadUrl = null;
-                pendingVersion = null;
-                resolve(true);
-            });
-        });
+        pendingDownloadUrl = null;
+        pendingChecksumUrl = null;
+        pendingVersion = null;
+        return true;
+    } catch (error) {
+        rmSync(STAGING_DIR, { recursive: true, force: true });
+        throw error;
     } finally {
         isApplying = false;
     }
@@ -131,5 +191,4 @@ async function stageUpdate(): Promise<boolean> {
 ipcMain.handle(IpcEvents.GET_REPO, serializeErrors(() => REPO_URL));
 ipcMain.handle(IpcEvents.GET_UPDATES, serializeErrors(getUpdates));
 ipcMain.handle(IpcEvents.UPDATE, serializeErrors(fetchUpdates));
-// BUILD is now "stage update" — actual file swap happens on next startup via midnightcord-index.js
 ipcMain.handle(IpcEvents.BUILD, serializeErrors(stageUpdate));

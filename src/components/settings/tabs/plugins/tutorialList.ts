@@ -1,20 +1,17 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
- *
- * AUTO-GENERATED — do not edit by hand.
- * Update by running: node scripts/generateTutorialList.mjs
  */
 
 /**
  * Maps a plugin's `name` to the basename (without extension) of its tutorial
- * video in https://source.nightcord.st/nightcord/nightcord-tutorials/src/branch/main/videos
+ * video in the Midnightcord GitHub repository
  *
  * These are NOT always identical: several videos were uploaded with a different
  * casing (or, in one case, a completely different name) than the plugin's actual
  * `name` field. Since the video URL has to match the file on disk exactly (the
- * Gitea file server is case-sensitive), we keep this explicit mapping instead of
+ * GitHub raw endpoint is case-sensitive), we keep this explicit mapping instead of
  * always assuming `${plugin.name}.mp4`.
  */
 export const TUTORIAL_VIDEOS: ReadonlyMap<string, string> = new Map([

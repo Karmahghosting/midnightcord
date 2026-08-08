@@ -13,7 +13,6 @@ import { app, BrowserWindow, nativeTheme } from "electron";
 
 import { CommandLine } from "./cli";
 import { DATA_DIR } from "./constants";
-import { createFirstLaunchTour } from "./firstLaunch";
 import { createWindows } from "./mainWindow";
 import { registerMediaPermissionsHandler } from "./mediaPermissions";
 import { registerScreenShareHandler } from "./screenShare";
@@ -27,6 +26,7 @@ process.env.Midnightcord_USER_DATA_DIR = DATA_DIR;
 process.env.MIDNIGHTCORD_USER_DATA_DIR = DATA_DIR;
 
 const isLinux = process.platform === "linux";
+if (isLinux) app.setDesktopName("midnightcord.desktop");
 
 export let enableHardwareAcceleration = true;
 

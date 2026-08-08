@@ -5,7 +5,6 @@
  */
 
 import { DataStore } from "@api/index";
-import {domain} from "../../../../../DOMAIN.json";
 
 import gitHash from "~git-hash";
 import plugins from "~plugins";
@@ -36,9 +35,9 @@ const LAST_SEEN_HASH_KEY = "EquicordChangelog_LastSeenHash";
 const KNOWN_PLUGINS_KEY = "EquicordChangelog_KnownPlugins";
 const KNOWN_SETTINGS_KEY = "EquicordChangelog_KnownSettings";
 const LAST_REPO_CHECK_KEY = "EquicordChangelog_LastRepoCheck";
-const GITEA_API_BASE = `https://source.${domain}/api/v1/repos`;
-const MIDNIGHTCORD_RELEASES_REPO = "midnightcord/midnightcord";
-const MIDNIGHTCORD_REPO_URL = `https://source.${domain}/${MIDNIGHTCORD_RELEASES_REPO}`;
+const GITHUB_API_BASE = "https://api.github.com/repos";
+const MIDNIGHTCORD_RELEASES_REPO = "Karmahghosting/midnightcord";
+const MIDNIGHTCORD_REPO_URL = `https://github.com/${MIDNIGHTCORD_RELEASES_REPO}`;
 
 type KnownPluginSettingsMap = Map<string, Set<string>>;
 
@@ -64,7 +63,7 @@ async function fetchCommitsBetween(
     if (!repoSlug || typeof fetch !== "function") return [];
     try {
         const res = await fetch(
-            `${GITEA_API_BASE}/${repoSlug}/compare/${fromHash}...${toHash}`,
+            `${GITHUB_API_BASE}/${repoSlug}/compare/${fromHash}...${toHash}`,
             {
                 headers: {
                     Accept: "application/json",
@@ -487,4 +486,3 @@ export function formatTimestamp(timestamp: number): string {
         return date.toLocaleDateString();
     }
 }
-

@@ -13,7 +13,8 @@ import {
     DISCORD_CHANNELS,
     findDiscordResources,
     injectResource,
-    installDistribution
+    installDistribution,
+    installLinuxDesktopEntry
 } from "./nativeInjection.mjs";
 
 const baseDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -94,6 +95,16 @@ for (const target of targets) {
         failures++;
         console.error("[Midnightcord] " + target.channel + ": " + error.message);
     }
+}
+
+if (process.platform === "linux") {
+    const packagedIcon = join(baseDir, "assets", "icon.png");
+    const sourceIcon = existsSync(packagedIcon) ? packagedIcon : join(baseDir, "static", "icon.png");
+    const desktopPath = installLinuxDesktopEntry({
+        channel: targets[0]?.channel || "stable",
+        iconSource: sourceIcon
+    });
+    if (desktopPath) console.log("[Midnightcord] Lanceur KDE installe dans " + desktopPath);
 }
 
 if (failures > 0) {

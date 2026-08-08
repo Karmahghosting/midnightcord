@@ -1,6 +1,6 @@
 /*
- * Midnightcord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -14,12 +14,11 @@ import { AddonCard } from "@components/settings";
 import { ExcludedReasons, PluginDependencyList } from "@components/settings/tabs/plugins";
 import { PluginCard } from "@components/settings/tabs/plugins/PluginCard";
 import { TooltipContainer } from "@components/TooltipContainer";
-import { EQUIBOT_USER_ID, MIDNIGHTCORD_BOT_USER_ID } from "@utils/constants";
+import { EQUIBOT_USER_ID } from "@utils/constants";
 import { isEquicordGuild, isEquicordSupport } from "@utils/misc";
 import { Message } from "@vencord/discord-types";
 import { showToast, Tooltip, useMemo } from "@webpack/common";
 import { JSX } from "react";
-import {domain} from "../../../DOMAIN.json";
 
 import plugins, { ExcludedPlugins } from "~plugins";
 
@@ -167,38 +166,6 @@ export const PluginCards = ErrorBoundary.wrap(function PluginCards({ message }: 
         }
     }
 
-    // Process components â€” NightCord Bot (domain, Component v2 Container format)
-    if (message.author.id === MIDNIGHTCORD_BOT_USER_ID) {
-        const containerComponents = (message.components?.[0] as any)?.components;
-        if (containerComponents?.length >= 3) {
-            // Find ActionRow by presence of nested components (same pattern as Equibot check above)
-            const actionRow = containerComponents.find((c: any) => c?.components);
-            const pluginUrl = actionRow?.components?.[0]?.url;
-            if (pluginUrl?.startsWith(`https://${domain}/plugins/`)) {
-                const pluginNameFromUrl = decodeURIComponent(new URL(pluginUrl).pathname.split("/")[2]);
-                const pluginNameNoSpaces = pluginNameFromUrl?.toLowerCase().replace(/\s+/g, "");
-                const actualPluginName =
-                    Object.keys(plugins).find(name => name.toLowerCase() === pluginNameFromUrl?.toLowerCase()) ??
-                    Object.keys(plugins).find(name => name.toLowerCase() === pluginNameNoSpaces) ??
-                    Object.keys(plugins).find(name => name.length > 3 && pluginNameNoSpaces?.startsWith(name.toLowerCase()));
-                const pluginName = actualPluginName || pluginNameFromUrl;
-                // Description is in the second TextDisplay (index 1)
-                const description = containerComponents[1]?.content ?? "";
-
-                if (pluginName && !seenPlugins.has(pluginName)) {
-                    seenPlugins.add(pluginName);
-                    pluginCards.push(
-                        <ChatPluginCard
-                            key={pluginUrl}
-                            url={pluginUrl}
-                            description={description}
-                        />
-                    );
-                }
-            }
-        }
-    }
-
     if (pluginCards.length === 0) return null;
 
     return (
@@ -207,4 +174,3 @@ export const PluginCards = ErrorBoundary.wrap(function PluginCards({ message }: 
         </div>
     );
 }, { noop: true });
-

@@ -21,8 +21,7 @@ async function Unwrap<T>(p: Promise<IpcRes<T>>): Promise<T> {
 }
 
 /**
- * Demande au main process s'il y a une version plus récente.
- * Met à jour isOutdated et changes.
+ * Checks whether GitHub contains a newer Midnightcord release.
  */
 export async function checkForUpdates(): Promise<boolean> {
     changes = await Unwrap(VencordNative.updater.getUpdates());
@@ -30,8 +29,7 @@ export async function checkForUpdates(): Promise<boolean> {
 }
 
 /**
- * Télécharge le Setup.exe (étape 1).
- * Retourne true si le téléchargement a réussi.
+ * Resolves the verified assets for the latest GitHub release.
  */
 export async function update(): Promise<boolean> {
     if (!isOutdated) return true;
@@ -41,8 +39,7 @@ export async function update(): Promise<boolean> {
 }
 
 /**
- * Lance l'installeur téléchargé (étape 2).
- * L'app va se fermer et se relancer automatiquement après installation.
+ * Downloads, verifies and stages the selected update for the next launch.
  */
 export async function rebuild(): Promise<boolean> {
     return Unwrap(VencordNative.updater.rebuild());
@@ -53,8 +50,26 @@ import { Settings } from "@api/Settings";
 export const getRepo = () => Unwrap(VencordNative.updater.getRepo());
 
 /**
- * Vérifie les mises à jour au démarrage et propose à l'utilisateur de mettre à jour.
+ * Checks GitHub in the background and stages a verified update.
+ * The loader applies it on the next normal Discord launch.
  */
+export async function stageAutomaticUpdate(): Promise<boolean> {
+    if (IS_WEB || IS_UPDATER_DISABLED || Settings.disableAutoUpdate) return false;
+
+    try {
+        if (!await checkForUpdates()) return false;
+        const staged = await rebuild();
+        if (staged) {
+            isOutdated = false;
+            UpdateLogger.info("Update verified and staged for the next launch.");
+        }
+        return staged;
+    } catch (error) {
+        UpdateLogger.error("Automatic GitHub update failed", error);
+        return false;
+    }
+}
+
 export async function maybePromptToUpdate(confirmMessage: string, checkForDev = false) {
     if (IS_WEB || IS_UPDATER_DISABLED || Settings.disableAutoUpdate) return;
     if (checkForDev && IS_DEV) return;

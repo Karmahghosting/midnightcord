@@ -27,7 +27,7 @@ import { patchTrayMenu } from "./trayMenu";
 import { IS_VANILLA } from "./utils/constants";
 
 console.log("[Midnightcord] Starting up...");
-
+if (process.platform === "linux") app.setDesktopName("midnightcord.desktop");
 
 // Our injector file at app/index.js
 const injectorPath = require.main!.filename;

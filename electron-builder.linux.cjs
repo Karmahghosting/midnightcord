@@ -19,6 +19,7 @@ module.exports = {
     extraMetadata: {
         version: rootPackage.version,
         main: "dist/js/main.js",
+        desktopName: "midnightcord.desktop",
         homepage: "https://github.com/Karmahghosting/midnightcord"
     },
     files: [
@@ -47,9 +48,23 @@ module.exports = {
     beforePack: path.resolve(__dirname, "scripts/build/beforePack.mjs"),
     afterPack: path.resolve(__dirname, "scripts/build/afterPack.mjs"),
 
+    publish: {
+        provider: "github",
+        owner: "Karmahghosting",
+        repo: "midnightcord",
+        releaseType: "release"
+    },
+
     linux: {
-        target: ["AppImage", "deb", "tar.gz"],
+        target: ["AppImage", "deb", "rpm", "tar.gz"],
         executableName: "midnightcord",
+        desktop: {
+            entry: {
+                Name: "Midnightcord",
+                Comment: "Optimized Discord desktop client",
+                StartupWMClass: "midnightcord",
+            }
+        },
         icon: "static/icon.png",
         category: "Network",
         maintainer: "Midnightcord contributors",

@@ -12,8 +12,11 @@ const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const forbidden = [
     /api\.nightcord\.st/i,
     /social\.nightcord\.st/i,
+    /nightcord\.st/i,
     /mellowtel/i,
-    /Vencord_cloud/
+    /Vencord_cloud/,
+    /MIDNIGHTCORD_ASAR_URL/,
+    /MIDNIGHTCORD_UPDATE_URL/
 ];
 
 function collectFiles(directory) {
@@ -45,8 +48,22 @@ assert(desktopFiles.length > 0, "dist/desktop is missing. Build the native distr
 assertClean(sourceFiles, "source");
 assertClean(desktopFiles, "desktop build");
 
+const updaterSource = readFileSync(join(rootDir, "src", "main", "updater", "http.ts"), "utf8");
+assert(updaterSource.includes('const REPOSITORY = "Karmahghosting/midnightcord"'), "Updater must be locked to the Midnightcord GitHub repository");
+assert(updaterSource.includes('createHash("sha256")'), "Native updater must verify SHA256");
+assert(!updaterSource.includes("source."), "Native updater must not use a legacy source host");
+
+const nativePackageScript = readFileSync(join(rootDir, "package.json"), "utf8");
+assert(!/package:native[^\n]+disable-updater/.test(nativePackageScript), "Native release builds must include the GitHub updater");
+
 const packageJson = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8"));
 assert(!packageJson.dependencies?.mellowtel, "Mellowtel must not be a dependency");
+
+const fakeVoiceSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "FakeVoice", "index.tsx"), "utf8");
+assert(/name:\s*"FakeVoice"[\s\S]*?enabledByDefault:\s*false/.test(fakeVoiceSource), "Fake Voice must remain disabled by default");
+
+const userAreaSource = readFileSync(join(rootDir, "src", "api", "UserArea.tsx"), "utf8");
+assert(userAreaSource.includes("> :not(.vc-user-area-btns):not(style)"), "Native user-area controls must remain protected from shrinking");
 
 const noTrack = readFileSync(join(rootDir, "src", "plugins", "_core", "noTrack.ts"), "utf8");
 assert(/required:\s*true/.test(noTrack), "NoTrack must remain required");

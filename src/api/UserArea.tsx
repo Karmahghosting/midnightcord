@@ -48,7 +48,10 @@ interface ButtonEntry {
     priority: number;
 }
 
-export const UserAreaButton = PanelButton;
+export function UserAreaButton({ className, ...props }: UserAreaButtonProps) {
+    const mergedClassName = [className, "vc-user-area-plugin-button"].filter(Boolean).join(" ");
+    return <PanelButton {...props} className={mergedClassName} />;
+}
 
 const logger = new Logger("UserArea");
 
@@ -80,8 +83,20 @@ function UserAreaButtons({ props }: { props: UserAreaRenderProps; }) {
     return (
         <>
             <style>{`
-                /* Allow the username and status text to shrink and truncate when the sidebar is small, 
-                   freeing up space for the extra plugins buttons without cutting them off */
+                /* Keep Discord's native controls visible while plugin buttons use the remaining space. */
+                .vc-user-area-plugin-button {
+                    flex: 1 1 32px !important;
+                    min-width: 0 !important;
+                    max-width: 32px !important;
+                    overflow: hidden !important;
+                }
+                div[class*="buttons_"]:has(.vc-user-area-plugin-button) {
+                    flex: 1 1 auto !important;
+                    min-width: 0 !important;
+                }
+                div[class*="buttons_"]:has(.vc-user-area-plugin-button) > :not(.vc-user-area-btns):not(style) {
+                    flex-shrink: 0 !important;
+                }
                 div[class*="nameTag_"] {
                     min-width: 0 !important;
                 }

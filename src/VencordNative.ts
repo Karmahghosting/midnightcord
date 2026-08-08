@@ -47,7 +47,6 @@ export default {
         update: () => invoke<IpcRes<boolean>>(IpcEvents.UPDATE),
         rebuild: () => invoke<IpcRes<boolean>>(IpcEvents.BUILD),
         getRepo: () => invoke<IpcRes<string>>(IpcEvents.GET_REPO),
-        downloadAndRun: (url: string) => invoke<boolean>(IpcEvents.MIDNIGHTCORD_DOWNLOAD_AND_RUN, url),
     },
 
     settings: {

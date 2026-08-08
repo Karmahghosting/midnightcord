@@ -15,11 +15,10 @@ import monacoHtml from "file://monacoWin.html?minify&base64";
 import { FSWatcher, mkdirSync, readFileSync, watch, writeFileSync } from "fs";
 import { open, readdir, readFile, unlink } from "fs/promises";
 import { join, normalize } from "path";
-import {domain} from "../../DOMAIN.json";
 
+import { makeLinksOpenExternally } from "../midnightcord/main/utils/makeLinksOpenExternally";
 import { registerCspIpcHandlers } from "./csp/manager";
 import { ALLOWED_PROTOCOLS, DATA_DIR, QUICK_CSS_PATH, SETTINGS_DIR, THEMES_DIR } from "./utils/constants";
-import { makeLinksOpenExternally } from "../midnightcord/main/utils/makeLinksOpenExternally";
 
 const RENDERER_CSS_PATH = join(__dirname, "renderer.css");
 const USERPLUGINS_DIR = join(DATA_DIR, "userplugins");
@@ -42,7 +41,7 @@ export function validateSender(event: any): boolean {
     if (!event || !event.sender) return false;
     const frame = event.senderFrame;
     if (!frame) return false;
-    const url = frame.url;
+    const { url } = frame;
     if (!url) return false;
 
     if (url.startsWith("file://")) {
@@ -66,7 +65,7 @@ export function validateSender(event: any): boolean {
 function verifySignature(filePath: string): Promise<boolean> {
     if (process.platform !== "win32") return Promise.resolve(true);
     const { execFile } = require("child_process");
-    return new Promise<boolean>((resolve) => {
+    return new Promise<boolean>(resolve => {
         execFile("powershell.exe", [
             "-NoProfile",
             "-ExecutionPolicy", "Bypass",
@@ -176,7 +175,7 @@ try { rmSync(tempDir, { recursive: true, force: true }); } catch {}
     });
 }
 
-ipcMain.handle(IpcEvents.WORLD_BOMB_PRESS_ENTER, (event) => {
+ipcMain.handle(IpcEvents.WORLD_BOMB_PRESS_ENTER, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return runPowershellScript(`
         $sig = '[DllImport("user32.dll")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);'
@@ -187,7 +186,7 @@ ipcMain.handle(IpcEvents.WORLD_BOMB_PRESS_ENTER, (event) => {
     `);
 });
 
-ipcMain.handle(IpcEvents.WORLD_BOMB_PRESS_BACKSPACE, (event) => {
+ipcMain.handle(IpcEvents.WORLD_BOMB_PRESS_BACKSPACE, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return runPowershellScript("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('{BACKSPACE}')");
 });
@@ -328,7 +327,7 @@ ipcMain.handle(IpcEvents.WORLD_BOMB_SEQUENCE, async (
         try { rmSync(tempDir, { recursive: true, force: true }); } catch {}
     }
 });
-ipcMain.handle(IpcEvents.WORLD_BOMB_GET_CURSOR_POS, (event) => {
+ipcMain.handle(IpcEvents.WORLD_BOMB_GET_CURSOR_POS, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return screen.getCursorScreenPoint();
 });
@@ -1144,7 +1143,7 @@ ipcMain.handle(IpcEvents.SET_CONTENT_PROTECTION, (event, enabled: boolean) => {
     return false;
 });
 
-ipcMain.handle(IpcEvents.OPEN_QUICKCSS, (event) => {
+ipcMain.handle(IpcEvents.OPEN_QUICKCSS, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return shell.openPath(QUICK_CSS_PATH);
 });
@@ -1162,7 +1161,7 @@ ipcMain.handle(IpcEvents.OPEN_EXTERNAL, (event, url) => {
     shell.openExternal(url);
 });
 
-ipcMain.handle(IpcEvents.GET_QUICK_CSS, (event) => {
+ipcMain.handle(IpcEvents.GET_QUICK_CSS, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return readCss();
 });
@@ -1171,11 +1170,11 @@ ipcMain.handle(IpcEvents.SET_QUICK_CSS, (event, css) => {
     return writeFileSync(QUICK_CSS_PATH, css);
 });
 
-ipcMain.handle(IpcEvents.GET_THEMES_DIR, (event) => {
+ipcMain.handle(IpcEvents.GET_THEMES_DIR, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return THEMES_DIR;
 });
-ipcMain.handle(IpcEvents.GET_THEMES_LIST, (event) => {
+ipcMain.handle(IpcEvents.GET_THEMES_LIST, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return listThemes();
 });
@@ -1189,7 +1188,7 @@ ipcMain.handle(IpcEvents.DELETE_THEME, (event, fileName) => {
     if (!safePath) return Promise.reject(`Unsafe path ${fileName}`);
     return unlink(safePath);
 });
-ipcMain.handle(IpcEvents.GET_THEME_SYSTEM_VALUES, (event) => {
+ipcMain.handle(IpcEvents.GET_THEME_SYSTEM_VALUES, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     let accentColor = systemPreferences.getAccentColor?.() ?? "";
 
@@ -1202,16 +1201,16 @@ ipcMain.handle(IpcEvents.GET_THEME_SYSTEM_VALUES, (event) => {
     };
 });
 
-ipcMain.handle(IpcEvents.OPEN_THEMES_FOLDER, (event) => {
+ipcMain.handle(IpcEvents.OPEN_THEMES_FOLDER, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return shell.openPath(THEMES_DIR);
 });
-ipcMain.handle(IpcEvents.OPEN_SETTINGS_FOLDER, (event) => {
+ipcMain.handle(IpcEvents.OPEN_SETTINGS_FOLDER, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return shell.openPath(SETTINGS_DIR);
 });
 
-ipcMain.handle(IpcEvents.INIT_FILE_WATCHERS, (event) => {
+ipcMain.handle(IpcEvents.INIT_FILE_WATCHERS, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     const { sender } = event;
     let quickCssWatcher: FSWatcher | undefined;
@@ -1245,7 +1244,7 @@ ipcMain.on(IpcEvents.GET_MONACO_THEME, e => {
     e.returnValue = nativeTheme.shouldUseDarkColors ? "vs-dark" : "vs-light";
 });
 
-ipcMain.handle(IpcEvents.GET_DESKTOP_SOURCES, async (event) => {
+ipcMain.handle(IpcEvents.GET_DESKTOP_SOURCES, async event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     try {
         const sources = await desktopCapturer.getSources({
@@ -1260,7 +1259,7 @@ ipcMain.handle(IpcEvents.GET_DESKTOP_SOURCES, async (event) => {
 
 let monacoWin: BrowserWindow | null = null;
 
-ipcMain.handle(IpcEvents.OPEN_MONACO_EDITOR, async (event) => {
+ipcMain.handle(IpcEvents.OPEN_MONACO_EDITOR, async event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     if (monacoWin && !monacoWin.isDestroyed()) {
         monacoWin.show();
@@ -1313,7 +1312,7 @@ app.on("before-quit", async event => {
     }
 });
 
-ipcMain.handle(IpcEvents.GET_RENDERER_CSS, (event) => {
+ipcMain.handle(IpcEvents.GET_RENDERER_CSS, event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     return readFile(RENDERER_CSS_PATH, "utf-8");
 });
@@ -1408,7 +1407,7 @@ if (IS_DISCORD_DESKTOP) {
 }
 
 try { ipcMain.removeHandler(IpcEvents.RELAUNCH_APP); } catch {}
-ipcMain.handle(IpcEvents.RELAUNCH_APP, async (event) => {
+ipcMain.handle(IpcEvents.RELAUNCH_APP, async event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
 
     if (process.platform === "win32") {
@@ -1424,67 +1423,7 @@ ipcMain.handle(IpcEvents.RELAUNCH_APP, async (event) => {
     app.exit(0);
 });
 
-const OFFICIAL_UPDATE_URL = `https://git.${domain}/nightcord/nightcord/releases/download/latest/Midnightcord-Installer.exe`;
-
-ipcMain.handle(IpcEvents.MIDNIGHTCORD_DOWNLOAD_AND_RUN, async (event, url: string) => {
-    if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
-    if (url !== OFFICIAL_UPDATE_URL) {
-        throw new Error("Unauthorized update URL");
-    }
-
-    const https = require("https");
-    const os = require("os");
-    const path = require("path");
-    const fs = require("original-fs");
-    const crypto = require("crypto");
-
-    const tmpPath = path.join(os.tmpdir(), "MidnightcordUpdate-Setup.exe");
-
-    await new Promise<void>((resolve, reject) => {
-        https.get(url, (res: any) => {
-            if (res.statusCode !== 200) {
-                res.resume();
-                reject(new Error(`HTTP ${res.statusCode}`));
-                return;
-            }
-            const file = fs.createWriteStream(tmpPath);
-            res.pipe(file);
-            file.on("finish", () => file.close(() => resolve()));
-            file.on("error", (err: any) => { fs.unlink(tmpPath, () => { }); reject(err); });
-            res.on("error", (err: any) => { fs.unlink(tmpPath, () => { }); reject(err); });
-        }).on("error", (err: any) => {
-            fs.unlink(tmpPath, () => { });
-            reject(err);
-        });
-    });
-
-    const isSigned = await verifySignature(tmpPath);
-    if (!isSigned) {
-        try { fs.unlinkSync(tmpPath); } catch {}
-        throw new Error("Signature validation failed for the downloaded update file.");
-    }
-
-    const { response } = await dialog.showMessageBox({
-        type: "info",
-        buttons: ["Install update", "Cancel"],
-        defaultId: 0,
-        title: "Midnightcord Update",
-        message: "A Midnightcord update is available.",
-        detail: "Do you want to install the update now?"
-    });
-    if (response === 1) return false;
-
-    const { spawn } = require("child_process");
-    const child = spawn(tmpPath, [], {
-        detached: true,
-        stdio: "ignore"
-    });
-    child.unref();
-
-    return true;
-});
-
-ipcMain.handle(IpcEvents.CHECK_VB_CABLE, async (event) => {
+ipcMain.handle(IpcEvents.CHECK_VB_CABLE, async event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     if (process.platform !== "win32") return { installed: false };
     const { existsSync } = require("fs");
@@ -1494,7 +1433,7 @@ ipcMain.handle(IpcEvents.CHECK_VB_CABLE, async (event) => {
     return { installed: existsSync(p1) || existsSync(p2) };
 });
 
-ipcMain.handle(IpcEvents.INSTALL_VB_CABLE, async (event) => {
+ipcMain.handle(IpcEvents.INSTALL_VB_CABLE, async event => {
     if (!validateSender(event)) throw new Error("Unauthorized IPC invocation");
     if (process.platform !== "win32") return { success: false, error: "Windows only" };
 
@@ -1567,4 +1506,3 @@ ipcMain.handle(IpcEvents.INSTALL_VB_CABLE, async (event) => {
         try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
     }
 });
-

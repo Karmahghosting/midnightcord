@@ -1,14 +1,15 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
-import { findByPropsLazy } from "@webpack";
 import definePlugin from "@utils/types";
-import { ChannelStore, ContextMenuApi, FluxDispatcher, Menu, React, SelectedChannelStore, VoiceActions, MediaEngineStore, UserStore } from "@webpack/common";
+import { findByPropsLazy } from "@webpack";
+import { ChannelStore, ContextMenuApi, FluxDispatcher, MediaEngineStore, Menu, React, SelectedChannelStore, UserStore } from "@webpack/common";
+
 import { t } from "../autoTranslateMidnightcord";
 
 let isGhostActive = false;
@@ -158,7 +159,7 @@ function FakeDeafenUserButton({ iconForeground, hideTooltips, nameplate }: UserA
 
 export default definePlugin({
     name: "FakeVoice",
-    enabledByDefault: true,
+    enabledByDefault: false,
     description: "Appear muted or deaf while listening. By mushzi.",
     authors: [{ name: "mushzi",
      id: 449282863582412850n }],

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { t } from "@api/i18n";
 import { Button } from "@components/Button";
 import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
@@ -14,12 +15,8 @@ import { Paragraph } from "@components/Paragraph";
 import { SettingsTab, wrapTab } from "@components/settings";
 import { Span } from "@components/Span";
 import { Margins } from "@utils/margins";
-import { relaunch } from "@utils/native";
 import { changes, checkForUpdates, rebuild, update, UpdateLogger } from "@utils/updater";
-import { React, useState } from "@webpack/common";
-import { Toasts } from "@webpack/common";
-import { t } from "@api/i18n";
-import {domain} from "../../../../../DOMAIN.json";
+import { React, Toasts, useState } from "@webpack/common";
 
 // Version locale depuis package.json (injectée au build)
 declare const VERSION: string;
@@ -27,7 +24,6 @@ declare const VERSION: string;
 function UpdaterTab() {
     const [checking, setChecking] = useState(false);
     const [downloading, setDownloading] = useState(false);
-    const [launching, setLaunching] = useState(false);
     const [checked, setChecked] = useState(false);
     const [outdated, setOutdated] = useState(false);
     const [updateList, setUpdateList] = useState(changes ?? []);
@@ -58,7 +54,7 @@ function UpdaterTab() {
                 detail = detail.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
                 if (detail.length > 300) detail = detail.substring(0, 300) + "…";
             }
-            setError(t("Check for Updates") + " — " + (detail ?? "Please check your connection."));
+            setError(t("Check for Updates") + ": " + (detail ?? "Please check your connection."));
         } finally {
             setChecking(false);
         }
@@ -68,20 +64,18 @@ function UpdaterTab() {
         setDownloading(true);
         setError(null);
         try {
-            // Update & build triggers our new ASAR overwrite
+            // Download and verify now. The loader applies it on the next normal launch.
             await update();
             await rebuild();
 
             Toasts.show({
-                message: "Update successful! Restarting...",
+                message: "Update ready. It will be applied on the next launch.",
                 id: Toasts.genId(),
                 type: Toasts.Type.SUCCESS,
                 options: { position: Toasts.Position.BOTTOM }
             });
-
-            setTimeout(() => {
-                relaunch();
-            }, 1500);
+            setOutdated(false);
+            setDownloading(false);
         } catch (e: any) {
             UpdateLogger.error(e);
             setError("Update failed: " + e.message);
@@ -110,8 +104,8 @@ function UpdaterTab() {
                     <div>
                         <Span size="sm" color="text-subtle">{t("Website")}</Span>
                         <div>
-                            <Link href={`https://${domain}`} style={{ fontSize: 13 }}>
-                                {domain}
+                            <Link href="https://github.com/Karmahghosting/midnightcord" style={{ fontSize: 13 }}>
+                                GitHub
                             </Link>
                         </div>
                     </div>
@@ -157,7 +151,7 @@ function UpdaterTab() {
                         onClick={handleUpdate}
                         disabled={downloading}
                     >
-                        {downloading ? "Installing..." : "🚀 Update Now (Automatic)"}
+                        {downloading ? "Preparing..." : "Prepare Update"}
                     </Button>
                 )}
             </Flex>
@@ -165,7 +159,7 @@ function UpdaterTab() {
             <Divider className={Margins.top20} />
 
             <Paragraph className={Margins.top16} style={{ fontSize: 12, opacity: 0.6 }}>
-                {t('Clicking "Update Now" will automatically download the latest version and restart your client.')}
+                {t("The verified update is applied on your next normal Discord launch.")}
             </Paragraph>
         </SettingsTab>
     );

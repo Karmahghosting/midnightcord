@@ -1,5 +1,5 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -8,19 +8,20 @@ import "./styles.css";
 
 import { HeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
+import { isPluginEnabled } from "@api/PluginManager";
+import { definePluginSettings } from "@api/Settings";
+import { SafeSearchableSelect } from "@components/SafeSearchableSelect";
+import { Switch } from "@components/Switch";
+import { SafeDynamicIsland } from "@midnightcordplugins/DynamicIslande";
 import { EquicordDevs } from "@utils/constants";
 import { ModalRoot, ModalSize, openModal } from "@utils/modal";
-import { definePluginSettings } from "@api/Settings";
 import definePlugin, { IconComponent, OptionType, PluginNative } from "@utils/types";
 import { findStoreLazy } from "@webpack";
-import { ApplicationAssetUtils, FluxDispatcher, MediaEngineStore, React, UserStore, useEffect, useRef, useState } from "@webpack/common";
-import { isPluginEnabled } from "@api/PluginManager";
-import { SafeDynamicIsland } from "@midnightcordplugins/DynamicIslande";
-import { t } from "../autoTranslateMidnightcord";
-import { Switch } from "@components/Switch";
-import { SafeSearchableSelect } from "@components/SafeSearchableSelect";
+import { ApplicationAssetUtils, FluxDispatcher, MediaEngineStore, React, useEffect, useRef, UserStore, useState } from "@webpack/common";
+
 import { getStoredToken } from "../../api/OAuth2";
-import { saveOwnPluginConfig, getPublicPluginConfig } from "../../api/PluginSync";
+import { getPublicPluginConfig, saveOwnPluginConfig } from "../../api/PluginSync";
+import { t } from "../autoTranslateMidnightcord";
 
 // ─── Native (IPC → main process) ─────────────────────────────────────────────
 
@@ -176,8 +177,6 @@ async function searchTracks(query: string, clientId: string): Promise<ScTrack[]>
     return parseTracks(JSON.parse(json));
 }
 
-
-
 async function getStreamUrl(track: ScTrack, clientId: string): Promise<string> {
     const { streamUrl, snipped, source } = track;
     if (!streamUrl) throw new Error("Stream URL not found");
@@ -258,7 +257,7 @@ async function playTrackById(trackId: string, startParam?: string) {
         if (!json) throw new Error("Track not found");
         const tracks = parseTracks({ collection: [JSON.parse(json)] });
         if (tracks.length === 0) throw new Error("Invalid track data");
-        
+
         let seekPos = 0;
         if (startParam) {
             const startTime = Number(startParam);
@@ -311,8 +310,8 @@ export const playerState = {
     audio: null as HTMLAudioElement | null,
     listeners: new Set<PlayerListener>(),
 
-    notify() { 
-        this.listeners.forEach(l => l()); 
+    notify() {
+        this.listeners.forEach(l => l());
         try {
             FluxDispatcher.dispatch({
                 type: "SOUNDCORD_STATE_UPDATE",
@@ -869,7 +868,6 @@ function SCHeaderBarButton() {
     );
 }
 
-
 const UserStore = findStoreLazy("UserStore");
 
 let lastSyncTime = 0;
@@ -897,7 +895,7 @@ async function syncPlayerStateToCloud() {
         const elapsed = Math.floor(p.position * 1000);
         const start = now - elapsed;
 
-        const shouldSync = 
+        const shouldSync =
             p.playing.id !== lastSyncTrackId ||
             p.isPlaying !== lastSyncIsPlaying ||
             Math.abs(now - lastSyncTime) > 10000;
@@ -1002,9 +1000,9 @@ async function _doUpdateRichPresence() {
                 type: 2, // LISTENING
                 timestamps: duration > 0 ? { start, end } : { start },
                 assets,
-                buttons: ["Download"],
+                buttons: ["Open on SoundCloud"],
                 metadata: {
-                    button_urls: ["https://nightcord.st"],
+                    button_urls: [p.playing.externalUrl || "https://soundcloud.com"],
                 },
                 flags: 1,
             }
@@ -1044,7 +1042,7 @@ function findUrlInReactFiber(element: HTMLElement | null): string | null {
                     // Check activity card button_urls (Discord RPC buttons)
                     if (Array.isArray(props.activity?.metadata?.button_urls)) {
                         for (const u of props.activity.metadata.button_urls) {
-                            if (typeof u === "string" && u.includes("nightcord.st/listen")) return u;
+                            if (typeof u === "string" && u.includes("midnightcord://listen")) return u;
                         }
                     }
                 }
@@ -1148,7 +1146,7 @@ export default definePlugin({
     description: "Integrated SoundCord player. Client ID is automatically fetched via native Electron process — no account required.",
     authors: [EquicordDevs.nobody],
     settings,
-    
+
     toolboxActions: {
         "Open SoundCord"() {
             openModal(props => (
@@ -1161,7 +1159,7 @@ export default definePlugin({
 
     headerBarButton: {
         icon: SoundCloudIconComponent,
-        render: (props) => {
+        render: props => {
             // DynamicIslande acts as the primary host. If it's disabled, we render our standalone version for SoundCord.
             const isFullIslandEnabled = isPluginEnabled("DynamicIslande");
             const enableIsland = settings.use(["enableDynamicIsland"]).enableDynamicIsland ?? true;
@@ -1198,7 +1196,7 @@ export default definePlugin({
                 if (fiberHref) href = fiberHref;
             }
 
-            if (href && href.includes("nightcord.st/listen?")) {
+            if (href && href.includes("midnightcord://listen?")) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();

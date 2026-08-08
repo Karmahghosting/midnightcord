@@ -729,7 +729,7 @@ function ThemesTab() {
             />
 
             <Notice.Info className={Margins.bottom16} style={{ width: "100%" }}>
-                {t("Looking for themes? Check out")} <Link href="https://nightcord.st/themes">{t("NightCord Themes")}</Link> {t("or search on")} <Link href="https://github.com/search?q=discord+theme">GitHub</Link>. {t("When downloading from BetterDiscord, click \"Download\" and place the .theme.css file into your themes folder.")}
+                {t("Looking for themes? Check out")} <Link href="https://betterdiscord.app/themes">{t("BetterDiscord Themes")}</Link> {t("or search on")} <Link href="https://github.com/search?q=discord+theme">GitHub</Link>. {t("When downloading from BetterDiscord, click \"Download\" and place the .theme.css file into your themes folder.")}
             </Notice.Info>
 
             <div className={cl("link-row")}>
@@ -943,4 +943,3 @@ function UserscriptThemesTab() {
 export default IS_USERSCRIPT
     ? wrapTab(UserscriptThemesTab, "Themes")
     : wrapTab(ThemesTab, "Themes");
-

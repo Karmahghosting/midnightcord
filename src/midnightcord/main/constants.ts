@@ -9,7 +9,6 @@ import { existsSync, mkdirSync } from "fs";
 import { dirname, join } from "path";
 
 import { CommandLine } from "./cli";
-import { domain } from "../../../DOMAIN.json";
 
 const MidnightcordDir = dirname(process.execPath);
 
@@ -32,7 +31,7 @@ export const VENCORD_QUICKCSS_FILE = join(VENCORD_SETTINGS_DIR, "quickCss.css");
 export const VENCORD_SETTINGS_FILE = join(VENCORD_SETTINGS_DIR, "settings.json");
 export const VENCORD_THEMES_DIR = join(DATA_DIR, "themes");
 
-export const USER_AGENT = `Midnightcord/${app.getVersion()} (https://git.${domain}/nightcord/nightcord)`;
+export const USER_AGENT = `Midnightcord/${app.getVersion()} (https://github.com/Karmahghosting/midnightcord)`;
 
 // dimensions shamelessly stolen from Discord Desktop :3
 export const MIN_WIDTH = 940;
@@ -63,4 +62,3 @@ export const IS_FLATPAK = process.env.FLATPAK_ID !== undefined;
 export const isWayland =
     process.platform === "linux" && (process.env.XDG_SESSION_TYPE === "wayland" || !!process.env.WAYLAND_DISPLAY);
 export const isLinux = process.platform === "linux";
-

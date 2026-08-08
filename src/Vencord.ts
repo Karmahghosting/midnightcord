@@ -100,7 +100,7 @@ import { popNotice, showNotice } from "./api/Notices";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings } from "./api/Settings";
 import { relaunch } from "./utils/native";
-import { checkForUpdates, isOutdated as getIsOutdated, update, UpdateLogger } from "./utils/updater";
+import { checkForUpdates, isOutdated as getIsOutdated, stageAutomaticUpdate, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
 import { patches } from "./webpack/patchWebpack";
 
@@ -143,6 +143,8 @@ async function init() {
     await onceReady;
 
     startAllPlugins(StartAt.WebpackReady);
+
+    setTimeout(() => void stageAutomaticUpdate(), 15_000);
 
     initTrayIpc();
 

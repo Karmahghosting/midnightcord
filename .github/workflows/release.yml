@@ -85,6 +85,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install RPM tools
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
       - name: Build Linux standalone packages
         run: pnpm package:linux:x64
 
@@ -95,7 +98,43 @@ jobs:
           path: |
             release/*.AppImage
             release/*.deb
+            release/*.rpm
+            release/*.yml
+            release/*.blockmap
             release/*.tar.gz
+          if-no-files-found: error
+
+  update-payload:
+    name: Native update payload
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build update payload
+        run: pnpm package:update
+
+      - name: Verify privacy
+        run: pnpm test:privacy
+
+      - name: Upload update payload
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-update-payload
+          path: release/update/*
           if-no-files-found: error
 
   publish:
@@ -103,6 +142,7 @@ jobs:
     needs:
       - native
       - linux-standalone
+      - update-payload
     runs-on: ubuntu-latest
 
     steps:

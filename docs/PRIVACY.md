@@ -8,7 +8,15 @@ La version native de Midnightcord fonctionne sans compte cloud Midnightcord et s
 - Authentification OAuth et stockage distant des profils, badges et votes de plugins
 - Mellowtel et tout partage de bande passante
 - Fil Midnightcord distant interrogé en arrière-plan
-- Recherche et téléchargement automatiques des mises à jour dans les archives natives
+- Ancien système de mise à jour Nightcord et téléchargement d’exécutables depuis ses serveurs
+
+## Mises à jour GitHub
+
+L’auto-update natif contacte uniquement `api.github.com` et `github.com/Karmahghosting/midnightcord`. La requête contient un User-Agent avec la version Midnightcord. Aucun réglage, compte Discord, message, salon ou identifiant utilisateur n’est envoyé.
+
+Le payload est limité au build compilé, contrôlé par SHA256, extrait avec protection contre les traversées de chemins puis appliqué atomiquement au lancement suivant. L’option `disableAutoUpdate` permet de désactiver la vérification.
+
+Un dépôt privé nécessite la variable locale `MIDNIGHTCORD_GITHUB_TOKEN`. Le token n’est jamais embarqué dans les builds ni enregistré par Midnightcord.
 
 Les réglages de badges sont conservés uniquement dans le stockage local de Discord. Le transfert entre machines passe par l’export et l’import manuels dans `Backup & Restore`.
 

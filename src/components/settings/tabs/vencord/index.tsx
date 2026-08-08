@@ -153,7 +153,7 @@ function DevTeamSection() {
                 <QuickAction
                     Icon={GithubIcon}
                     text="Source Code"
-                    action={() => (typeof VencordNative !== "undefined" && VencordNative?.native?.openExternal) ? VencordNative.native.openExternal("https://source.nightcord.st/nightcord/nightcord") : window.open("https://source.nightcord.st/nightcord/nightcord", "_blank")}
+                    action={() => (typeof VencordNative !== "undefined" && VencordNative?.native?.openExternal) ? VencordNative.native.openExternal("https://github.com/Karmahghosting/midnightcord") : window.open("https://github.com/Karmahghosting/midnightcord", "_blank")}
                 />
                 <QuickAction
                     Icon={PaintbrushIcon}

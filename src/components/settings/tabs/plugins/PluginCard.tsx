@@ -4,30 +4,29 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { detailedPluginDescriptions } from "@api/detailedPluginDescriptions";
+import { t } from "@api/i18n";
 import { showNotice } from "@api/Notices";
-import { isPluginEnabled, pluginRequiresRestart, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
-import { fetchPluginRatings, togglePluginLike, PluginLikeData } from "@api/PluginLikes";
-import { LIKE_AUTH_EVENT } from "@api/PluginLikesAuth";
 import { getStoredToken } from "@api/OAuth2";
-import { CogWheel, InfoIcon } from "@components/Icons";
+import { tPlugin } from "@api/pluginI18n";
+import { fetchPluginRatings, PluginLikeData,togglePluginLike } from "@api/PluginLikes";
+import { LIKE_AUTH_EVENT } from "@api/PluginLikesAuth";
+import { isPluginEnabled, pluginRequiresRestart, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
+import { Button } from "@components/Button";
+import { HeadingPrimary } from "@components/Heading";
+import { CogWheel } from "@components/Icons";
 import { AddonCard } from "@components/settings/AddonCard";
 import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, ModalSize,openModal } from "@utils/modal";
 import { OptionType, Plugin } from "@utils/types";
-import { HeadingPrimary } from "@components/Heading";
-import { Button } from "@components/Button";
 import { React, showToast, Text, Toasts, Tooltip, UserStore } from "@webpack/common";
 import { Settings } from "Vencord";
-import {domain} from "../../../../../DOMAIN.json";
-import { t } from "@api/i18n";
-import { tPlugin } from "@api/pluginI18n";
-import { detailedPluginDescriptions } from "@api/detailedPluginDescriptions";
 
-import { TUTORIAL_CACHE } from "./components/Common";
-import { openPluginModal } from "./PluginModal";
-import { getTutorialVideoName, TUTORIAL_PLUGIN_NAMES } from "./tutorialList";
 import { PluginMeta } from "~plugins";
+
+import { openPluginModal } from "./PluginModal";
+import { getTutorialVideoName } from "./tutorialList";
 
 export function removeEmojis(text: string): string {
     if (!text) return "";
@@ -181,7 +180,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         // through the mapping instead of assuming they are identical. Also always
         // URL-encode the segment since some filenames contain spaces (e.g. "Fake Voice Option.mp4").
         const videoName = getTutorialVideoName(plugin.name) ?? plugin.name;
-        const videoUrl = `https://git.${domain}/nightcord/nightcord-tutorials/raw/branch/main/videos/${encodeURIComponent(videoName)}.mp4`;
+        const videoUrl = `https://raw.githubusercontent.com/Karmahghosting/midnightcord/main/tutorials/${encodeURIComponent(videoName)}.mp4`;
         openModal(props => (
             <ModalRoot {...props} size={ModalSize.DYNAMIC} className="nc-tutorial-modal">
                 <ModalHeader separator={false}>
@@ -281,8 +280,8 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
 
     const openInfoModal = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const rawDesc = plugin.detailedDescription 
-            ? tPlugin(plugin.detailedDescription) 
+        const rawDesc = plugin.detailedDescription
+            ? tPlugin(plugin.detailedDescription)
             : (detailedPluginDescriptions[plugin.name] ? tPlugin(detailedPluginDescriptions[plugin.name]) : tPlugin(plugin.description));
         const cleanDesc = removeEmojis(rawDesc);
 
@@ -341,8 +340,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
                 </ModalHeader>
                 <ModalContent style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" } as any}>
                     {isMidnightcord ? (
-                        <a href="https://source.nightcord.st/nightcord/nightcord" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none", color: "var(--text-normal)", fontSize: "20px", fontWeight: 600 }}>
-                            <img src="https://source.nightcord.st/assets/img/logo.svg" alt="Midnightcord" style={{ width: 64, height: 64, borderRadius: "50%" }} />
+                        <a href="https://github.com/Karmahghosting/midnightcord" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none", color: "var(--text-normal)", fontSize: "20px", fontWeight: 600 }}>
                             Midnightcord
                         </a>
                     ) : (
@@ -363,10 +361,10 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
     }
 
     const hasSettings = !!plugin.settingsAboutComponent || (plugin.settings?.def && Object.values(plugin.settings.def).some(s => s.type !== OptionType.CUSTOM && !s.hidden));
-    
-    const PluginIcon = plugin.headerBarButton?.icon || 
-                       plugin.chatBarButton?.icon || 
-                       plugin.messagePopoverButton?.icon || 
+
+    const PluginIcon = plugin.headerBarButton?.icon ||
+                       plugin.chatBarButton?.icon ||
+                       plugin.messagePopoverButton?.icon ||
                        plugin.userAreaButton?.icon;
 
     return (

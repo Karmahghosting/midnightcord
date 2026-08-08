@@ -46,9 +46,11 @@ Si un autre chargeur est détecté, l’installation s’arrête sans l’écras
 
 ## Mise à jour
 
-Téléchargez une nouvelle archive et relancez son script d’installation. Le build installé et le chargeur sont remplacés proprement.
+Le build natif vérifie automatiquement la dernière release GitHub. Lorsqu’une version plus récente existe, il télécharge le payload compilé et sa somme SHA256. L’archive est vérifiée, extraite dans un dossier temporaire puis appliquée atomiquement au prochain lancement de Discord avec rollback en cas d’échec.
 
-Une mise à jour de Discord peut créer un nouveau dossier de version. Relancez simplement l’installation Midnightcord après la mise à jour.
+La mise à jour ne coupe pas la vocal active. Elle attend le prochain redémarrage normal. L’option `disableAutoUpdate` désactive cette fonction.
+
+Une mise à jour de Discord peut créer un nouveau dossier de version. Relancez le script d’installation afin d’injecter le chargeur dans ce nouveau dossier.
 
 ## Désinstallation
 

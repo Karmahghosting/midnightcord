@@ -4,6 +4,7 @@
  */
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
     existsSync,
     mkdirSync,
@@ -19,7 +20,9 @@ import {
     findDiscordResources,
     injectResource,
     installDistribution,
+    installLinuxDesktopEntry,
     isMidnightcordLoader,
+    removeLinuxDesktopEntry,
     uninjectResource
 } from "./nativeInjection.mjs";
 
@@ -39,6 +42,24 @@ try {
     assert.equal(readFileSync(join(resources, "_app.asar"), "utf8"), "official-discord");
     assert.equal(isMidnightcordLoader(join(resources, "app")), true);
     assert.equal(injectResource(resources, patcher), "unchanged");
+
+    const stagedUpdate = join(root, "staged-update");
+    const updateSignal = join(root, "update-applied.txt");
+    mkdirSync(stagedUpdate, { recursive: true });
+    writeFileSync(join(stagedUpdate, "patcher.js"), `require("node:fs").writeFileSync(${JSON.stringify(updateSignal)}, "updated");\n`);
+    writeFileSync(join(root, "build", "midnightcord-pending-update.json"), JSON.stringify({
+        version: "v9.9.9",
+        stagingDir: stagedUpdate,
+        destDir: join(root, "build"),
+        createdAt: Date.now()
+    }));
+
+    const loaderRun = spawnSync(process.execPath, [join(resources, "app", "index.js")], { encoding: "utf8" });
+    assert.equal(loaderRun.status, 0, loaderRun.stderr);
+    assert.equal(readFileSync(updateSignal, "utf8"), "updated");
+    assert.equal(existsSync(stagedUpdate), false);
+    assert.equal(existsSync(join(root, "build.previous")), false);
+    assert.equal(existsSync(join(root, "build", "midnightcord-pending-update.json")), false);
 
     assert.equal(uninjectResource(resources), "restored");
     assert.equal(readFileSync(join(resources, "app.asar"), "utf8"), "official-discord");
@@ -91,6 +112,24 @@ try {
     assert.equal(installDistribution(sourceDist, { target: installedDist }), installedDist);
     assert.equal(readFileSync(join(installedDist, "patcher.js"), "utf8"), "patcher");
     assert.equal(existsSync(join(installedDist, "patcher.js.map")), false);
+
+    const kdeHome = join(root, "kde-home");
+    const iconSource = join(root, "icon.png");
+    writeFileSync(iconSource, "icon");
+    const desktopEntry = installLinuxDesktopEntry({
+        platform: "linux",
+        home: kdeHome,
+        env: {},
+        channel: "stable",
+        iconSource
+    });
+    const desktopContent = readFileSync(desktopEntry, "utf8");
+    assert.match(desktopContent, /Exec=discord --ozone-platform=auto %U/);
+    assert.match(desktopContent, /StartupWMClass=discord/);
+    assert.match(desktopContent, /X-Midnightcord-Native=true/);
+    removeLinuxDesktopEntry({ platform: "linux", home: kdeHome, env: {}, purgeIcon: true });
+    assert.equal(existsSync(desktopEntry), false);
+    assert.equal(existsSync(join(kdeHome, ".local", "share", "icons", "hicolor", "256x256", "apps", "midnightcord.png")), false);
 
     console.log("[test] Native injection tests passed.");
 } finally {

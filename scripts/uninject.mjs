@@ -9,6 +9,7 @@ import {
     DISCORD_CHANNELS,
     findDiscordResources,
     removeInstalledDistribution,
+    removeLinuxDesktopEntry,
     uninjectResource
 } from "./nativeInjection.mjs";
 
@@ -80,6 +81,10 @@ for (const target of targets) {
         failures++;
         console.error("[Midnightcord] " + target.channel + ": " + error.message);
     }
+}
+
+if (failures === 0 && restored > 0 && process.platform === "linux") {
+    removeLinuxDesktopEntry({ purgeIcon: args.includes("--purge") });
 }
 
 if (args.includes("--purge") && failures === 0 && restored > 0) {

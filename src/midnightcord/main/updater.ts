@@ -5,8 +5,8 @@
  */
 
 import { app, BrowserWindow, ipcMain } from "electron";
-import { join } from "path";
 import { autoUpdater, UpdateInfo } from "electron-updater";
+import { join } from "path";
 import { IpcEvents, UpdaterIpcEvents } from "shared/IpcEvents";
 import { STATIC_DIR } from "shared/paths";
 import { Millis } from "shared/utils/millis";
@@ -16,10 +16,8 @@ import { handle } from "./utils/ipcWrappers";
 import { makeLinksOpenExternally } from "./utils/makeLinksOpenExternally";
 import { loadView } from "./vesktopStatic";
 
-// Fork builds have no implicit update server. A publisher can opt in with a
-// generic electron-updater feed without changing the source tree.
-const UPDATE_URL = process.env.MIDNIGHTCORD_UPDATE_URL?.trim();
-const updatesEnabled = app.isPackaged && Boolean(UPDATE_URL);
+const REPOSITORY = { owner: "Karmahghosting", repo: "midnightcord" } as const;
+const updatesEnabled = app.isPackaged;
 const MIDNIGHTCORD_PREFS = { defaultPlugins: true, autoUpdate: updatesEnabled } as const;
 
 export const installerPrefs = MIDNIGHTCORD_PREFS;
@@ -29,7 +27,9 @@ handle(IpcEvents.GET_INSTALLER_PREFS, () => MIDNIGHTCORD_PREFS);
 let updaterWindow: BrowserWindow | null = null;
 
 if (updatesEnabled) {
-    autoUpdater.setFeedURL({ provider: "generic", url: UPDATE_URL! });
+    autoUpdater.setFeedURL({ provider: "github", ...REPOSITORY });
+    const token = process.env.MIDNIGHTCORD_GITHUB_TOKEN?.trim();
+    if (token) autoUpdater.requestHeaders = { Authorization: `Bearer ${token}` };
 }
 
 autoUpdater.on("update-available", update => {
@@ -53,6 +53,8 @@ autoUpdater.on("error", err => updaterWindow?.webContents.send(UpdaterIpcEvents.
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 autoUpdater.fullChangelog = true;
+autoUpdater.allowPrerelease = false;
+autoUpdater.allowDowngrade = false;
 
 const isOutdated: Promise<boolean> = !updatesEnabled ? Promise.resolve(false) : new Promise(resolve => {
     app.whenReady().then(() => {

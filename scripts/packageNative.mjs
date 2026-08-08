@@ -46,6 +46,7 @@ const scriptsDir = join(bundleDir, "scripts");
 mkdirSync(outputDir, { recursive: true });
 mkdirSync(runtimeDir, { recursive: true });
 mkdirSync(scriptsDir, { recursive: true });
+mkdirSync(join(bundleDir, "assets"), { recursive: true });
 
 try {
     cpSync(sourceDist, join(bundleDir, "dist", "desktop"), {
@@ -65,6 +66,7 @@ try {
     ]) {
         cpSync(join(rootDir, "scripts", filename), join(scriptsDir, filename));
     }
+    cpSync(join(rootDir, "static", "icon.png"), join(bundleDir, "assets", "icon.png"));
     cpSync(join(rootDir, "LICENSE"), join(bundleDir, "LICENSE"));
 
     const runtimeName = process.platform === "win32" ? "node.exe" : "node";

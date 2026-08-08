@@ -14,7 +14,7 @@
 
 Midnightcord injecte son interface et ses plugins dans l’application Discord officielle. Le moteur vocal natif de Discord reste actif, ce qui évite le blocage DTLS observé avec certains clients Electron autonomes.
 
-Le projet dérive de [Nightcord](https://source.nightcord.st/nightcord/nightcord), Equicord, Vesktop et Vencord.
+Le projet dérive de Nightcord, Equicord, Vesktop et Vencord.
 
 ## Installation recommandée
 
@@ -43,12 +43,12 @@ Le paquet natif du système courant est créé dans release/native/.
 
 Pour un build de développement injecté directement depuis le dépôt :
 
-    corepack pnpm build --standalone --disable-updater
+    corepack pnpm build --standalone
     corepack pnpm run inject
 
 ## Paquets Linux autonomes
 
-Les sorties AppImage, Debian et tar.gz restent disponibles avec corepack pnpm package:linux:x64. Elles utilisent WebRTC au lieu du moteur vocal Discord. Le mode natif est recommandé pour la voix.
+Les sorties AppImage, Debian, RPM et tar.gz restent disponibles avec corepack pnpm package:linux:x64. Elles utilisent WebRTC au lieu du moteur vocal Discord. Le mode natif est recommandé pour la voix.
 
 ## Performances
 
@@ -58,11 +58,13 @@ Les builds de production sont minifiés, sans obfuscation et sans source maps da
 
 Les releases natives ne contiennent ni synchronisation cloud Midnightcord, ni Mellowtel, ni interrogation automatique du fil Midnightcord. Les profils, badges et préférences restent locaux. `NoTrack` bloque les Analytics, les métriques et Sentry de Discord.
 
+La seule vérification automatique intégrée contacte les releases GitHub Midnightcord. Elle télécharge un payload vérifié par SHA256 et l’applique au prochain lancement.
+
 Les plugins optionnels qui utilisent un service externe restent sous le contrôle de l’utilisateur. Consultez [la documentation de confidentialité](./docs/PRIVACY.md) pour le détail.
 
 ## Crédits
 
-Midnightcord dérive de [Nightcord](https://source.nightcord.st/nightcord/nightcord), [Equicord](https://github.com/Equicord/Equicord), [Vesktop](https://github.com/Vencord/Vesktop) et [Vencord](https://github.com/Vendicated/Vencord). Leurs auteurs et contributeurs conservent leurs crédits et droits respectifs.
+Midnightcord dérive de Nightcord, [Equicord](https://github.com/Equicord/Equicord), [Vesktop](https://github.com/Vencord/Vesktop) et [Vencord](https://github.com/Vendicated/Vencord). Leurs auteurs et contributeurs conservent leurs crédits et droits respectifs.
 
 ## Avertissement
 

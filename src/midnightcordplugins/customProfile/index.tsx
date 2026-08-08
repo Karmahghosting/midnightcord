@@ -401,7 +401,7 @@ interface FakeConnection {
 }
 
 const FAKE_PLATFORMS = [
-    { id: "domain", label: "Domain / Site Web", icon: "/assets/b4376756bcbbf1ef.svg", placeholder: "nightcord.st", defaultUrl: (name: string) => name.startsWith("http") ? name : `https://${name}` },
+    { id: "domain", label: "Domain / Site Web", icon: "/assets/b4376756bcbbf1ef.svg", placeholder: "example.com", defaultUrl: (name: string) => name.startsWith("http") ? name : `https://${name}` },
     { id: "twitter", label: "X (Twitter)", icon: "/assets/a61999ae9bfb9658.svg", placeholder: "midnightcord", defaultUrl: (name: string) => `https://x.com/${name.replace(/^@/, "")}` },
     { id: "github", label: "GitHub", icon: "/assets/a35ff3e86ffa1eb2.svg", placeholder: "midnightcord", defaultUrl: (name: string) => `https://github.com/${name}` },
     { id: "youtube", label: "YouTube", icon: "/assets/0fa530ba9c04ac32.svg", placeholder: "midnightcord", defaultUrl: (name: string) => `https://youtube.com/@${name.replace(/^@/, "")}` },
@@ -1441,7 +1441,7 @@ function ConnectionsPicker({ connections, onChange }: {
             }}>
                 <strong>{t("Profile Connections")}</strong>
                 <br />
-                {t("Add social links or custom domains (e.g. nightcord.st, X @tag, GitHub, Spotify, TikTok). These connections will appear directly on your Discord profile.")}
+                {t("Add social links or custom domains (e.g. example.com, X @tag, GitHub, Spotify, TikTok). These connections will appear directly on your Discord profile.")}
             </div>
 
             {/* List of active connections */}
@@ -1546,7 +1546,7 @@ function ConnectionsPicker({ connections, onChange }: {
                 {/* Form fields */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <Field
-                        label={platform === "domain" ? t("Domain / Website Name (e.g. nightcord.st)") : t("Account Name / Username")}
+                        label={platform === "domain" ? t("Domain / Website Name (e.g. example.com)") : t("Account Name / Username")}
                         value={name}
                         placeholder={currentPlat.placeholder || "midnightcord"}
                         onChange={setName}

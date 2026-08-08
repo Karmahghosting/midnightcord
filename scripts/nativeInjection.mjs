@@ -165,11 +165,51 @@ export function isMidnightcordLoader(appDir) {
 }
 
 function createLoader(patcherPath) {
-    return "// " + INJECTOR_MARKER + ", generated automatically\n"
-        + "\"use strict\";\n"
-        + "require(" + JSON.stringify(resolve(patcherPath)) + ");\n";
+    const resolvedPatcher = resolve(patcherPath);
+    return [
+        "// " + INJECTOR_MARKER + ", generated automatically",
+        "\"use strict\";",
+        "const fs = require(\"node:fs\");",
+        "const path = require(\"node:path\");",
+        "const patcherPath = " + JSON.stringify(resolvedPatcher) + ";",
+        "const distDir = path.dirname(patcherPath);",
+        "const markerPath = path.join(distDir, \"midnightcord-pending-update.json\");",
+        "function applyPendingUpdate() {",
+        "    if (!fs.existsSync(markerPath)) return;",
+        "    const updateDir = distDir + \".update\";",
+        "    const previousDir = distDir + \".previous\";",
+        "    try {",
+        "        const marker = JSON.parse(fs.readFileSync(markerPath, \"utf8\"));",
+        "        const stagingDir = path.resolve(marker.stagingDir || \"\");",
+        "        const destinationDir = path.resolve(marker.destDir || \"\");",
+        "        if (destinationDir !== path.resolve(distDir)) throw new Error(\"Update destination mismatch\");",
+        "        if (!fs.existsSync(path.join(stagingDir, \"patcher.js\"))) throw new Error(\"Staged update is incomplete\");",
+        "        fs.rmSync(updateDir, { recursive: true, force: true });",
+        "        fs.cpSync(stagingDir, updateDir, { recursive: true });",
+        "        fs.rmSync(previousDir, { recursive: true, force: true });",
+        "        fs.renameSync(distDir, previousDir);",
+        "        try {",
+        "            fs.renameSync(updateDir, distDir);",
+        "        } catch (error) {",
+        "            fs.renameSync(previousDir, distDir);",
+        "            throw error;",
+        "        }",
+        "        fs.rmSync(previousDir, { recursive: true, force: true });",
+        "        fs.rmSync(stagingDir, { recursive: true, force: true });",
+        "        console.log(\"[Midnightcord] Native update applied successfully.\");",
+        "    } catch (error) {",
+        "        try { fs.rmSync(updateDir, { recursive: true, force: true }); } catch {}",
+        "        if (!fs.existsSync(distDir) && fs.existsSync(previousDir)) {",
+        "            try { fs.renameSync(previousDir, distDir); } catch {}",
+        "        }",
+        "        console.error(\"[Midnightcord] Failed to apply staged update:\", error);",
+        "    }",
+        "}",
+        "applyPendingUpdate();",
+        "require(patcherPath);",
+        ""
+    ].join("\n");
 }
-
 function writeLoader(appDir, patcherPath) {
     mkdirSync(appDir, { recursive: true });
     writeFileSync(join(appDir, "package.json"), JSON.stringify({
@@ -289,6 +329,69 @@ export function installDistribution(sourceDist, options = {}) {
     rmSync(target, { recursive: true, force: true });
     renameSync(temporary, target);
     return target;
+}
+
+const LINUX_DESKTOP_MARKER = "X-Midnightcord-Native=true";
+const LINUX_EXECUTABLES = {
+    stable: { command: "discord", wmClass: "discord" },
+    ptb: { command: "discord-ptb", wmClass: "discordptb" },
+    canary: { command: "discord-canary", wmClass: "discordcanary" },
+    development: { command: "discord-development", wmClass: "discorddevelopment" }
+};
+
+export function installLinuxDesktopEntry(options = {}) {
+    if ((options.platform || process.platform) !== "linux") return null;
+
+    const userHome = options.home || homedir();
+    const env = options.env || process.env;
+    const dataHome = env.XDG_DATA_HOME || join(userHome, ".local", "share");
+    const applicationsDir = join(dataHome, "applications");
+    const desktopPath = join(applicationsDir, "midnightcord.desktop");
+    const iconDir = join(dataHome, "icons", "hicolor", "256x256", "apps");
+    const iconPath = join(iconDir, "midnightcord.png");
+    const channel = options.channel || "stable";
+    const executable = LINUX_EXECUTABLES[channel] || LINUX_EXECUTABLES.stable;
+
+    mkdirSync(applicationsDir, { recursive: true });
+    if (options.iconSource && existsSync(options.iconSource)) {
+        mkdirSync(iconDir, { recursive: true });
+        cpSync(options.iconSource, iconPath);
+    }
+
+    writeFileSync(desktopPath, [
+        "[Desktop Entry]",
+        "Name=Midnightcord",
+        "Comment=Discord natif avec Midnightcord",
+        `Exec=${executable.command} --ozone-platform=auto %U`,
+        "Icon=midnightcord",
+        "Terminal=false",
+        "Type=Application",
+        "Categories=Network;InstantMessaging;Chat;",
+        "MimeType=x-scheme-handler/discord;",
+        `StartupWMClass=${executable.wmClass}`,
+        "StartupNotify=true",
+        "X-KDE-StartupNotify=true",
+        LINUX_DESKTOP_MARKER,
+        ""
+    ].join("\n"));
+
+    return desktopPath;
+}
+
+export function removeLinuxDesktopEntry(options = {}) {
+    if ((options.platform || process.platform) !== "linux") return null;
+
+    const userHome = options.home || homedir();
+    const env = options.env || process.env;
+    const dataHome = env.XDG_DATA_HOME || join(userHome, ".local", "share");
+    const desktopPath = join(dataHome, "applications", "midnightcord.desktop");
+    const iconPath = join(dataHome, "icons", "hicolor", "256x256", "apps", "midnightcord.png");
+
+    if (existsSync(desktopPath) && readFileSync(desktopPath, "utf8").includes(LINUX_DESKTOP_MARKER)) {
+        rmSync(desktopPath, { force: true });
+        if (options.purgeIcon) rmSync(iconPath, { force: true });
+    }
+    return desktopPath;
 }
 
 export function removeInstalledDistribution(options = {}) {
