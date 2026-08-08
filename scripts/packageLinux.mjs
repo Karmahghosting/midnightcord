@@ -34,6 +34,7 @@ try {
     const options = {
         projectDir: stagingDir,
         config,
+        publish: "never",
         linux: isRpmOnly ? ["rpm"] : [],
         dir: isDir,
         x64: requestedArch === "x64",
