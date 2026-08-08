@@ -34,6 +34,7 @@ import IconsTab from "@midnightcordplugins/iconViewer/components/IconsTab";
 import { gitHashShort } from "@shared/vencordUserAgent";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
+import { Logger } from "@utils/Logger";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
 import { waitFor } from "@webpack";
 import { React } from "@webpack/common";
@@ -68,7 +69,13 @@ let LayoutTypes = {
     CATEGORY: 5,
     CUSTOM: 19,
 };
-waitFor(["SECTION", "SIDEBAR_ITEM", "PANEL", "CUSTOM"], v => LayoutTypes = v);
+waitFor(["SECTION", "SIDEBAR_ITEM", "PANEL", "CUSTOM"], value => {
+    if (["SECTION", "SIDEBAR_ITEM", "PANEL", "CATEGORY", "CUSTOM"].every(key => Number.isInteger(value?.[key]))) {
+        LayoutTypes = value;
+    }
+});
+
+const settingsLogger = new Logger("Settings");
 
 const enum SectionType {
     HEADER = "HEADER",
@@ -223,127 +230,142 @@ export default definePlugin({
     },
 
     buildLayout(originalLayoutBuilder: SettingsLayoutBuilder) {
-        const layout = originalLayoutBuilder.buildLayout();
-        if (originalLayoutBuilder.key !== "$Root") return layout;
-        if (!Array.isArray(layout)) return layout;
-        if (layout.some(s => s?.key === "equicord_section")) return layout;
+        const originalLayout = originalLayoutBuilder.buildLayout();
+        if (originalLayoutBuilder.key !== "$Root") return originalLayout;
+        if (!Array.isArray(originalLayout)) return originalLayout;
+        if (originalLayout.some(s => s?.key === "equicord_section")) return originalLayout;
 
-        const { buildEntry } = this;
+        const layout = [...originalLayout];
 
-        const mainEntry = buildEntry({
-            key: "equicord_main",
-            title: "Midnightcord",
-            panelTitle: "Midnightcord Settings",
-            Component: VencordTab,
-            Icon: MainSettingsIcon
-        });
+        try {
 
-        const fullEntries: SettingsLayoutNode[] = [
-            mainEntry,
+            const { buildEntry } = this;
 
-            buildEntry({
-                key: "equicord_plugins",
-                title: "Plugins",
-                Component: PluginsTab,
-                Icon: PluginsIcon
-            }),
-            buildEntry({
-                key: "equicord_themes",
-                title: "Themes",
-                Component: ThemesTab,
-                Icon: PaintbrushIcon
-            }),
-            buildEntry({
-                key: "equicord_create_theme",
-                title: "Create Theme",
-                panelTitle: "Theme Creator",
-                Component: CreateThemeTab,
-                Icon: PencilSparkleIcon
-            }),
+            const mainEntry = buildEntry({
+                key: "equicord_main",
+                title: "Midnightcord",
+                panelTitle: "Midnightcord Settings",
+                Component: VencordTab,
+                Icon: MainSettingsIcon
+            });
 
-            !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
-                key: "equicord_updater",
-                title: "Updater",
-                panelTitle: "Midnightcord Updater",
-                Component: UpdaterTab,
-                Icon: UpdaterIcon
-            }),
-            buildEntry({
-                key: "equicord_changelog",
-                title: "Changelog",
-                Component: ChangelogTab,
-                Icon: LogIcon,
-            }),
-            buildEntry({
-                key: "equicord_backup_restore",
-                title: "Backup & Restore",
-                Component: BackupAndRestoreTab,
-                Icon: BackupRestoreIcon
-            }),
-            buildEntry({
-                key: "midnightcord_sync",
-                title: "Privacy",
-                panelTitle: "Midnightcord Privacy",
-                Component: SyncTab,
-                Icon: ShieldIcon
-            }),
-            buildEntry({
-                key: "midnightcord_language",
-                title: "Language",
-                Component: LanguageTab,
-                Icon: LangIcon
-            }),
-            IS_DEV && PatchHelperTab && buildEntry({
-                key: "equicord_patch_helper",
-                title: "Patch Helper",
-                Component: PatchHelperTab,
-                Icon: PatchHelperIcon
-            }),
-            buildEntry({
-                key: "midnightcord_icon_finder",
-                title: "Icon Finder",
-                Component: IconsTab,
-                Icon: MagnifyingGlassIcon
-            }),
-            ...this.customEntries.map(buildEntry)
-        ].filter(isTruthy);
+            const fullEntries: SettingsLayoutNode[] = [
+                mainEntry,
 
-        const equicordSection: SettingsLayoutNode = {
-            key: "equicord_section",
-            type: LayoutTypes.SECTION,
-            useTitle: () => {
-                try { if (localStorage.getItem("Midnightcord_stealthMode") === "1") return ""; } catch { }
-                return t("Midnightcord Settings");
-            },
-            buildLayout: () => {
-                try { if (localStorage.getItem("Midnightcord_stealthMode") === "1") return [mainEntry]; } catch { }
-                return fullEntries;
+                buildEntry({
+                    key: "equicord_plugins",
+                    title: "Plugins",
+                    Component: PluginsTab,
+                    Icon: PluginsIcon
+                }),
+                buildEntry({
+                    key: "equicord_themes",
+                    title: "Themes",
+                    Component: ThemesTab,
+                    Icon: PaintbrushIcon
+                }),
+                buildEntry({
+                    key: "equicord_create_theme",
+                    title: "Create Theme",
+                    panelTitle: "Theme Creator",
+                    Component: CreateThemeTab,
+                    Icon: PencilSparkleIcon
+                }),
+
+                !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
+                    key: "equicord_updater",
+                    title: "Updater",
+                    panelTitle: "Midnightcord Updater",
+                    Component: UpdaterTab,
+                    Icon: UpdaterIcon
+                }),
+                buildEntry({
+                    key: "equicord_changelog",
+                    title: "Changelog",
+                    Component: ChangelogTab,
+                    Icon: LogIcon,
+                }),
+                buildEntry({
+                    key: "equicord_backup_restore",
+                    title: "Backup & Restore",
+                    Component: BackupAndRestoreTab,
+                    Icon: BackupRestoreIcon
+                }),
+                buildEntry({
+                    key: "midnightcord_sync",
+                    title: "Privacy",
+                    panelTitle: "Midnightcord Privacy",
+                    Component: SyncTab,
+                    Icon: ShieldIcon
+                }),
+                buildEntry({
+                    key: "midnightcord_language",
+                    title: "Language",
+                    Component: LanguageTab,
+                    Icon: LangIcon
+                }),
+                IS_DEV && PatchHelperTab && buildEntry({
+                    key: "equicord_patch_helper",
+                    title: "Patch Helper",
+                    Component: PatchHelperTab,
+                    Icon: PatchHelperIcon
+                }),
+                buildEntry({
+                    key: "midnightcord_icon_finder",
+                    title: "Icon Finder",
+                    Component: IconsTab,
+                    Icon: MagnifyingGlassIcon
+                }),
+                ...this.customEntries
+                    .filter(entry => Boolean(entry && typeof entry.key === "string" && typeof entry.title === "string" && entry.Component && entry.Icon))
+                    .map(buildEntry)
+            ].filter(isTruthy);
+
+            const equicordSection: SettingsLayoutNode = {
+                key: "equicord_section",
+                type: LayoutTypes.SECTION,
+                useTitle: () => {
+                    try { if (localStorage.getItem("Midnightcord_stealthMode") === "1") return ""; } catch { }
+                    return t("Midnightcord Settings");
+                },
+                buildLayout: () => {
+                    try { if (localStorage.getItem("Midnightcord_stealthMode") === "1") return [mainEntry]; } catch { }
+                    return fullEntries;
+                }
+            };
+
+            const rawSettingsLocation: unknown = settings.store.settingsLocation;
+
+            const places: Record<SettingsLocation, string> = {
+                top: "user_section",
+                aboveNitro: "billing_section",
+                belowNitro: "billing_section",
+                aboveActivity: "activity_section",
+                belowActivity: "activity_section",
+                bottom: "logout_section"
+            };
+
+            const settingsLocation: SettingsLocation = typeof rawSettingsLocation === "string"
+                && Object.prototype.hasOwnProperty.call(places, rawSettingsLocation)
+                ? rawSettingsLocation as SettingsLocation
+                : "aboveNitro";
+
+            const key = places[settingsLocation] ?? places.top;
+            let idx = layout.findIndex(s => typeof s?.key === "string" && s.key === key);
+
+            if (idx === -1) {
+                idx = 2;
+            } else if (settingsLocation.startsWith("below")) {
+                idx += 1;
             }
-        };
 
-        const { settingsLocation } = settings.store;
+            layout.splice(idx, 0, equicordSection);
 
-        const places: Record<SettingsLocation, string> = {
-            top: "user_section",
-            aboveNitro: "billing_section",
-            belowNitro: "billing_section",
-            aboveActivity: "activity_section",
-            belowActivity: "activity_section",
-            bottom: "logout_section"
-        };
-
-        const key = places[settingsLocation] ?? places.top;
-        let idx = layout.findIndex(s => typeof s?.key === "string" && s.key === key);
-
-        if (idx === -1) {
-            idx = 2;
-        } else if (settingsLocation.startsWith("below")) {
-            idx += 1;
+            return layout;
+        } catch (error) {
+            settingsLogger.error("Failed to add the Midnightcord settings section", error);
+            return originalLayout;
         }
-
-        layout.splice(idx, 0, equicordSection);
-
-        return layout;
     },
 
     customSections: [] as ((SectionTypes: Record<string, string>) => { section: string; element: ComponentType; label: string; id?: string; })[],

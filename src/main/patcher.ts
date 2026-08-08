@@ -22,6 +22,7 @@ import { existsSync as fsExistsSync, statSync as fsStatSync } from "original-fs"
 import { dirname, join } from "path";
 
 import { registerMediaPermissionsForSession } from "../midnightcord/main/mediaPermissions";
+import { startNativeUpdateRepair } from "./patchNativeUpdater";
 import { RendererSettings } from "./settings";
 import { patchTrayMenu } from "./trayMenu";
 import { IS_VANILLA } from "./utils/constants";
@@ -50,11 +51,9 @@ if (!IS_VANILLA) {
     const settings = RendererSettings.store;
 
     patchTrayMenu();
+    startNativeUpdateRepair(injectorPath);
 
-    // Repatch after host updates on Windows
     if (process.platform === "win32") {
-        require("./patchWin32Updater");
-
         if (settings.winCtrlQ) {
             const originalBuild = Menu.buildFromTemplate;
             Menu.buildFromTemplate = function (template) {

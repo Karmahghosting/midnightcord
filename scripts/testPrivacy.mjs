@@ -69,4 +69,16 @@ const noTrack = readFileSync(join(rootDir, "src", "plugins", "_core", "noTrack.t
 assert(/required:\s*true/.test(noTrack), "NoTrack must remain required");
 assert(/disableAnalytics[\s\S]*?default:\s*true/.test(noTrack), "Discord analytics blocking must remain enabled by default");
 
+const settingsSource = readFileSync(join(rootDir, "src", "plugins", "_core", "settings.tsx"), "utf8");
+assert(settingsSource.includes('typeof rawSettingsLocation === "string"'), "Settings location must be validated before use");
+assert(settingsSource.includes("return originalLayout"), "Settings injection must fall back to Discord's original layout");
+
+for (const relativePath of [
+    ["src", "renderer", "patches", "streamerMode.ts"],
+    ["src", "midnightcord", "renderer", "patches", "streamerMode.ts"]
+]) {
+    const streamerModeSource = readFileSync(join(rootDir, ...relativePath), "utf8");
+    assert(!streamerModeSource.includes("STREAMING_AUTO_STREAMER_MODE"), "Streamer Mode must use Discord's native support predicate");
+}
+
 console.log("[test] Privacy regression checks passed.");
