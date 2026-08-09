@@ -676,44 +676,6 @@ function onAccountSwitch() {
     forceAccountPanelRerender();
 }
 
-/**
- * Intercepts CURRENT_USER_UPDATE dispatches from the gateway BEFORE Discord's
- * UserStore processes them.
- *
- * The invariant that triggers the reconnect:
- *   "Premium type should not change for non-staff users"
- *
- * Root cause: our prototype getter lies and returns premiumType=2 (Nitro).
- * When the user edits their profile, Discord's gateway fires CURRENT_USER_UPDATE
- * with the *real* premiumType (0 for non-subscribers).  Discord's store compares
- * the cached value (2, from our hook) against the incoming value (0) and throws.
- *
- * Fix: if we are faking Nitro for this user, overwrite premiumType in the
- * payload with the value our prototype would return (2), so Discord sees no
- * change and the invariant passes silently.
- */
-function _onCurrentUserUpdate(event: any) {
-    try {
-        if (!event?.user) return;
-        const userId: string | undefined = event.user.id;
-        if (!userId) return;
-
-        const fakingNitro =
-            (isEnabled && isMe(userId) && storedData.nitro) ||
-            (Settings.seeAllCustomProfile && publicProfilesCache.get(userId)?.data?.nitro);
-
-        if (fakingNitro) {
-            // Overwrite in-place so Discord's store validation sees no change.
-            // We also stash the real value so we can restore it on stop().
-            if (event.user._realPremiumType === undefined) {
-                event.user._realPremiumType = event.user.premiumType ?? 0;
-            }
-            event.user.premiumType = 2;
-        }
-    } catch { /* never throw inside a Flux handler */ }
-}
-
-
 loadDataSync();
 
 const HIDE_STYLE_ID = "cp-hide-during-load";
@@ -2347,27 +2309,15 @@ export default definePlugin({
                     return target.avatarDecorationData;
                 }
                 if (prop === "publicFlags" || prop === "flags") {
-                    return isEnabled && storedData.badgeFlags != null ? storedData.badgeFlags : target[prop];
+                    return target[prop];
                 }
                 if (prop === "premiumType") {
-                    return isEnabled && storedData.nitro ? 2 : target.premiumType;
+                    return target.premiumType;
                 }
                 if (prop === "premiumSince") {
-                    if (isEnabled && storedData.nitro) {
-                        const seedBase = target.id || "self";
-                        const nl = storedData.nitroLevel ?? 0;
-                        return getFakeNitroDate(nl, seedBase);
-                    }
                     return target.premiumSince;
                 }
                 if (prop === "premiumGuildSince") {
-                    if (isEnabled && storedData.nitro) {
-                        const bm = storedData.boostMonths ?? -1;
-                        if (bm >= 0) {
-                            const seedBase = target.id || "self";
-                            return getFakeBoostDate(bm, seedBase);
-                        }
-                    }
                     return target.premiumGuildSince;
                 }
                 if (prop === "getTag") {
@@ -2469,27 +2419,15 @@ export default definePlugin({
                     return target.avatarDecorationData;
                 }
                 if (prop === "publicFlags" || prop === "flags") {
-                    return data.badgeFlags != null ? data.badgeFlags : target[prop];
+                    return target[prop];
                 }
                 if (prop === "premiumType") {
-                    return data.nitro ? 2 : target.premiumType;
+                    return target.premiumType;
                 }
                 if (prop === "premiumSince") {
-                    if (data.nitro) {
-                        const seedBase = target.id || "other";
-                        const nl = data.nitroLevel ?? 0;
-                        return getFakeNitroDate(nl, seedBase);
-                    }
                     return target.premiumSince;
                 }
                 if (prop === "premiumGuildSince") {
-                    if (data.nitro) {
-                        const bm = data.boostMonths ?? -1;
-                        if (bm >= 0) {
-                            const seedBase = target.id || "other";
-                            return getFakeBoostDate(bm, seedBase);
-                        }
-                    }
                     return target.premiumGuildSince;
                 }
                 if (prop === "getTag") {
@@ -3161,19 +3099,7 @@ export default definePlugin({
         // Listen for account changes to sync data
         FluxDispatcher.subscribe("CONNECTION_OPEN", onAccountSwitch);
 
-        // ── INVARIANT GUARD ──────────────────────────────────────────────────
-        // Discord's UserStore_CURRENT_USER_UPDATE validates that premiumType
-        // does not change between two successive CURRENT_USER_UPDATE dispatches
-        // *unless* the user has staff flags.  Our prototype hook makes every
-        // read of premiumType return 2 (Nitro), so when a profile edit comes
-        // back from the gateway with the real premiumType (0), Discord sees
-        // 2→0 and throws:
-        //   Invariant Violation: Premium type should not change for non-staff
-        // Fix: subscribe BEFORE Discord's stores, intercept the payload, and
-        // set premiumType to whatever the prototype would return for this user.
-        FluxDispatcher.subscribe("CURRENT_USER_UPDATE", _onCurrentUserUpdate);
-
-        // PERFECT AND SECURE NATIVE INTERCEPTION ON USER STORE.
+        // Apply visual identity fields without changing Discord account entitlements.
         try {
             const US = (Vencord as any).Webpack?.findByProps?.("getCurrentUser", "getUser");
             if (US && !US._cp_perfect_hook) {
@@ -3185,83 +3111,6 @@ export default definePlugin({
 
                 US.getCurrentUser = () => {
                     const realUser = origCurrent();
-
-                    // --- DEFERRED PROTOTYPE PATCH TO FORCE NATIVE POPOUTS ---
-                    // Run this as soon as we have a valid user object to get the constructor
-                    if (realUser && !realUser.constructor.prototype._cp_premium_hook) {
-                        try {
-                            const UserClass = realUser.constructor;
-                            
-                            // Patch isPremium if it's a method
-                            if (typeof UserClass.prototype.isPremium === "function") {
-                                const origIsPremium = UserClass.prototype.isPremium;
-                                UserClass.prototype.isPremium = function() {
-                                    if (isEnabled && isMe(this.id) && storedData.nitro) return true;
-                                    if (Settings.seeAllCustomProfile && publicProfilesCache.get(this.id)?.data?.nitro) return true;
-                                    return origIsPremium.call(this);
-                                };
-                            }
-
-                            // Comprehensive staff method & property patches to prevent Invariant Violation: Premium type should not change for non-staff users
-                            const staffProps = ["isStaff", "isStaffPersonal", "isStaffUser", "hasStaffFlag", "isStaffMember"];
-                            for (const prop of staffProps) {
-                                try {
-                                    const orig = UserClass.prototype[prop];
-                                    if (typeof orig === "function") {
-                                        UserClass.prototype[prop] = function(this: any) {
-                                            const isFake = (isEnabled && isMe(this.id) && storedData.nitro) ||
-                                                           (Settings.seeAllCustomProfile && publicProfilesCache.get(this.id)?.data?.nitro);
-                                            if (isFake) return true;
-                                            return orig.call(this);
-                                        };
-                                    } else {
-                                        Object.defineProperty(UserClass.prototype, prop, {
-                                            get() {
-                                                const isFake = (isEnabled && isMe(this.id) && storedData.nitro) ||
-                                                               (Settings.seeAllCustomProfile && publicProfilesCache.get(this.id)?.data?.nitro);
-                                                if (isFake) return true;
-                                                return orig ?? false;
-                                            },
-                                            configurable: true,
-                                            enumerable: true
-                                        });
-                                    }
-                                } catch { }
-                            }
-
-                            // Define a getter/setter for premiumType to intercept ALL accesses
-                            // This ensures even standalone functions reading user.premiumType see the fake value!
-                            Object.defineProperty(UserClass.prototype, "premiumType", {
-                                get() {
-                                    const isFake = (isEnabled && isMe(this.id) && storedData.nitro) || 
-                                                   (Settings.seeAllCustomProfile && publicProfilesCache.get(this.id)?.data?.nitro);
-                                    if (isFake) {
-                                        return 2;
-                                    }
-                                    return this._realPremiumType !== undefined ? this._realPremiumType : 0;
-                                },
-                                set(val) {
-                                    this._realPremiumType = val;
-                                },
-                                configurable: true,
-                                enumerable: true
-                            });
-
-                            UserClass.prototype._cp_premium_hook = true;
-
-                            // Clean up existing own properties in UserStore to force prototype usage
-                            const allUsers = US.getUsers ? US.getUsers() : [];
-                            for (const u of Object.values(allUsers)) {
-                                if (u && typeof u === "object" && Object.prototype.hasOwnProperty.call(u, "premiumType")) {
-                                    (u as any)._realPremiumType = (u as any).premiumType;
-                                    delete (u as any).premiumType;
-                                }
-                            }
-                        } catch (e) {
-                            console.error("[CustomProfile] Failed to patch User prototype", e);
-                        }
-                    }
-                    // --------------------------------------------------------
 
                     if (realUser) {
                         // Update name cache only when the user object itself changes
@@ -3582,7 +3431,6 @@ export default definePlugin({
         removeHeaderBarButton("custom-profile-btn");
         removeContextMenuPatch("user-context", userContextMenuPatch);
         FluxDispatcher.unsubscribe("CONNECTION_OPEN", onAccountSwitch);
-        FluxDispatcher.unsubscribe("CURRENT_USER_UPDATE", _onCurrentUserUpdate);
         stopDomObserver();
         removeHideStyle();
         if (this._origExtractTimestamp && SnowflakeUtils) {

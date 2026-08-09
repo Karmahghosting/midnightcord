@@ -36,7 +36,8 @@ function printHelp() {
         "",
         "Options:",
         "  --channel <name>  stable, ptb, canary or development",
-        "  --copy            copy the build into the user profile before injection",
+        "  --copy            copy the build into the user profile (default)",
+        "  --no-copy         load dist/desktop directly for development",
         "  --dry-run         list targets without changing files",
         "  --help            show this help"
     ].join("\n"));
@@ -75,7 +76,7 @@ if (args.includes("--dry-run")) {
 }
 
 let patcherPath = join(sourceDist, "patcher.js");
-if (args.includes("--copy")) {
+if (!args.includes("--no-copy")) {
     const installedDist = installDistribution(sourceDist);
     patcherPath = join(installedDist, "patcher.js");
     console.log("[Midnightcord] Fichiers installes dans " + installedDist);

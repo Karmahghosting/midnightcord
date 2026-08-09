@@ -62,6 +62,29 @@ assert(!packageJson.dependencies?.mellowtel, "Mellowtel must not be a dependency
 const fakeVoiceSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "FakeVoice", "index.tsx"), "utf8");
 assert(/name:\s*"FakeVoice"[\s\S]*?enabledByDefault:\s*false/.test(fakeVoiceSource), "Fake Voice must remain disabled by default");
 
+const customProfileSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "customProfile", "index.tsx"), "utf8");
+for (const forbiddenPattern of [
+    /FluxDispatcher\.subscribe\("CURRENT_USER_UPDATE"/,
+    /Object\.defineProperty\(UserClass\.prototype,\s*"premiumType"/,
+    /const staffProps =/,
+    /event\.user\.premiumType\s*=\s*2/,
+    /return isEnabled && storedData\.badgeFlags/,
+    /return data\.badgeFlags/,
+    /prop === "premiumSince"[\s\S]{0,250}getFakeNitroDate/,
+    /prop === "premiumGuildSince"[\s\S]{0,350}getFakeBoostDate/,
+    /delete\s+\(u as any\)\.premiumType/
+]) {
+    assert(!forbiddenPattern.test(customProfileSource), `CustomProfile must not alter Discord account entitlements: ${forbiddenPattern}`);
+}
+assert.equal(
+    customProfileSource.match(/if \(prop === "premiumType"\) \{\s*return target\.premiumType;/g)?.length,
+    2,
+    "CustomProfile user proxies must expose the real premium type"
+);
+
+const injectorSource = readFileSync(join(rootDir, "scripts", "inject.mjs"), "utf8");
+assert(injectorSource.includes('if (!args.includes("--no-copy"))'), "Native injection must install the current build by default");
+
 const userAreaSource = readFileSync(join(rootDir, "src", "api", "UserArea.tsx"), "utf8");
 assert(userAreaSource.includes("> :not(.vc-user-area-btns):not(style)"), "Native user-area controls must remain protected from shrinking");
 
