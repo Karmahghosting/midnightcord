@@ -85,6 +85,10 @@ let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>
 let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 type MidnightcordBadge = { icon: string; placeholder: string; uuid: string; };
 
+const MIDNIGHTCORD_BADGE_SIZES: Record<string, string> = {
+    "netrix-profile": "16px"
+};
+
 const MIDNIGHTCORD_BADGE_ENDPOINT = "https://api.midnightcord.fr/v1/badge";
 const MIDNIGHTCORD_CLIENT_MARKER = "midnightcord-desktop";
 const MIDNIGHTCORD_CACHE_TTL = 30 * 60_000;
@@ -436,8 +440,9 @@ export default definePlugin({
                     props: {
                         style: {
                             borderRadius: "50%",
-                            maxHeight: "22px",
-                            maxWidth: "22px"
+                            height: MIDNIGHTCORD_BADGE_SIZES[badge.uuid] ?? "22px",
+                            width: MIDNIGHTCORD_BADGE_SIZES[badge.uuid] ?? "22px",
+                            objectFit: "contain"
                         }
                     },
                     onContextMenu(event, b) {
