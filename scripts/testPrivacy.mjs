@@ -119,4 +119,8 @@ assert(trayMenuSource.includes("return hasOpenOrShow && hasQuit && isNotAppMenu"
 
 const rendererStartupSource = readFileSync(join(rootDir, "src", "Vencord.ts"), "utf8");
 assert(rendererStartupSource.includes("openSettingsTabModal(UpdaterTab)"), "Startup updates must open the updater popup");
+
+const badgeApiSource = readFileSync(join(rootDir, "src", "plugins", "_api", "badges", "index.tsx"), "utf8");
+assert(badgeApiSource.includes('loadBadges("https://midnightcord.fr/api/badges"'), "Midnightcord badges must use the public read-only API");
+assert(!/midnightcord\.fr\/api\/badges[\s\S]{0,120}method:\s*["'](?:POST|PUT|PATCH|DELETE)/i.test(badgeApiSource), "Badge API must remain read-only");
 console.log("[test] Privacy regression checks passed.");
