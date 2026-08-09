@@ -97,11 +97,25 @@ const MidnightcordBadgeRequests = new Map<string, Promise<void>>();
 const MidnightcordBadgeFailures = new Map<string, number>();
 
 function isMidnightcordBadge(value: any): value is MidnightcordBadge {
-    return value
-        && typeof value.icon === "string"
-        && value.icon.startsWith("https://midnightcord.fr/")
-        && typeof value.placeholder === "string"
-        && typeof value.uuid === "string";
+    if (
+        !value
+        || typeof value.icon !== "string"
+        || typeof value.placeholder !== "string"
+        || typeof value.uuid !== "string"
+    ) return false;
+
+    try {
+        const url = new URL(value.icon);
+        if (url.protocol !== "https:") return false;
+
+        const isWebsiteAsset = ["midnightcord.fr", "www.midnightcord.fr"].includes(url.hostname)
+            && url.pathname.startsWith("/assets/");
+        const isApiAsset = url.hostname === "api.midnightcord.fr"
+            && url.pathname.startsWith("/v1/assets/");
+        return isWebsiteAsset || isApiAsset;
+    } catch {
+        return false;
+    }
 }
 
 function loadMidnightcordBadges(userId: string, noCache = false): Promise<void> {

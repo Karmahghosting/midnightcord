@@ -158,4 +158,11 @@ assert(!afterPackSource.includes("Warning: arRPC binary not found"), "Packaging 
 const standaloneSettingsSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "settings.ts"), "utf8");
 assert(standaloneSettingsSource.includes("if (Settings.store.arRPC == null) Settings.store.arRPC = true;"), "Existing standalone installs must enable Rich Presence when no choice was saved");
 
+assert(badgeApiSource.includes('url.hostname === "api.midnightcord.fr"'), "Badge icons hosted by the isolated API must be accepted");
+assert(badgeApiSource.includes('url.pathname.startsWith("/v1/assets/")'), "API badge icons must stay inside the dedicated asset path");
+
+const screenShareSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "screenShare.ts"), "utf8");
+assert(!screenShareSource.includes("warmUpCapturer"), "Wayland screen capture must never be requested during startup");
+assert(screenShareSource.includes("setDisplayMediaRequestHandler"), "Screen capture must remain available after an explicit sharing request");
+
 console.log("[test] Privacy regression checks passed.");
