@@ -161,6 +161,11 @@ assert(standaloneSettingsSource.includes("if (Settings.store.arRPC == null) Sett
 assert(badgeApiSource.includes('url.hostname === "api.midnightcord.fr"'), "Badge icons hosted by the isolated API must be accepted");
 assert(badgeApiSource.includes('url.pathname.startsWith("/v1/assets/")'), "API badge icons must stay inside the dedicated asset path");
 
+assert(badgeApiSource.includes("dedupeBadges([...$self.getBadges(this),...$1])}"), "DisplayProfile badges must close the deduplication call after injecting API badges");
+const discordDisplayProfileMethods = "getBadges(){return[...this._userProfile.badges??[],...this._guildMemberProfile?.badges??[]]}getLegacyUsername(){return this._userProfile.legacyUsername}";
+const patchedDisplayProfileMethods = discordDisplayProfileMethods.replace(/getBadges\(\)\{return(\[[^}]*?\])\}(?=getLegacyUsername\(\))/, "getBadges(){return dedupeBadges([...getBadges(this),...$1])}");
+assert.doesNotThrow(() => new Function(`class DisplayProfile { ${patchedDisplayProfileMethods} }`), "The current Discord DisplayProfile badge patch must produce valid JavaScript");
+
 const screenShareSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "screenShare.ts"), "utf8");
 assert(!screenShareSource.includes("warmUpCapturer"), "Wayland screen capture must never be requested during startup");
 assert(screenShareSource.includes("setDisplayMediaRequestHandler"), "Screen capture must remain available after an explicit sharing request");

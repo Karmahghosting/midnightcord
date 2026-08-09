@@ -242,8 +242,8 @@ export default definePlugin({
         {
             find: "getLegacyUsername(){",
             replacement: {
-                match: /getBadges\(\)\{.{0,100}?return\[/,
-                replace: "getBadges(){return $self.dedupeBadges([...$self.getBadges(this),"
+                match: /getBadges\(\)\{return(\[[^}]*?\])\}(?=getLegacyUsername\(\))/,
+                replace: "getBadges(){return $self.dedupeBadges([...$self.getBadges(this),...$1])}"
             }
         }
     ],
