@@ -155,4 +155,7 @@ const afterPackSource = readFileSync(join(rootDir, "scripts", "build", "afterPac
 assert(afterPackSource.includes("Required arRPC binary not found"), "Packaging must fail when the Rich Presence relay is missing");
 assert(!afterPackSource.includes("Warning: arRPC binary not found"), "Packaging must never silently omit the Rich Presence relay");
 
+const standaloneSettingsSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "settings.ts"), "utf8");
+assert(standaloneSettingsSource.includes("if (Settings.store.arRPC == null) Settings.store.arRPC = true;"), "Existing standalone installs must enable Rich Presence when no choice was saved");
+
 console.log("[test] Privacy regression checks passed.");
