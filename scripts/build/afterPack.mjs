@@ -34,8 +34,7 @@ async function copyArRPCBinaries(context) {
         console.log(`Copying arRPC binary: ${binaryName} -> ${destBinaryName}...`);
         cpSync(binarySourcePath, binaryDestPath);
     } else {
-        console.warn(`Warning: arRPC binary not found: ${binarySourcePath}`);
-        console.warn("Run 'bun compileArrpc' to build arRPC binaries");
+        throw new Error(`Required arRPC binary not found: ${binarySourcePath}`);
     }
 }
 

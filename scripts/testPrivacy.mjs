@@ -145,4 +145,14 @@ assert(!branchPickerSource.includes("@Midnightcord/types/webpack/common"), "The 
 const rendererUtilsSource = readFileSync(join(rootDir, "src", "midnightcord", "renderer", "utils.ts"), "utf8");
 assert(rendererUtilsSource.includes("navigator.platform.toLowerCase()"), "CachyOS must have a platform detection fallback");
 
+const packageLinuxSource = readFileSync(join(rootDir, "scripts", "packageLinux.mjs"), "utf8");
+const fetchArrpcSource = readFileSync(join(rootDir, "scripts", "build", "fetchArrpc.mjs"), "utf8");
+assert(packageLinuxSource.includes('await fetchArrpcBinary("linux", requestedArch)'), "Linux packages must bundle the Rich Presence relay");
+assert(fetchArrpcSource.includes('const ARRPC_VERSION = "1.3.5"'), "The Rich Presence relay version must be pinned");
+assert(fetchArrpcSource.includes("checksum mismatch"), "The Rich Presence relay must be checksum verified before packaging");
+
+const afterPackSource = readFileSync(join(rootDir, "scripts", "build", "afterPack.mjs"), "utf8");
+assert(afterPackSource.includes("Required arRPC binary not found"), "Packaging must fail when the Rich Presence relay is missing");
+assert(!afterPackSource.includes("Warning: arRPC binary not found"), "Packaging must never silently omit the Rich Presence relay");
+
 console.log("[test] Privacy regression checks passed.");

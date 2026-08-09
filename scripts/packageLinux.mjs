@@ -5,6 +5,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
+import { fetchArrpcBinary } from "./build/fetchArrpc.mjs";
+
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const require = createRequire(import.meta.url);
 const config = require(join(rootDir, "electron-builder.linux.cjs"));
@@ -20,6 +22,8 @@ const requestedArch = process.argv.includes("--arm64")
 if (requestedArch !== "x64" && requestedArch !== "arm64") {
     throw new Error(`Unsupported Linux architecture: ${requestedArch}`);
 }
+
+await fetchArrpcBinary("linux", requestedArch);
 
 // The parent pnpm lifecycle must not leak into the isolated, dependency-free app.
 delete process.env.npm_config_user_agent;
