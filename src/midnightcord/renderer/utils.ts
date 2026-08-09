@@ -15,10 +15,20 @@ export const isFirstRun = (() => {
 })();
 
 function getPlatform() {
-    const platform = VesktopNative.app.getPlatformSpoofInfo().originalPlatform.toLowerCase();
-    if (platform.startsWith("win")) return "windows";
-    if (platform.startsWith("mac")) return "macos";
-    if (platform.startsWith("linux")) return "linux";
+    try {
+        const platformInfo = VesktopNative?.app?.getPlatformSpoofInfo?.();
+        const platform = platformInfo?.originalPlatform?.toLowerCase?.();
+        if (typeof platform === "string") {
+            if (platform.startsWith("win")) return "windows";
+            if (platform.startsWith("mac")) return "macos";
+            if (platform.startsWith("linux")) return "linux";
+        }
+    } catch {}
+
+    const fallback = navigator.platform.toLowerCase();
+    if (fallback.includes("win")) return "windows";
+    if (fallback.includes("mac")) return "macos";
+    if (fallback.includes("linux") || fallback.includes("x11")) return "linux";
     return "unknown";
 }
 

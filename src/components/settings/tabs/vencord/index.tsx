@@ -12,175 +12,59 @@ import { openNotificationLogModal } from "@api/Notifications/notificationLog";
 import { plugins } from "@api/PluginManager";
 import { useSettings } from "@api/Settings";
 import { Button } from "@components/Button";
-import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
 import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
-import { GithubIcon, HeartIcon, OwnerCrownIcon, PaintbrushIcon, PlanetIcon, RestartIcon } from "@components/Icons";
+import { GithubIcon, HeartIcon, PaintbrushIcon, RestartIcon } from "@components/Icons";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
 import { openPluginModal, SettingsTab, wrapTab } from "@components/settings";
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
-import { copyToClipboard } from "@utils/clipboard";
 import { IS_MAC, IS_WINDOWS } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
-import { openModal } from "@utils/modal";
 import { relaunch } from "@utils/native";
 import { React } from "@webpack/common";
 
-import { ContributeModal } from "../../../../midnightcord/renderer/components/ContributeModal";
 import { openNotificationSettingsModal } from "./NotificationSettings";
 
 const cl = classNameFactory("vc-vencord-tab-");
 
-const DEV_TEAM_IDS = [
-    {
-        id: "1209621342639493201",
-        role: "Creator",
-        description: "Manager of app, site visuals, communication & ads"
-    },
-    {
-        id: "171356978310938624",
-        role: "Admin",
-        description: "Manager of infrastructure, API, bot & network hosting"
+function openExternal(url: string) {
+    if (typeof VencordNative !== "undefined" && VencordNative?.native?.openExternal) {
+        VencordNative.native.openExternal(url);
+        return;
     }
-];
-
-function DevCard({ id, role, description }: { id: string; role: string; description: string; }) {
-    const [copied, setCopied] = React.useState(false);
-
-    const handleCopy = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        try {
-            copyToClipboard(id);
-        } catch {
-            navigator.clipboard.writeText(id);
-        }
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-    };
-
-    return (
-        <Card variant="primary" outline style={{ padding: "12px" }}>
-            <Flex align={Flex.Align.CENTER} gap="12px">
-                <div
-                    aria-hidden="true"
-                    style={{
-                        alignItems: "center",
-                        background: "var(--brand-500)",
-                        borderRadius: "50%",
-                        color: "white",
-                        display: "flex",
-                        flex: "0 0 48px",
-                        fontSize: "18px",
-                        fontWeight: 700,
-                        height: 48,
-                        justifyContent: "center",
-                        width: 48
-                    }}
-                >
-                    {role.slice(0, 1)}
-                </div>
-                <Flex direction={Flex.Direction.VERTICAL} style={{ flex: 1, gap: "2px" }}>
-                    <Flex align={Flex.Align.CENTER} justify={Flex.Justify.BETWEEN} style={{ width: "100%" }}>
-                        <Heading tag="h3" style={{ marginBottom: "0px", fontSize: "14px", fontWeight: "bold" }}>{`Midnightcord ${role}`}</Heading>
-                        <Heading tag="h4" style={{ color: "var(--brand-experiment)", fontWeight: "bold", fontSize: "12px" }}>{role}</Heading>
-                    </Flex>
-
-                    <div
-                        onClick={handleCopy}
-                        title="Cliquer pour copier l'ID"
-                        style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            fontSize: "11px",
-                            color: "var(--text-muted)",
-                            background: "var(--background-secondary-alt, rgba(0,0,0,0.2))",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            width: "fit-content",
-                            marginTop: "2px",
-                            marginBottom: "4px",
-                            userSelect: "all",
-                            transition: "all 0.15s ease"
-                        }}
-                    >
-                        <span>{id}</span>
-                        {copied ? (
-                            <span style={{ color: "var(--status-positive, #43b581)", fontWeight: "bold", fontSize: "10px" }}>✓ Copié</span>
-                        ) : (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                        )}
-                    </div>
-
-                    <Paragraph size="xs" color="text-muted" style={{ fontSize: "12px", lineHeight: "1.3" }}>{description}</Paragraph>
-                </Flex>
-            </Flex>
-        </Card>
-    );
+    window.open(url, "_blank", "noopener,noreferrer");
 }
 
-function DevTeamSection() {
-    const [showDevs, setShowDevs] = React.useState(false);
-
+function QuickActionsSection() {
     return (
-        <>
-            <QuickActionCard>
+        <QuickActionCard>
+            <QuickAction
+                Icon={GithubIcon}
+                text="Source Code"
+                action={() => openExternal("https://github.com/Karmahghosting/midnightcord")}
+            />
+            <QuickAction
+                Icon={PaintbrushIcon}
+                text="Edit QuickCSS"
+                action={() => typeof VencordNative !== "undefined" && VencordNative?.quickCss?.openEditor?.()}
+            />
+            {!IS_WEB && (
                 <QuickAction
-                    Icon={GithubIcon}
-                    text="Source Code"
-                    action={() => (typeof VencordNative !== "undefined" && VencordNative?.native?.openExternal) ? VencordNative.native.openExternal("https://github.com/Karmahghosting/midnightcord") : window.open("https://github.com/Karmahghosting/midnightcord", "_blank")}
+                    Icon={RestartIcon}
+                    text="Relaunch Discord"
+                    action={relaunch}
                 />
-                <QuickAction
-                    Icon={PaintbrushIcon}
-                    text="Edit QuickCSS"
-                    action={() => typeof VencordNative !== "undefined" && VencordNative?.quickCss?.openEditor?.()}
-                />
-                {!IS_WEB && (
-                    <QuickAction
-                        Icon={RestartIcon}
-                        text="Relaunch Discord"
-                        action={relaunch}
-                    />
-                )}
-                <QuickAction
-                    Icon={HeartIcon}
-                    text="Contribute"
-                    action={() => openModal(props => <ContributeModal {...props} />)}
-                />
-                <QuickAction
-                    Icon={OwnerCrownIcon}
-                    text="DEV Team"
-                    action={() => setShowDevs(!showDevs)}
-                />
-                <QuickAction
-                    Icon={PlanetIcon}
-                    text="Midnightcord Channel"
-                    action={() => (typeof VencordNative !== "undefined" && VencordNative?.native?.openExternal) ? VencordNative.native.openExternal("https://t.me/nightcordoff") : window.open("https://t.me/nightcordoff", "_blank")}
-                />
-            </QuickActionCard>
-
-            {showDevs && (
-                <div style={{ marginTop: "16px", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", animation: "slideIn 0.3s ease-out" }}>
-                    <style>{`
-                        @keyframes slideIn {
-                            from { opacity: 0; transform: translateY(-10px); }
-                            to { opacity: 1; transform: translateY(0); }
-                        }
-                    `}</style>
-                    {DEV_TEAM_IDS.map(dev => (
-                        <DevCard key={dev.id} id={dev.id} role={dev.role} description={dev.description} />
-                    ))}
-                </div>
             )}
-        </>
+            <QuickAction
+                Icon={HeartIcon}
+                text="Ko-fi"
+                action={() => openExternal("https://ko-fi.com/midnightcord")}
+            />
+        </QuickActionCard>
     );
 }
 
@@ -352,7 +236,7 @@ function EquicordSettings() {
                     {t("Common actions you might want to perform. These shortcuts give you quick access to frequently used features without navigating through menus.")}
                 </Paragraph>
 
-                <DevTeamSection />
+                <QuickActionsSection />
 
                 <Divider className={Margins.top20} />
 

@@ -121,6 +121,28 @@ const rendererStartupSource = readFileSync(join(rootDir, "src", "Vencord.ts"), "
 assert(rendererStartupSource.includes("openSettingsTabModal(UpdaterTab)"), "Startup updates must open the updater popup");
 
 const badgeApiSource = readFileSync(join(rootDir, "src", "plugins", "_api", "badges", "index.tsx"), "utf8");
-assert(badgeApiSource.includes('loadBadges("https://midnightcord.fr/api/badges"'), "Midnightcord badges must use the public read-only API");
-assert(!/midnightcord\.fr\/api\/badges[\s\S]{0,120}method:\s*["'](?:POST|PUT|PATCH|DELETE)/i.test(badgeApiSource), "Badge API must remain read-only");
+assert(badgeApiSource.includes('const MIDNIGHTCORD_BADGE_ENDPOINT = "https://api.midnightcord.fr/v1/badge"'), "Midnightcord badges must use the isolated API host");
+assert(badgeApiSource.includes('method: "POST"'), "Badge lookups must query one profile at a time");
+assert(badgeApiSource.includes('"X-Midnightcord-Client": MIDNIGHTCORD_CLIENT_MARKER'), "Badge lookups must carry the client marker");
+assert(badgeApiSource.includes("body: JSON.stringify({ userId })"), "Badge lookups must send only one user ID");
+assert(!badgeApiSource.includes("https://midnightcord.fr/api/badges"), "The website must not serve badge data");
+assert(!badgeApiSource.includes("const midnightcordBadges = await loadBadges"), "The client must never download the full Midnightcord badge list");
+
+assert(!midnightcordSettingsSource.includes("DEV_TEAM_IDS"), "Creator and admin cards must be removed");
+assert(!midnightcordSettingsSource.includes("Midnightcord Channel"), "The obsolete channel action must be removed");
+assert(midnightcordSettingsSource.includes('text="Ko-fi"'), "Quick actions must link to Ko-fi");
+assert(midnightcordSettingsSource.includes("https://ko-fi.com/midnightcord"), "Ko-fi must use the official Midnightcord page");
+assert(!existsSync(join(rootDir, "src", "midnightcord", "renderer", "components", "ContributeModal.tsx")), "The crypto donation modal must be removed");
+
+const changelogManagerSource = readFileSync(join(rootDir, "src", "components", "settings", "tabs", "changelog", "changelogManager.ts"), "utf8");
+assert(changelogManagerSource.includes("memoryDataStore"), "Changelog storage must have an in-memory fallback");
+assert(changelogManagerSource.includes("disablePersistentDataStore"), "IndexedDB failures must be contained");
+
+const branchPickerSource = readFileSync(join(rootDir, "src", "midnightcord", "renderer", "components", "settings", "DiscordBranchPicker.tsx"), "utf8");
+assert(branchPickerSource.includes("<select"), "The standalone settings must use a native branch selector");
+assert(!branchPickerSource.includes("@Midnightcord/types/webpack/common"), "The branch selector must not depend on Discord lazy modules");
+
+const rendererUtilsSource = readFileSync(join(rootDir, "src", "midnightcord", "renderer", "utils.ts"), "utf8");
+assert(rendererUtilsSource.includes("navigator.platform.toLowerCase()"), "CachyOS must have a platform detection fallback");
+
 console.log("[test] Privacy regression checks passed.");

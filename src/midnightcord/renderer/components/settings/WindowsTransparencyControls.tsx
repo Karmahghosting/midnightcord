@@ -6,13 +6,19 @@
 
 import { Heading, Paragraph } from "@Midnightcord/types/components";
 import { Margins } from "@Midnightcord/types/utils";
-import { Select } from "@Midnightcord/types/webpack/common";
+import { isWindows } from "renderer/utils";
 
 import { SimpleErrorBoundary } from "../SimpleErrorBoundary";
 import { SettingsComponent } from "./Settings";
 
 export const WindowsTransparencyControls: SettingsComponent = ({ settings }) => {
-    if (!VesktopNative.app.supportsWindowsTransparency()) return null;
+    if (!isWindows) return null;
+
+    try {
+        if (VesktopNative?.app?.supportsWindowsTransparency?.() !== true) return null;
+    } catch {
+        return null;
+    }
 
     return (
         <div>
@@ -22,29 +28,24 @@ export const WindowsTransparencyControls: SettingsComponent = ({ settings }) => 
             </Paragraph>
 
             <SimpleErrorBoundary>
-                <Select
-                    placeholder="None"
-                    options={[
-                        {
-                            label: "None",
-                            value: "none",
-                            default: true
-                        },
-                        {
-                            label: "Mica (incorporates system theme + desktop wallpaper to paint the background)",
-                            value: "mica"
-                        },
-                        { label: "Tabbed (variant of Mica with stronger background tinting)", value: "tabbed" },
-                        {
-                            label: "Acrylic (blurs the window behind Midnightcord for a translucent background)",
-                            value: "acrylic"
-                        }
-                    ]}
-                    closeOnSelect={true}
-                    select={v => (settings.transparencyOption = v)}
-                    isSelected={v => v === settings.transparencyOption}
-                    serialize={s => s}
-                />
+                <select
+                    aria-label="Transparency option"
+                    value={settings.transparencyOption || "none"}
+                    onChange={event => (settings.transparencyOption = event.currentTarget.value as typeof settings.transparencyOption)}
+                    style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: "4px",
+                        background: "var(--background-tertiary)",
+                        color: "var(--text-normal)",
+                        border: "1px solid var(--background-modifier-accent)"
+                    }}
+                >
+                    <option value="none">None</option>
+                    <option value="mica">Mica</option>
+                    <option value="tabbed">Tabbed</option>
+                    <option value="acrylic">Acrylic</option>
+                </select>
             </SimpleErrorBoundary>
         </div>
     );

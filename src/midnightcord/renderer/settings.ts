@@ -10,8 +10,23 @@ import { SettingsStore } from "shared/utils/SettingsStore";
 import { VesktopLogger } from "./logger";
 import { localStorage } from "./utils";
 
-export const Settings = new SettingsStore(VesktopNative.settings.get());
-Settings.addGlobalChangeListener((o, p) => VesktopNative.settings.set(o, p));
+function getInitialSettings(): ReturnType<typeof VesktopNative.settings.get> {
+    try {
+        return VesktopNative.settings.get();
+    } catch (error) {
+        console.warn("Native settings bridge is unavailable; using safe defaults.", error);
+        return {} as ReturnType<typeof VesktopNative.settings.get>;
+    }
+}
+
+export const Settings = new SettingsStore(getInitialSettings());
+Settings.addGlobalChangeListener((o, p) => {
+    try {
+        VesktopNative.settings.set(o, p);
+    } catch (error) {
+        console.warn("Unable to persist native settings.", error);
+    }
+});
 
 export function useSettings() {
     const [, update] = useReducer(x => x + 1, 0);

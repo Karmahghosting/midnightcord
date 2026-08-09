@@ -12,6 +12,7 @@ import { ComponentType } from "react";
 import { Settings, useSettings } from "renderer/settings";
 import { isMac, isWindows } from "renderer/utils";
 
+import { SimpleErrorBoundary } from "../SimpleErrorBoundary";
 import { ArRPCSettingsButton } from "./ArRPCSettings";
 import { AutoStartToggle } from "./AutoStartToggle";
 import { DeveloperOptionsButton } from "./DeveloperOptions";
@@ -172,7 +173,13 @@ function SettingsSections() {
 
             <div className={cl("category-content")}>
                 {settings.map((Setting, i) => {
-                    if (typeof Setting === "function") return <Setting key={`Custom-${i}`} settings={Settings} />;
+                    if (typeof Setting === "function") {
+                        return (
+                            <SimpleErrorBoundary key={"Custom-" + i}>
+                                <Setting settings={Settings} />
+                            </SimpleErrorBoundary>
+                        );
+                    }
 
                     const { defaultValue, title, description, key, disabled, invisible } = Setting;
                     if (invisible?.()) return null;
@@ -201,8 +208,8 @@ export default ErrorBoundary.wrap(
     function SettingsUI() {
         return (
             <section>
-                <Updater />
-                <OutdatedVesktopWarning />
+                <SimpleErrorBoundary><Updater /></SimpleErrorBoundary>
+                <SimpleErrorBoundary><OutdatedVesktopWarning /></SimpleErrorBoundary>
                 <SettingsSections />
             </section>
         );

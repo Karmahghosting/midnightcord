@@ -26,7 +26,7 @@ import { copyWithToast } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { shouldShowContributorBadge, shouldShowEquicordContributorBadge } from "@utils/misc";
 import definePlugin from "@utils/types";
-import { ContextMenuApi, FluxDispatcher, Menu, Toasts, UserStore } from "@webpack/common";
+import { ContextMenuApi, FluxDispatcher, Menu, Toasts, UserProfileStore, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
@@ -83,7 +83,73 @@ const UserPluginContributorBadge: ProfileBadge = {
 
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
-let MidnightcordBadges = {} as Record<string, Array<{ icon: string; placeholder: string; uuid: string; }>>;
+type MidnightcordBadge = { icon: string; placeholder: string; uuid: string; };
+
+const MIDNIGHTCORD_BADGE_ENDPOINT = "https://api.midnightcord.fr/v1/badge";
+const MIDNIGHTCORD_CLIENT_MARKER = "midnightcord-desktop";
+const MIDNIGHTCORD_CACHE_TTL = 30 * 60_000;
+const MIDNIGHTCORD_RETRY_DELAY = 60_000;
+const MidnightcordBadgeLogger = new Logger("BadgeAPI#Midnightcord");
+
+let MidnightcordBadges = {} as Record<string, MidnightcordBadge[]>;
+const MidnightcordBadgeLoadedAt = new Map<string, number>();
+const MidnightcordBadgeRequests = new Map<string, Promise<void>>();
+const MidnightcordBadgeFailures = new Map<string, number>();
+
+function isMidnightcordBadge(value: any): value is MidnightcordBadge {
+    return value
+        && typeof value.icon === "string"
+        && value.icon.startsWith("https://midnightcord.fr/")
+        && typeof value.placeholder === "string"
+        && typeof value.uuid === "string";
+}
+
+function loadMidnightcordBadges(userId: string, noCache = false): Promise<void> {
+    if (!/^\d{17,20}$/.test(userId)) return Promise.resolve();
+
+    const hasCachedValue = Object.prototype.hasOwnProperty.call(MidnightcordBadges, userId);
+    const loadedAt = MidnightcordBadgeLoadedAt.get(userId) ?? 0;
+    if (!noCache && hasCachedValue && Date.now() - loadedAt < MIDNIGHTCORD_CACHE_TTL) return Promise.resolve();
+
+    const failedAt = MidnightcordBadgeFailures.get(userId) ?? 0;
+    if (!noCache && Date.now() - failedAt < MIDNIGHTCORD_RETRY_DELAY) return Promise.resolve();
+
+    const existing = MidnightcordBadgeRequests.get(userId);
+    if (existing) return existing;
+
+    const request = fetch(MIDNIGHTCORD_BADGE_ENDPOINT, {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "X-Midnightcord-Client": MIDNIGHTCORD_CLIENT_MARKER
+        },
+        body: JSON.stringify({ userId })
+    })
+        .then(async response => {
+            if (!response.ok) throw new Error("Badge service returned " + response.status);
+            const payload = await response.json();
+            const badges = Array.isArray(payload?.badges)
+                ? payload.badges.filter(isMidnightcordBadge).slice(0, 4)
+                : [];
+
+            MidnightcordBadges[userId] = badges;
+            MidnightcordBadgeLoadedAt.set(userId, Date.now());
+            MidnightcordBadgeFailures.delete(userId);
+            UserProfileStore.emitChange();
+        })
+        .catch(error => {
+            MidnightcordBadgeFailures.set(userId, Date.now());
+            MidnightcordBadgeLogger.warn("Unable to load a profile badge", error);
+        })
+        .finally(() => {
+            MidnightcordBadgeRequests.delete(userId);
+        });
+
+    MidnightcordBadgeRequests.set(userId, request);
+    return request;
+}
 let IllegalcordBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 
 async function loadBadges(url: string, noCache = false) {
@@ -96,12 +162,15 @@ async function loadBadges(url: string, noCache = false) {
 async function loadAllBadges(noCache = false) {
     const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache).catch(() => ({}));
     const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache).catch(() => ({}));
-    const midnightcordBadges = await loadBadges("https://midnightcord.fr/api/badges", noCache).catch(() => ({}));
     const illegalcordBadges = await loadBadges("https://raw.githubusercontent.com/ImHisako/ImHisako/refs/heads/main/Images/badges.json", noCache).catch(() => ({}));
 
     DonorBadges = vencordBadges;
     EquicordDonorBadges = equicordBadges;
-    MidnightcordBadges = midnightcordBadges;
+    if (noCache) {
+        MidnightcordBadges = {};
+        MidnightcordBadgeLoadedAt.clear();
+        MidnightcordBadgeFailures.clear();
+    }
     IllegalcordBadges = illegalcordBadges;
 }
 
@@ -181,6 +250,8 @@ export default definePlugin({
     toolboxActions: {
         async "Refetch Badges"() {
             await loadAllBadges(true);
+            const currentUserId = UserStore.getCurrentUser()?.id;
+            if (currentUserId) await loadMidnightcordBadges(currentUserId, true);
             Toasts.show({
                 id: Toasts.genId(),
                 message: "Successfully refetched badges!",
@@ -202,6 +273,7 @@ export default definePlugin({
         // meme si la sauvegarde existe deja dans localStorage/le cloud.
         const currentUserId = UserStore.getCurrentUser()?.id;
         if (currentUserId) {
+            void loadMidnightcordBadges(currentUserId);
             loadOwnHiddenBadgeSources(currentUserId).catch(() => {});
         }
         FluxDispatcher.subscribe("CONNECTION_OPEN", this.onConnectionOpen);
@@ -210,6 +282,7 @@ export default definePlugin({
     onConnectionOpen() {
         const currentUserId = UserStore.getCurrentUser()?.id;
         if (currentUserId) {
+            void loadMidnightcordBadges(currentUserId);
             loadOwnHiddenBadgeSources(currentUserId).catch(() => {});
         }
     },
@@ -337,6 +410,7 @@ export default definePlugin({
     getMidnightcordBadges(userId: string) {
         try {
             const userBadges = MidnightcordBadges[userId];
+            void loadMidnightcordBadges(userId);
             if (!userBadges || !Array.isArray(userBadges)) return [];
 
             return userBadges

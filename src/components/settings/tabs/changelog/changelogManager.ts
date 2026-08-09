@@ -41,6 +41,53 @@ const MIDNIGHTCORD_REPO_URL = `https://github.com/${MIDNIGHTCORD_RELEASES_REPO}`
 
 type KnownPluginSettingsMap = Map<string, Set<string>>;
 
+const memoryDataStore = new Map<string, unknown>();
+let persistentDataStoreAvailable = true;
+let persistentDataStoreWarningShown = false;
+
+function disablePersistentDataStore(error: unknown) {
+    persistentDataStoreAvailable = false;
+    if (!persistentDataStoreWarningShown) {
+        persistentDataStoreWarningShown = true;
+        console.warn("Changelog persistence is unavailable; using memory for this session.", error);
+    }
+}
+
+async function storageGet(key: string): Promise<unknown> {
+    if (!persistentDataStoreAvailable) return memoryDataStore.get(key);
+
+    try {
+        const value = await DataStore.get(key);
+        if (value !== undefined) memoryDataStore.set(key, value);
+        return value;
+    } catch (error) {
+        disablePersistentDataStore(error);
+        return memoryDataStore.get(key);
+    }
+}
+
+async function storageSet(key: string, value: unknown): Promise<void> {
+    memoryDataStore.set(key, value);
+    if (!persistentDataStoreAvailable) return;
+
+    try {
+        await DataStore.set(key, value);
+    } catch (error) {
+        disablePersistentDataStore(error);
+    }
+}
+
+async function storageDelete(key: string): Promise<void> {
+    memoryDataStore.delete(key);
+    if (!persistentDataStoreAvailable) return;
+
+    try {
+        await DataStore.del(key);
+    } catch (error) {
+        disablePersistentDataStore(error);
+    }
+}
+
 function normalizeRepoUrl(repoUrl: string | null | undefined): string | null {
     if (!repoUrl) return null;
     try {
@@ -172,7 +219,7 @@ function serializeKnownSettings(
 async function persistKnownSettings(
     map: KnownPluginSettingsMap,
 ): Promise<void> {
-    await DataStore.set(KNOWN_SETTINGS_KEY, serializeKnownSettings(map));
+    await storageSet(KNOWN_SETTINGS_KEY, serializeKnownSettings(map));
 }
 
 function isMapLike(value: any): value is Map<string, string[]> {
@@ -200,7 +247,7 @@ export function getNewSettingsEntries(
 }
 
 export async function getChangelogHistory(): Promise<ChangelogHistory> {
-    const history = (await DataStore.get(
+    const history = (await storageGet(
         CHANGELOG_HISTORY_KEY,
     )) as ChangelogHistory;
 
@@ -293,7 +340,7 @@ export async function saveUpdateSession(
         history.splice(50);
     }
 
-    await DataStore.set(CHANGELOG_HISTORY_KEY, history);
+    await storageSet(CHANGELOG_HISTORY_KEY, history);
 
     if (!forceLog) {
         await setLastSeenHash(currentHash);
@@ -309,21 +356,21 @@ export async function saveUpdateSession(
 }
 
 export async function getLastSeenHash(): Promise<string | null> {
-    return (await DataStore.get(LAST_SEEN_HASH_KEY)) as string | null;
+    return (await storageGet(LAST_SEEN_HASH_KEY)) as string | null;
 }
 
 export async function setLastSeenHash(hash: string): Promise<void> {
-    await DataStore.set(LAST_SEEN_HASH_KEY, hash);
+    await storageSet(LAST_SEEN_HASH_KEY, hash);
 }
 
 export async function getKnownPlugins(): Promise<Set<string>> {
-    const known = (await DataStore.get(KNOWN_PLUGINS_KEY)) as string[];
+    const known = (await storageGet(KNOWN_PLUGINS_KEY)) as string[];
     return new Set(known || []);
 }
 
 export async function updateKnownPlugins(): Promise<void> {
     const currentPlugins = Object.keys(plugins);
-    await DataStore.set(KNOWN_PLUGINS_KEY, currentPlugins);
+    await storageSet(KNOWN_PLUGINS_KEY, currentPlugins);
 }
 
 function getSettingsSetForPlugin(plugin: string): Set<string> {
@@ -340,7 +387,7 @@ function getCurrentSettings(pluginList: string[]): KnownPluginSettingsMap {
 }
 
 export async function getKnownSettings(): Promise<KnownPluginSettingsMap> {
-    const mapData = (await DataStore.get(KNOWN_SETTINGS_KEY)) as any;
+    const mapData = (await storageGet(KNOWN_SETTINGS_KEY)) as any;
     if (mapData === undefined) {
         const knownPlugins = await getKnownPlugins();
         const pluginNames = [
@@ -439,15 +486,15 @@ export async function getUpdatedPlugins(): Promise<string[]> {
 }
 
 export async function clearChangelogHistory(): Promise<void> {
-    await DataStore.del(CHANGELOG_HISTORY_KEY);
-    await DataStore.del(LAST_SEEN_HASH_KEY);
-    await DataStore.del(KNOWN_SETTINGS_KEY);
+    await storageDelete(CHANGELOG_HISTORY_KEY);
+    await storageDelete(LAST_SEEN_HASH_KEY);
+    await storageDelete(KNOWN_SETTINGS_KEY);
 }
 
 export async function clearIndividualLog(logId: string): Promise<void> {
     const history = await getChangelogHistory();
     const filteredHistory = history.filter(log => log.id !== logId);
-    await DataStore.set(CHANGELOG_HISTORY_KEY, filteredHistory);
+    await storageSet(CHANGELOG_HISTORY_KEY, filteredHistory);
 }
 
 export async function initializeChangelog(): Promise<void> {
@@ -461,11 +508,11 @@ export async function initializeChangelog(): Promise<void> {
 }
 
 export async function getLastRepositoryCheckHash(): Promise<string | null> {
-    return (await DataStore.get(LAST_REPO_CHECK_KEY)) as string | null;
+    return (await storageGet(LAST_REPO_CHECK_KEY)) as string | null;
 }
 
 export async function setLastRepositoryCheckHash(hash: string): Promise<void> {
-    await DataStore.set(LAST_REPO_CHECK_KEY, hash);
+    await storageSet(LAST_REPO_CHECK_KEY, hash);
 }
 
 export function formatTimestamp(timestamp: number): string {
