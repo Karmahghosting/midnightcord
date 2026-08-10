@@ -1,7 +1,7 @@
 {
     "name": "midnightcord",
     "private": "true",
-    "version": "1.27.10",
+    "version": "1.27.11",
     "desktopName": "midnightcord.desktop",
     "description": "A fast cross-platform Discord client mod with native voice",
     "main": "dist/js/main.js",
