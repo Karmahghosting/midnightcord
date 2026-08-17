@@ -12,7 +12,7 @@ on:
                 default: both
             webhook_url:
                 type: string
-                description: "Webhook URL that the report will be posted to. This will be visible for everyone, so DO NOT pass sensitive webhooks like discord webhook. This is meant to be used by Venbot."
+                description: "Webhook URL that the report will be posted to. This will be visible for everyone, so DO NOT pass sensitive webhooks like discord webhook. This is meant to be used by [...]
                 required: false
     schedule:
         #   # Every day at midnight
@@ -29,7 +29,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
               with:
-                  ref: ${{ github.event_name == 'schedule' && 'dev' || github.ref }}
+                  ref: ${{ github.event_name == 'schedule' && 'main' || github.ref_name }}
 
             - uses: pnpm/action-setup@v3 # Install pnpm using packageManager key in package.json
 
