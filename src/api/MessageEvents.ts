@@ -53,11 +53,36 @@ export interface MessageOptions {
 export type MessageSendListener = (channelId: string, messageObj: MessageObject, options: MessageOptions) => Promisable<void | { cancel: boolean; }>;
 export type MessageEditListener = (channelId: string, messageId: string, messageObj: MessageObject) => Promisable<void | { cancel: boolean; }>;
 
+export interface MessageValidationContext {
+    phase: "before" | "after";
+    operation: object;
+}
+
+export type MessageSendValidator = (channelId: string, messageObj: MessageObject, options: MessageOptions, context: MessageValidationContext) => ReturnType<MessageSendListener>;
+export type MessageEditValidator = (channelId: string, messageId: string, messageObj: MessageObject, context: MessageValidationContext) => ReturnType<MessageEditListener>;
+
 const sendListeners = new Set<MessageSendListener>();
 const editListeners = new Set<MessageEditListener>();
+const sendValidators = new Set<MessageSendValidator>();
+const editValidators = new Set<MessageEditValidator>();
+
+async function validate<T>(validators: readonly T[], run: (validator: T) => ReturnType<MessageSendListener>) {
+    for (const validator of validators) {
+        try {
+            if ((await run(validator))?.cancel) return true;
+        } catch {
+            MessageEventsLogger.error("Message validation failed; the operation was cancelled.");
+            return true;
+        }
+    }
+    return false;
+}
 
 export async function _handlePreSend(channelId: string, messageObj: MessageObject, options: MessageOptions, replyOptions: MessageReplyOptions) {
     options.replyOptions = replyOptions;
+    const operation = {};
+    const validators = [...sendValidators];
+    if (await validate(validators, validator => validator(channelId, messageObj, options, { phase: "before", operation }))) return true;
     for (const listener of sendListeners) {
         try {
             const result = await listener(channelId, messageObj, options);
@@ -68,10 +93,13 @@ export async function _handlePreSend(channelId: string, messageObj: MessageObjec
             MessageEventsLogger.error("MessageSendHandler: Listener encountered an unknown error\n", e);
         }
     }
-    return false;
+    return validate(validators, validator => validator(channelId, messageObj, options, { phase: "after", operation }));
 }
 
 export async function _handlePreEdit(channelId: string, messageId: string, messageObj: MessageObject) {
+    const operation = {};
+    const validators = [...editValidators];
+    if (await validate(validators, validator => validator(channelId, messageId, messageObj, { phase: "before", operation }))) return true;
     for (const listener of editListeners) {
         try {
             const result = await listener(channelId, messageId, messageObj);
@@ -82,7 +110,26 @@ export async function _handlePreEdit(channelId: string, messageId: string, messa
             MessageEventsLogger.error("MessageEditHandler: Listener encountered an unknown error\n", e);
         }
     }
-    return false;
+    return validate(validators, validator => validator(channelId, messageId, messageObj, { phase: "after", operation }));
+}
+
+/** Validators run before transformations and again before the final send/edit. */
+export function addMessagePreSendValidator(validator: MessageSendValidator) {
+    sendValidators.add(validator);
+    return validator;
+}
+
+export function removeMessagePreSendValidator(validator: MessageSendValidator) {
+    return sendValidators.delete(validator);
+}
+
+export function addMessagePreEditValidator(validator: MessageEditValidator) {
+    editValidators.add(validator);
+    return validator;
+}
+
+export function removeMessagePreEditValidator(validator: MessageEditValidator) {
+    return editValidators.delete(validator);
 }
 
 /**

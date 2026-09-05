@@ -46,6 +46,17 @@ Pour un build de développement injecté directement depuis le dépôt :
     corepack pnpm build --standalone
     corepack pnpm run inject
 
+## Plugins pratiques
+
+BetterSessions ajoute la gestion des appareils et les alertes de nouvelles
+sessions. MessageReminders permet de créer des rappels sur les messages.
+AudioProfiles sauvegarde et restaure vos réglages audio. SecretGuard avertit
+avant de publier un texte contenant un secret courant. LocalOCR extrait le texte
+des images sur votre appareil ; ImageOptimizer crée une copie redimensionnée
+avec aperçu et comparaison du poids. Les six plugins sont dans la catégorie
+**Midnightcord**, désactivés par défaut. Consultez le
+[guide d'activation et d'utilisation](./docs/UTILITY-PLUGINS.md).
+
 ## Paquets Linux autonomes
 
 Les sorties AppImage, Debian, RPM et tar.gz restent disponibles avec corepack pnpm package:linux:x64. Elles utilisent WebRTC au lieu du moteur vocal Discord. Le mode natif est recommandé pour la voix.

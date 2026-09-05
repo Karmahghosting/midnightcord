@@ -1,0 +1,77 @@
+.mc-reminders {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--text-default, var(--text-normal));
+}
+
+.mc-reminders p {
+    margin: 0;
+}
+
+.mc-reminders-header {
+    justify-content: space-between;
+}
+
+.mc-reminders-notice {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mc-reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+.mc-reminders-card {
+    padding: 14px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 8px;
+    background: var(--background-secondary);
+}
+
+.mc-reminders-meta,
+.mc-reminders-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mc-reminders-meta span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.mc-reminders-card .mc-reminders-preview {
+    margin: 12px 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.mc-reminders-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mc-reminders-field input {
+    padding: 10px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 6px;
+    background: var(--input-background, var(--background-tertiary));
+    color: var(--text-default, var(--text-normal));
+    font: inherit;
+    color-scheme: dark;
+}
+
+.theme-light .mc-reminders-field input {
+    color-scheme: light;
+}
+
+.mc-reminders-error {
+    color: var(--text-danger);
+}

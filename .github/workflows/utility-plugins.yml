@@ -1,0 +1,103 @@
+name: Utility plugins and native packages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: utility-plugins-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Utilities and native ${{ matrix.platform }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x64
+            browser: true
+          - os: macos-15-intel
+            platform: macos
+            arch: x64
+            browser: false
+          - os: macos-latest
+            platform: macos
+            arch: arm64
+            browser: false
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            browser: true
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+            browser: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          architecture: ${{ matrix.arch }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test utility plugins and offline OCR
+        run: pnpm test:utilities
+
+      - name: Test image processing in Chrome
+        if: matrix.browser
+        run: pnpm test:images
+
+      - name: Build native archive
+        run: pnpm package:native
+
+      - name: Verify privacy and native injection
+        run: pnpm test:privacy && pnpm test:native-injection
+
+      - name: Install local Electron for the ASAR smoke test
+        run: node node_modules/electron/install.js
+
+      - name: Prepare Linux Electron smoke environment
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0t64 libnss3 libgbm1 libasound2t64
+          electron_sandbox="$(node -p 'require("path").join(require("path").dirname(require("electron")), "chrome-sandbox")')"
+          sudo chown root:root "$electron_sandbox"
+          sudo chmod 4755 "$electron_sandbox"
+
+      - name: Verify OCR from the real ASAR on Windows and macOS
+        if: runner.os != 'Linux'
+        run: pnpm test:ocr-asar
+
+      - name: Verify OCR from the real ASAR on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:ocr-asar
+
+      - name: Upload native archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release/native/*
+          if-no-files-found: error
+          retention-days: 7

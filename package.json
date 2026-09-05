@@ -62,7 +62,10 @@
         "uninject:windows": "node scripts/uninject.mjs",
         "uninject:macos": "node scripts/uninject.mjs",
         "test:native-injection": "node scripts/testNativeInjection.mjs",
-        "test:privacy": "node scripts/testPrivacy.mjs"
+        "test:privacy": "node scripts/testPrivacy.mjs",
+        "test:utilities": "node scripts/testUtilityPlugins.mjs",
+        "test:images": "node scripts/testImageOptimizer.mjs",
+        "test:ocr-asar": "node scripts/testLocalOcrAsar.mjs"
     },
     "dependencies": {
         "@ffmpeg/ffmpeg": "^0.12.10",
@@ -70,6 +73,8 @@
         "@intrnl/xxhash64": "^0.1.2",
         "@song-spotlight/api": "^2.0.1",
         "@streamparser/json": "^0.0.22",
+        "@tesseract.js-data/eng": "1.0.0",
+        "@tesseract.js-data/fra": "1.0.0",
         "@types/less": "^3.0.8",
         "@types/stylus": "^0.48.42",
         "@types/tinycolor2": "^1.4.6",
@@ -84,6 +89,7 @@
         "monaco-editor": "^0.54.0",
         "nanoid": "^5.1.6",
         "native-file-system-adapter": "^3.0.1",
+        "tesseract.js": "7.0.0",
         "usercss-meta": "^0.12.0",
         "virtual-merge": "^1.0.1",
         "yaml-js": "^0.3.1"

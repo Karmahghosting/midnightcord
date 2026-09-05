@@ -1,0 +1,67 @@
+.vc-betterSessions-panel,
+.vc-betterSessions-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vc-betterSessions-content {
+    padding-bottom: 16px;
+}
+
+.vc-betterSessions-footer-buttons,
+.vc-betterSessions-actions,
+.vc-betterSessions-session-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.vc-betterSessions-session {
+    padding: 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--background-base-lower);
+    overflow-wrap: anywhere;
+}
+
+.vc-betterSessions-new-btn {
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-feedback-positive);
+    font-size: 12px;
+}
+
+.vc-betterSessions-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+}
+
+.vc-betterSessions-label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--text-default);
+}
+
+.vc-betterSessions-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: var(--input-background);
+    color: var(--text-default);
+    font: inherit;
+}
+
+.vc-betterSessions-input:focus-visible {
+    outline: 2px solid var(--text-link);
+    outline-offset: 2px;
+}

@@ -1,0 +1,114 @@
+.vc-audio-profiles {
+    color: var(--text-normal);
+    padding: 4px 0 20px;
+}
+
+.vc-audio-profiles p {
+    line-height: 1.5;
+    margin: 0 0 14px;
+}
+
+.vc-audio-profiles-create,
+.vc-audio-profiles-actions,
+.vc-audio-profiles-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.vc-audio-profiles-create {
+    align-items: end;
+    margin-bottom: 12px;
+}
+
+.vc-audio-profiles label {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vc-audio-profiles input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text-normal);
+    background: var(--input-background);
+    font: inherit;
+}
+
+.vc-audio-profiles input:focus-visible,
+.vc-audio-profiles button:focus-visible {
+    outline: 2px solid var(--text-link);
+    outline-offset: 2px;
+}
+
+.vc-audio-profiles-hint {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.vc-audio-profiles-list {
+    display: grid;
+    gap: 12px;
+}
+
+.vc-audio-profiles-card {
+    padding: 16px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 10px;
+    background: var(--background-secondary);
+}
+
+.vc-audio-profiles-card-header {
+    justify-content: space-between;
+}
+
+.vc-audio-profiles-card h3 {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.vc-audio-profiles-details {
+    display: grid;
+    gap: 6px;
+    margin: 12px 0;
+    font-size: 13px;
+}
+
+.vc-audio-profiles-details > div {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+}
+
+.vc-audio-profiles-details dt {
+    color: var(--text-muted);
+}
+
+.vc-audio-profiles-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.vc-audio-profiles-actions + .vc-audio-profiles-actions {
+    margin-top: 12px;
+}
+
+.vc-audio-profiles-status,
+.vc-audio-profiles-error {
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.vc-audio-profiles-error {
+    color: var(--text-danger);
+}

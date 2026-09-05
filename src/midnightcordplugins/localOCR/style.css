@@ -1,0 +1,48 @@
+.vc-local-ocr {
+    padding: 16px;
+    color: var(--text-default);
+}
+
+.vc-local-ocr p {
+    margin: 10px 0;
+    overflow-wrap: anywhere;
+}
+
+.vc-local-ocr label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.vc-local-ocr textarea,
+.vc-local-ocr select,
+.vc-local-ocr input {
+    padding: 8px;
+    color: var(--text-default);
+    background: var(--background-base-lower);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font: inherit;
+}
+
+.vc-local-ocr textarea {
+    resize: vertical;
+    min-height: 160px;
+}
+
+.vc-local-ocr-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.vc-local-ocr-hint {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.vc-local-ocr-error {
+    color: var(--text-danger);
+}

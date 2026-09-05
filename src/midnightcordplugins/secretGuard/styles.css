@@ -1,0 +1,47 @@
+.mc-secret-guard {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--text-default, var(--text-normal));
+    line-height: 1.5;
+}
+
+.mc-secret-guard p {
+    margin: 0;
+}
+
+.mc-secret-guard-header {
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mc-secret-guard-note {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.mc-secret-guard-findings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    list-style: none;
+    margin: 0;
+}
+
+.mc-secret-guard-findings li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mc-secret-guard-findings code {
+    color: var(--text-muted);
+}
+
+.mc-secret-guard-actions {
+    gap: 8px;
+    flex-wrap: wrap;
+}
