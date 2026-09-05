@@ -28,7 +28,14 @@ Discord doit toujours communiquer avec ses propres services pour la connexion, l
 
 ## Plugins réseau
 
-Certains plugins optionnels ont besoin d’un service choisi par l’utilisateur, par exemple la traduction, une API d’intelligence artificielle, un lecteur multimédia ou un hébergeur de fichiers. Ces appels ne font pas partie du cloud Midnightcord. Désactivez les plugins concernés si vous ne souhaitez pas utiliser leurs services externes.
+Certains plugins optionnels ont besoin d'un service choisi par l'utilisateur, par exemple la traduction, une API d'intelligence artificielle, un lecteur multimédia ou un hébergeur de fichiers. Ces appels ne font pas partie du cloud Midnightcord. Désactivez les plugins concernés si vous ne souhaitez pas utiliser leurs services externes.
+
+Lorsque son option Spotify est active, DynamicIslande utilise la connexion Spotify
+déjà gérée par Discord pour consulter `api.spotify.com/v1/me/player` et envoyer
+les commandes choisies dans le lecteur. Les événements de lecture assurent le
+suivi principal ; une requête de secours resynchronise l'état après une période
+sans événement. Aucun identifiant Spotify supplémentaire n'est demandé ni stocké
+par ce plugin. Désactiver l'option arrête cette synchronisation supplémentaire.
 
 ## Vérification
 

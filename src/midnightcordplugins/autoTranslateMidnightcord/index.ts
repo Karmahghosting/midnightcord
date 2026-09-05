@@ -1,5 +1,5 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -11,6 +11,11 @@ export type SupportedLang = "en" | "fr" | "ar" | "es" | "ru" | "zh";
 export type TranslationMap = Record<string, Record<SupportedLang, string>>;
 
 export const translations: TranslationMap = {
+    "Playback position": { en: "Playback position", fr: "Position de lecture", ar: "موضع التشغيل", es: "Posición de reproducción", ru: "Позиция воспроизведения", zh: "播放位置" },
+    "Elapsed time": { en: "Elapsed time", fr: "Temps écoulé", ar: "الوقت المنقضي", es: "Tiempo transcurrido", ru: "Прошедшее время", zh: "已播放时间" },
+    "Spotify is temporarily limiting requests. Please try again later.": { en: "Spotify is temporarily limiting requests. Please try again later.", fr: "Spotify limite temporairement les requêtes. Réessayez plus tard.", ar: "يحد Spotify من الطلبات مؤقتًا. يُرجى المحاولة لاحقًا.", es: "Spotify está limitando las solicitudes temporalmente. Inténtalo de nuevo más tarde.", ru: "Spotify временно ограничивает запросы. Повторите попытку позже.", zh: "Spotify 暂时限制了请求。请稍后重试。" },
+    "Spotify could not authorize this action. Check your Spotify connection in Discord settings.": { en: "Spotify could not authorize this action. Check your Spotify connection in Discord settings.", fr: "Spotify n'a pas autorisé cette action. Vérifiez votre connexion Spotify dans les paramètres Discord.", ar: "لم يسمح Spotify بهذا الإجراء. تحقّق من اتصال Spotify في إعدادات Discord.", es: "Spotify no pudo autorizar esta acción. Revisa tu conexión de Spotify en los ajustes de Discord.", ru: "Spotify не разрешил это действие. Проверьте подключение Spotify в настройках Discord.", zh: "Spotify 未能授权此操作。请检查 Discord 设置中的 Spotify 连接。" },
+    "Spotify is unavailable. Playback will synchronize when the connection returns.": { en: "Spotify is unavailable. Playback will synchronize when the connection returns.", fr: "Spotify est indisponible. La lecture se synchronisera au retour de la connexion.", ar: "Spotify غير متاح. ستتم مزامنة التشغيل عند عودة الاتصال.", es: "Spotify no está disponible. La reproducción se sincronizará cuando se restablezca la conexión.", ru: "Spotify недоступен. Воспроизведение синхронизируется после восстановления соединения.", zh: "Spotify 暂时不可用。连接恢复后将同步播放状态。" },
     "Successfully updated your avatar!": { en: "Successfully updated your avatar!", fr: "Mise à jour de votre avatar réussie !", ar: "تم تحديث صورتك الرمزية بنجاح!", es: "¡Actualización exitosa de su avatar!", ru: "Аватар успешно обновлен!", zh: "成功更新您的头像！" },
     "Successfully updated your banner!": { en: "Successfully updated your banner!", fr: "Mise à jour de votre bannière réussie !", ar: "تم تحديث البانر الخاص بك بنجاح!", es: "¡Actualización exitosa de su banner!", ru: "Баннер успешно обновлен!", zh: "成功更新您的横幅！" },
     "Failed to update avatar.": { en: "Failed to update avatar.", fr: "Échec de la mise à jour de l'avatar.", ar: "فشل في تحديث الصورة الرمزية.", es: "Error al actualizar el avatar.", ru: "Не удалось обновить аватар.", zh: "更新头像失败。" },

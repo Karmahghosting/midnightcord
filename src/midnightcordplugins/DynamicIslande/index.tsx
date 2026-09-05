@@ -34,6 +34,7 @@ interface ControlButtonProps {
     children: ReactNode;
     compact?: boolean;
     danger?: boolean;
+    disabled?: boolean;
     label: string;
     primary?: boolean;
     onClick(): void;
@@ -204,12 +205,13 @@ function stopScreenShare(stream: Stream) {
     });
 }
 
-function ControlButton({ active, children, compact, danger, label, primary, onClick }: ControlButtonProps) {
+function ControlButton({ active, children, compact, danger, disabled, label, primary, onClick }: ControlButtonProps) {
     return (
         <button
             type="button"
             aria-label={label}
             title={label}
+            disabled={disabled}
             className={cl("control", { "control-active": active, "control-compact": compact, "control-danger": danger, "control-primary": primary })}
             onClick={(event: MouseEvent<HTMLButtonElement>) => {
                 event.stopPropagation();
@@ -307,32 +309,102 @@ function SoundCordSection({ sc }: { sc: ReturnType<typeof useSoundCordState> }) 
     );
 }
 
-function SpotifySection() {
-    const track = useStateFromStores([SpotifyStore], () => SpotifyStore.device?.is_active ? SpotifyStore.track : null);
+function SpotifyCover({ url, compact = false }: { url?: string; compact?: boolean; }) {
+    const [failedUrl, setFailedUrl] = useState<string>();
+    const className = cl(compact ? "summary-cover" : "cover");
+    return url && failedUrl !== url
+        ? <img className={className} src={url} alt="" draggable={false} onError={() => setFailedUrl(url)} />
+        : <span className={`${className} ${cl("cover-fallback")}`} aria-hidden="true">
+            <Glyph path="M10 3v12.2A4 4 0 1 0 12 19V7h8V3H10Z" />
+        </span>;
+}
+
+function SpotifySection({ active }: { active: boolean; }) {
+    const track = useStateFromStores([SpotifyStore], () => SpotifyStore.track);
     const isPlaying = useStateFromStores([SpotifyStore], () => SpotifyStore.isPlaying);
+    const canControl = useStateFromStores([SpotifyStore], () => SpotifyStore.canControl);
+    const lastError = useStateFromStores([SpotifyStore], () => SpotifyStore.lastError);
+    const storePosition = useStateFromStores([SpotifyStore], () => SpotifyStore.mPosition);
+    const deviceId = useStateFromStores([SpotifyStore], () => SpotifyStore.device?.id);
+    const accountId = useStateFromStores([UserStore], () => UserStore.getCurrentUser()?.id);
+    const [, setClock] = useState(0);
+    const [scrubPosition, setScrubPosition] = useState<number | null>(null);
+    const pendingSeek = useRef<{ position: number; trackId: string; deviceId?: string; accountId?: string; } | null>(null);
+    const trackId = track?.id;
+
+    useEffect(() => {
+        if (!active || !isPlaying || !trackId) return;
+        const interval = window.setInterval(() => setClock(value => value + 1), 1000);
+        return () => clearInterval(interval);
+    }, [active, isPlaying, trackId]);
+
+    useEffect(() => {
+        pendingSeek.current = null;
+        setScrubPosition(null);
+    }, [active, trackId, deviceId, accountId, canControl]);
+
     if (!track) return null;
+    const duration = Number.isFinite(track.duration) ? Math.max(0, track.duration) : 0;
+    const currentPosition = active && isPlaying ? SpotifyStore.position : storePosition;
+    const position = Math.min(duration, Math.max(0, scrubPosition ?? (Number.isFinite(currentPosition) ? currentPosition : 0)));
+    const elapsedText = formatDurationMs(position);
+    const durationText = formatDurationMs(duration);
+
+    const cancelSeek = () => {
+        pendingSeek.current = null;
+        setScrubPosition(null);
+    };
+    const commitSeek = () => {
+        const pending = pendingSeek.current;
+        cancelSeek();
+        if (!pending || !active || !SpotifyStore.canControl
+            || pending.trackId !== SpotifyStore.track?.id || pending.deviceId !== SpotifyStore.device?.id
+            || pending.accountId !== UserStore.getCurrentUser()?.id) return;
+        void SpotifyStore.seek(pending.position).catch(() => {});
+    };
 
     return (
         <section className={cl("section", "music-section")} aria-label={t("Spotify controls")}>
             <div className={cl("section-info")}>
-                <img className={cl("cover")} src={track.album.image.url} alt="" draggable={false} />
+                <SpotifyCover url={track.album?.image?.url} />
                 <div className={cl("copy")}>
                     <span className={cl("section-label")}>Spotify</span>
                     <strong>{track.name}</strong>
                     <span>{track.artists.map(artist => artist.name).join(", ")}</span>
                 </div>
             </div>
+            <div className={cl("spotify-progress")}>
+                <input type="range" className={cl("progress-slider")} min={0} max={duration || 1} step={1000}
+                    value={position} disabled={!canControl || !duration} aria-label={t("Playback position")}
+                    aria-valuetext={`${elapsedText} / ${durationText}`}
+                    style={{ "--value-percent": `${duration ? position / duration * 100 : 0}%` } as React.CSSProperties}
+                    onChange={event => {
+                        const value = Number(event.currentTarget.value);
+                        pendingSeek.current = { position: value, trackId: track.id, deviceId, accountId };
+                        setScrubPosition(value);
+                    }}
+                    onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)}
+                    onPointerUp={commitSeek} onPointerCancel={cancelSeek} onBlur={commitSeek}
+                    onKeyUp={event => {
+                        if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(event.key)) commitSeek();
+                    }} />
+                <div className={cl("progress-times")}>
+                    <span aria-label={t("Elapsed time")}>{elapsedText}</span>
+                    <span aria-label={t("Duration")}>{durationText}</span>
+                </div>
+            </div>
             <div className={cl("controls")}>
-                <ControlButton label={t("Previous track")} onClick={() => SpotifyStore.prev()}>
+                <ControlButton disabled={!canControl} label={t("Previous track")} onClick={() => { void SpotifyStore.prev().catch(() => {}); }}>
                     <Glyph path="M6 5h2v14H6V5Zm3 7 9-7v14l-9-7Z" />
                 </ControlButton>
-                <ControlButton primary label={isPlaying ? t("Pause") : t("Play")} onClick={() => SpotifyStore.setPlaying(!isPlaying)}>
+                <ControlButton primary disabled={!canControl} label={isPlaying ? t("Pause") : t("Play")} onClick={() => { void SpotifyStore.setPlaying(!isPlaying).catch(() => {}); }}>
                     <Glyph path={isPlaying ? "M6 5h4v14H6V5Zm8 0h4v14h-4V5Z" : "M8 5v14l11-7L8 5Z"} />
                 </ControlButton>
-                <ControlButton label={t("Next track")} onClick={() => SpotifyStore.next()}>
+                <ControlButton disabled={!canControl} label={t("Next track")} onClick={() => { void SpotifyStore.next().catch(() => {}); }}>
                     <Glyph path="M16 5h2v14h-2V5ZM6 5l9 7-9 7V5Z" />
                 </ControlButton>
             </div>
+            {lastError && <p className={cl("spotify-error")} role="status">{t(lastError)}</p>}
         </section>
     );
 }
@@ -551,7 +623,7 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
     const swipeStartRef = useRef<SwipeStart | null>(null);
     const suppressClickRef = useRef(false);
     const { islandColor, keepIslandVisible, morphNotifications, showScreenShareIsland, showSoundCordIsland, showSpotifyIsland, showVoiceIsland } = settings.use(SETTINGS_KEYS);
-    const spotifyTrack = useStateFromStores([SpotifyStore], () => SpotifyStore.device?.is_active ? SpotifyStore.track : null);
+    const spotifyTrack = useStateFromStores([SpotifyStore], () => SpotifyStore.track);
     const isPlaying = useStateFromStores([SpotifyStore], () => SpotifyStore.isPlaying);
     const spotifyTrackId = spotifyTrack?.id;
     const soundCordState = useSoundCordState();
@@ -562,6 +634,10 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
     });
     const soundCordSettings = useSettings(SOUNDCORD_STATE_PATHS as any).plugins?.SoundCordPlayer ?? { enableDynamicIsland: true };
     const soundCordIslandEnabled = soundCordSettings.enableDynamicIsland ?? true;
+
+    useEffect(() => {
+        if (showSpotifyIsland && !onlySoundCord) return SpotifyStore.retainSync();
+    }, [showSpotifyIsland, onlySoundCord]);
 
     const track = !onlySoundCord && showSpotifyIsland && !spotifyIdle ? spotifyTrack : null;
     const channelId = !onlySoundCord && showVoiceIsland ? voiceState?.channelId : undefined;
@@ -753,7 +829,7 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
                             : primaryStream
                                 ? <ScreenShareIcon className={cl("summary-icon", "stream-icon")} />
                                 : primaryTrack
-                                    ? <img className={cl("summary-cover")} src={primaryTrack.album.image.url} alt="" draggable={false} />
+                                    ? <SpotifyCover compact url={primaryTrack.album?.image?.url} />
                                     : primarySoundCord
                                         ? <img className={cl("summary-cover")} src={primarySoundCord.artworkUrl} alt="" draggable={false} />
                                         : <IslandIcon className={cl("summary-icon")} />}
@@ -794,7 +870,7 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
                 <div className={cl("panel-clip")}>
                     <div className={cl("panel")}>
                         {stream && <ScreenShareSection stream={stream} startedAt={streamStartedAt} />}
-                        {track && <SpotifySection />}
+                        {track && <SpotifySection active={isOpen} />}
                         {scTrack && <SoundCordSection sc={soundCordState} />}
                         {channelId && <VoiceSection channelId={channelId} />}
                         {idle && <div className={cl("empty")}>{t("Enable an Island type, play music, or join a call to show controls.")}</div>}

@@ -57,6 +57,10 @@ avec aperçu et comparaison du poids. Les six plugins sont dans la catégorie
 **Midnightcord**, désactivés par défaut. Consultez le
 [guide d'activation et d'utilisation](./docs/UTILITY-PLUGINS.md).
 
+Pour la musique, reliez votre compte Spotify dans les **Connexions** de Discord,
+puis activez **DynamicIslande** et son option Spotify. L'île affiche le morceau
+en cours, sa pochette et sa progression, avec les commandes de lecture.
+
 ## Paquets Linux autonomes
 
 Les sorties AppImage, Debian, RPM et tar.gz restent disponibles avec corepack pnpm package:linux:x64. Elles utilisent WebRTC au lieu du moteur vocal Discord. Le mode natif est recommandé pour la voix.

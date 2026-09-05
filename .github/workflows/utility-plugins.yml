@@ -64,6 +64,9 @@ jobs:
       - name: Test utility plugins and offline OCR
         run: pnpm test:utilities
 
+      - name: Test Spotify playback synchronization
+        run: pnpm test:spotify
+
       - name: Test image processing in Chrome
         if: matrix.browser
         run: pnpm test:images

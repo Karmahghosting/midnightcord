@@ -148,6 +148,17 @@
     border-radius: 12px;
 }
 
+.vc-illegalcord-dynamic-island-cover-fallback {
+    display: grid;
+    place-items: center;
+    color: var(--di-muted);
+}
+
+.vc-illegalcord-dynamic-island-cover-fallback svg {
+    width: 52%;
+    height: 52%;
+}
+
 .vc-illegalcord-dynamic-island-summary-icon {
     width: 34px;
     height: 34px;
@@ -400,13 +411,18 @@
     transition: color 150ms ease, background-color 150ms ease, transform 150ms ease;
 }
 
-.vc-illegalcord-dynamic-island-control:hover {
+.vc-illegalcord-dynamic-island-control:disabled {
+    cursor: not-allowed;
+    opacity: .4;
+}
+
+.vc-illegalcord-dynamic-island-control:hover:not(:disabled) {
     color: var(--di-text);
     background: var(--di-track);
 
 }
 
-.vc-illegalcord-dynamic-island-control:active {
+.vc-illegalcord-dynamic-island-control:active:not(:disabled) {
     transform: scale(.94);
 }
 
@@ -428,13 +444,13 @@
     background: var(--di-danger-background);
 }
 
-.vc-illegalcord-dynamic-island-control-danger:hover {
+.vc-illegalcord-dynamic-island-control-danger:hover:not(:disabled) {
     color: var(--di-danger);
     background: color-mix(in srgb, var(--di-danger-background), var(--di-danger) 12%);
 }
 
 .vc-illegalcord-dynamic-island-control-primary,
-.vc-illegalcord-dynamic-island-control-primary:hover {
+.vc-illegalcord-dynamic-island-control-primary:hover:not(:disabled) {
     width: 42px;
     height: 42px;
     min-width: 42px;
@@ -599,6 +615,67 @@ button.vc-illegalcord-dynamic-island-section-info:not(:disabled) {
     background: var(--di-text);
     border: 0;
     border-radius: 50%;
+}
+
+.vc-illegalcord-dynamic-island-spotify-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.vc-illegalcord-dynamic-island-progress-slider {
+    width: 100%;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    appearance: none;
+    background: linear-gradient(to right, var(--di-text) 0% var(--value-percent, 0%), var(--di-track) var(--value-percent, 0%) 100%) center / 100% 2px no-repeat;
+    border: 0;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.vc-illegalcord-dynamic-island-progress-slider::-webkit-slider-thumb {
+    width: 8px;
+    height: 8px;
+    appearance: none;
+    background: var(--di-text);
+    border: 0;
+    border-radius: 50%;
+}
+
+.vc-illegalcord-dynamic-island-progress-slider::-moz-range-thumb {
+    width: 8px;
+    height: 8px;
+    background: var(--di-text);
+    border: 0;
+    border-radius: 50%;
+}
+
+.vc-illegalcord-dynamic-island-progress-slider::-moz-range-track {
+    background: transparent;
+}
+
+.vc-illegalcord-dynamic-island-progress-slider:disabled {
+    cursor: default;
+    opacity: .6;
+}
+
+.vc-illegalcord-dynamic-island-progress-times {
+    display: flex;
+    justify-content: space-between;
+    color: var(--di-faint);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    line-height: 14px;
+}
+
+.vc-illegalcord-dynamic-island-spotify-error {
+    margin: 0;
+    color: var(--di-muted);
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
 }
 
 .vc-illegalcord-dynamic-island-empty {
