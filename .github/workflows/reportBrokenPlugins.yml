@@ -12,7 +12,7 @@ on:
                 default: both
             webhook_url:
                 type: string
-                description: "Webhook URL that the report will be posted to. This will be visible for everyone, so DO NOT pass sensitive webhooks like discord webhook. This is meant to be used by [...]
+                description: "Public webhook URL for the report. Do not enter a sensitive URL such as a Discord webhook."
                 required: false
     schedule:
         #   # Every day at midnight
