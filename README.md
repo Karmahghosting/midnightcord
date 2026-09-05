@@ -64,7 +64,7 @@ Les plugins optionnels qui utilisent un service externe restent sous le contrôl
 
 ## Crédits
 
-Midnightcord dérive de Nightcord, [Equicord](https://github.com/Equicord/Equicord), [Vesktop](https://github.com/Vencord/Vesktop) et [Vencord](https://github.com/Vendicated/Vencord). Leurs auteurs et contributeurs conservent leurs crédits et droits respectifs.
+Midnightcord dérive de [Nightcord](https://source.nightcord.st/nightcord/nightcord) [Equicord](https://github.com/Equicord/Equicord), [Vesktop](https://github.com/Vencord/Vesktop) et [Vencord](https://github.com/Vendicated/Vencord). Leurs auteurs et contributeurs conservent leurs crédits et droits respectifs.
 
 ## Avertissement
 
