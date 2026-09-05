@@ -1,5 +1,5 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -7,7 +7,6 @@
 import "./style.css";
 
 import { definePluginSettings, useSettings } from "@api/Settings";
-import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadphonesIcon, Microphone } from "@components/Icons";
 import { settings as musicControlsSettings } from "@midnightcordplugins/musicControls/settings";
@@ -16,11 +15,12 @@ import { classNameFactory } from "@utils/css";
 import { useFixedTimer } from "@utils/react";
 import { formatDurationMs } from "@utils/text";
 import definePlugin, { OptionType } from "@utils/types";
-import { t } from "../autoTranslateMidnightcord";
 import type { Message, Stream } from "@vencord/discord-types";
-import { ApplicationStreamingStore, ChannelStore, Clickable, FluxDispatcher, GuildMemberStore, IconUtils, MediaEngineStore, MessageStore, ReactDOM, RelationshipStore, SelectedChannelStore, useEffect, useRef, UserGuildSettingsStore, UserStore, useState, useStateFromStores, VoiceStateStore } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
+import { ApplicationStreamingStore, ChannelStore, Clickable, FluxDispatcher, GuildMemberStore, IconUtils, MediaEngineStore, MessageStore, ReactDOM, RelationshipStore, SelectedChannelStore, useEffect, useRef, UserGuildSettingsStore, UserStore, useState, useStateFromStores, VoiceStateStore } from "@webpack/common";
 import type { MouseEvent, PointerEvent, ReactNode, SVGProps } from "react";
+
+import { t } from "../autoTranslateMidnightcord";
 import { follow, unfollow, useFollowId } from "../followUser";
 const IS_WEB = typeof window !== "undefined" && typeof (window as any).VencordNative === "undefined";
 
@@ -35,6 +35,7 @@ interface ControlButtonProps {
     compact?: boolean;
     danger?: boolean;
     label: string;
+    primary?: boolean;
     onClick(): void;
 }
 
@@ -105,13 +106,9 @@ const settings = definePluginSettings({
         description: t("Choose the Dynamic Island color."),
         type: OptionType.SELECT,
         options: [
-            { label: t("Frosted Glass"), value: "blur", default: true },
-            { label: t("Transparent"), value: "transparent" },
-            { label: t("Discord theme"), value: "theme" },
+            { label: "Graphite", value: "blur", default: true },
             { label: t("AMOLED"), value: "amoled" },
-            { label: t("White"), value: "white" },
-            { label: t("Light blue"), value: "blue" },
-            { label: t("Pink"), value: "pink" }
+            { label: t("White"), value: "white" }
         ]
     },
     keepIslandVisible: {
@@ -207,13 +204,13 @@ function stopScreenShare(stream: Stream) {
     });
 }
 
-function ControlButton({ active, children, compact, danger, label, onClick }: ControlButtonProps) {
+function ControlButton({ active, children, compact, danger, label, primary, onClick }: ControlButtonProps) {
     return (
-        <Button
+        <button
+            type="button"
             aria-label={label}
-            className={cl("control", { "control-active": active, "control-compact": compact, "control-danger": danger })}
-            size="iconOnly"
-            variant="none"
+            title={label}
+            className={cl("control", { "control-active": active, "control-compact": compact, "control-danger": danger, "control-primary": primary })}
             onClick={(event: MouseEvent<HTMLButtonElement>) => {
                 event.stopPropagation();
                 onClick();
@@ -221,7 +218,7 @@ function ControlButton({ active, children, compact, danger, label, onClick }: Co
             onPointerDown={event => event.stopPropagation()}
         >
             {children}
-        </Button>
+        </button>
     );
 }
 
@@ -251,84 +248,61 @@ const SOUNDCORD_SECTION_PATHS = [
 
 function useSoundCordState() {
     const [state, setState] = useState({ playing: null as any, isPlaying: false, favorites: [] as any[], favIndex: -1, volume: 80 });
-    
+
     useEffect(() => {
         const handleUpdate = (e: any) => {
             if (e.state) setState(e.state);
         };
-        // Request initial state in case the player is already running
-        FluxDispatcher.dispatch({ type: "SOUNDCORD_REQUEST_STATE" });
-        
         FluxDispatcher.subscribe("SOUNDCORD_STATE_UPDATE", handleUpdate);
+        // Request initial state after subscribing so an immediate reply is captured.
+        FluxDispatcher.dispatch({ type: "SOUNDCORD_REQUEST_STATE" });
         return () => {
             FluxDispatcher.unsubscribe("SOUNDCORD_STATE_UPDATE", handleUpdate);
         };
     }, []);
-    
+
     return state;
 }
 
 function SoundCordSection({ sc }: { sc: ReturnType<typeof useSoundCordState> }) {
     const track = sc.playing;
-    const isPlaying = sc.isPlaying;
-    // hooks MUST be called before any conditional returns (React rules of hooks)
+    const { isPlaying } = sc;
     const soundCordSettings = useSettings(SOUNDCORD_SECTION_PATHS as any).plugins?.SoundCordPlayer ?? { showSoundCordControls: true, showSoundCordVolume: true };
     const showControls = soundCordSettings.showSoundCordControls ?? true;
     const showVolume = soundCordSettings.showSoundCordVolume ?? true;
-
     if (!track) return null;
     const hasPrevNext = sc.favorites.length > 1;
 
     return (
-        <section className={cl("section")} aria-label="SoundCord controls" style={{ flexDirection: "column", alignItems: "stretch", gap: "10px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, width: "100%" }}>
-                <div className={cl("section-info")}>
-                    <img className={cl("cover")} src={track.artworkUrl} alt="" draggable={false} />
-                    <div className={cl("copy")}>
-                        <strong>{track.title}</strong>
-                        <span>{track.artist}</span>
-                    </div>
+        <section className={cl("section", "music-section")} aria-label="SoundCord controls">
+            <div className={cl("section-info")}>
+                <img className={cl("cover")} src={track.artworkUrl} alt="" draggable={false} />
+                <div className={cl("copy")}>
+                    <span className={cl("section-label")}>SoundCord</span>
+                    <strong>{track.title}</strong>
+                    <span>{track.artist}</span>
                 </div>
-                {showControls && (
-                    <div className={cl("controls")}>
-                        {hasPrevNext && (
-                            <ControlButton label={t("Previous track")} onClick={() => {
-                                FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "prev" });
-                            }}>
-                                <Glyph path="M6 5h2v14H6V5Zm3 7 9-7v14l-9-7Z" />
-                            </ControlButton>
-                        )}
-                        <ControlButton label={isPlaying ? t("Pause") : t("Play")} active={isPlaying} onClick={() => {
-                            FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "toggle" });
-                        }}>
-                            <Glyph path={isPlaying ? "M6 5h4v14H6V5Zm8 0h4v14h-4V5Z" : "M8 5v14l11-7L8 5Z"} />
-                        </ControlButton>
-                        {hasPrevNext && (
-                            <ControlButton label={t("Next track")} onClick={() => {
-                                FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "next" });
-                            }}>
-                                <Glyph path="M16 5h2v14h-2V5ZM6 5l9 7-9 7V5Z" />
-                            </ControlButton>
-                        )}
-                    </div>
-                )}
             </div>
-            
-            {showVolume && (
-                <div style={{ padding: "0 4px" }}>
-                    <input 
-                        type="range" 
-                        min={0} 
-                        max={100} 
-                        value={sc.volume} 
-                        className="vc-illegalcord-dynamic-island-volume-slider"
-                        style={{ "--value-percent": `${sc.volume}%` } as React.CSSProperties}
-                        onChange={(e: any) => {
-                            FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "volume", value: Number(e.currentTarget.value) });
-                        }}
-                    />
+            {showControls && (
+                <div className={cl("controls")}>
+                    {hasPrevNext && <ControlButton label={t("Previous track")} onClick={() => FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "prev" })}>
+                        <Glyph path="M6 5h2v14H6V5Zm3 7 9-7v14l-9-7Z" />
+                    </ControlButton>}
+                    <ControlButton primary label={isPlaying ? t("Pause") : t("Play")} onClick={() => FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "toggle" })}>
+                        <Glyph path={isPlaying ? "M6 5h4v14H6V5Zm8 0h4v14h-4V5Z" : "M8 5v14l11-7L8 5Z"} />
+                    </ControlButton>
+                    {hasPrevNext && <ControlButton label={t("Next track")} onClick={() => FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "next" })}>
+                        <Glyph path="M16 5h2v14h-2V5ZM6 5l9 7-9 7V5Z" />
+                    </ControlButton>}
                 </div>
             )}
+            {showVolume && <div className={cl("volume")}>
+                <Glyph path="M3 9v6h4l5 4V5L7 9H3Zm12-1v8a5 5 0 0 0 0-8Zm0-4v2a7 7 0 0 1 0 12v2a9 9 0 0 0 0-16Z" />
+                <input type="range" min={0} max={100} value={sc.volume}
+                    aria-label={t("Volume")} className={cl("volume-slider")}
+                    style={{ "--value-percent": `${sc.volume}%` } as React.CSSProperties}
+                    onChange={event => FluxDispatcher.dispatch({ type: "SOUNDCORD_COMMAND", command: "volume", value: Number(event.currentTarget.value) })} />
+            </div>}
         </section>
     );
 }
@@ -339,10 +313,11 @@ function SpotifySection() {
     if (!track) return null;
 
     return (
-        <section className={cl("section")} aria-label={t("Spotify controls")}>
+        <section className={cl("section", "music-section")} aria-label={t("Spotify controls")}>
             <div className={cl("section-info")}>
                 <img className={cl("cover")} src={track.album.image.url} alt="" draggable={false} />
                 <div className={cl("copy")}>
+                    <span className={cl("section-label")}>Spotify</span>
                     <strong>{track.name}</strong>
                     <span>{track.artists.map(artist => artist.name).join(", ")}</span>
                 </div>
@@ -351,7 +326,7 @@ function SpotifySection() {
                 <ControlButton label={t("Previous track")} onClick={() => SpotifyStore.prev()}>
                     <Glyph path="M6 5h2v14H6V5Zm3 7 9-7v14l-9-7Z" />
                 </ControlButton>
-                <ControlButton label={isPlaying ? t("Pause") : t("Play")} active={isPlaying} onClick={() => SpotifyStore.setPlaying(!isPlaying)}>
+                <ControlButton primary label={isPlaying ? t("Pause") : t("Play")} onClick={() => SpotifyStore.setPlaying(!isPlaying)}>
                     <Glyph path={isPlaying ? "M6 5h4v14H6V5Zm8 0h4v14h-4V5Z" : "M8 5v14l11-7L8 5Z"} />
                 </ControlButton>
                 <ControlButton label={t("Next track")} onClick={() => SpotifyStore.next()}>
@@ -376,33 +351,33 @@ function ParticipantRow({ p, channel, currentUser }: { p: { user: any; member: a
         ? useStateFromStores([MediaEngineStore], () => MediaEngineStore.isSelfMute())
         : useStateFromStores([MediaEngineStore], () => MediaEngineStore.isLocalMute(p.user.id), [p.user.id]);
 
-    const avatarUrl = typeof p.user.getAvatarURL === "function" 
+    const avatarUrl = typeof p.user.getAvatarURL === "function"
         ? p.user.getAvatarURL(channel?.guild_id, 32)
         : p.user.avatarURL;
 
     return (
-        <div 
+        <div
             className="vc-illegalcord-dynamic-island-participant-row"
-            onContextMenu={(e) => {
+            onContextMenu={e => {
                 e.preventDefault();
                 const copy = (window as any).DiscordNative?.clipboard?.copy;
                 if (copy) copy(p.user.id);
                 else navigator.clipboard.writeText(p.user.id);
             }}
-            style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "10px", 
-                padding: "6px 8px", 
+            style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "6px 8px",
                 borderRadius: "8px",
                 cursor: "context-menu",
                 transition: "background-color 0.15s ease"
             }}
             title={t("Right click to copy ID")}
         >
-            <img 
-                src={avatarUrl} 
-                style={{ width: "26px", height: "26px", borderRadius: "50%", objectFit: "cover" }} 
+            <img
+                src={avatarUrl}
+                style={{ width: "26px", height: "26px", borderRadius: "50%", objectFit: "cover" }}
                 alt=""
             />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2", flexGrow: 1, minWidth: 0 }}>
@@ -413,32 +388,32 @@ function ParticipantRow({ p, channel, currentUser }: { p: { user: any; member: a
                     {p.user.username}
                 </span>
             </div>
-            
+
             {showParticipantButtons && (
-                <div 
+                <div
                     style={{ display: "flex", alignItems: "center", gap: "4px" }}
-                    onClick={(e) => e.stopPropagation()}
-                    onContextMenu={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
+                    onContextMenu={e => e.stopPropagation()}
                 >
                     {/* Mute Button */}
-                    <ControlButton 
-                        label={isMuted ? t("Unmute") : t("Mute")} 
-                        danger={isMuted} 
-                        compact 
+                    <ControlButton
+                        label={isMuted ? t("Unmute") : t("Mute")}
+                        danger={isMuted}
+                        compact
                         onClick={() => {
                             if (isSelf) IslandVoiceActions.toggleSelfMute();
                             else IslandVoiceActions.toggleLocalMute(p.user.id);
                         }}
                     >
-                        <VoiceIcon slashed={isMuted}><Microphone size="14" /></VoiceIcon>
+                        <VoiceIcon slashed={isMuted}><Microphone width={14} height={14} /></VoiceIcon>
                     </ControlButton>
 
                     {!isSelf && (
                         <>
                             {/* Follow Button */}
-                            <ControlButton 
-                                label={isFollowingUser ? t("Unfollow") : t("Follow")} 
-                                compact 
+                            <ControlButton
+                                label={isFollowingUser ? t("Unfollow") : t("Follow")}
+                                compact
                                 active={isFollowingUser}
                                 danger={isFollowingUser}
                                 onClick={() => {
@@ -458,9 +433,9 @@ function ParticipantRow({ p, channel, currentUser }: { p: { user: any; member: a
                             </ControlButton>
 
                             {/* Friend Button */}
-                            <ControlButton 
-                                label={isFriend ? t("Remove Friend") : (isOutgoing || isIncoming ? t("Cancel Request") : t("Add Friend"))} 
-                                compact 
+                            <ControlButton
+                                label={isFriend ? t("Remove Friend") : (isOutgoing || isIncoming ? t("Cancel Request") : t("Add Friend"))}
+                                compact
                                 onClick={() => {
                                     if (isFriend) RelationshipActions.removeFriend(p.user.id);
                                     else if (isOutgoing) RelationshipActions.cancelFriendRequest(p.user.id);
@@ -504,82 +479,41 @@ function VoiceSection({ channelId }: { channelId: string; }) {
     const [expanded, setExpanded] = useState(false);
     const currentUser = UserStore.getCurrentUser();
     const { showCallControls, showCallParticipants } = settings.use(["showCallControls", "showCallParticipants"]);
-
     const participants = (showCallParticipants && expanded) ? Object.keys(voiceStates).map(uid => {
         if (currentUser && uid === currentUser.id) return null;
         const user = UserStore.getUser(uid);
         const member = channel?.guild_id ? GuildMemberStore.getMember(channel.guild_id, uid) : null;
         return user ? { user, member } : null;
-    }).filter(Boolean) as { user: any, member: any }[] : [];
+    }).filter(Boolean) as { user: any; member: any; }[] : [];
 
     return (
-        <div 
-            className={cl("section")} 
-            style={{ 
-                display: "flex", 
-                flexDirection: "column", 
-                alignItems: "stretch", 
-                padding: 0, 
-                gap: 0 
-            }}
-        >
-            <div 
-                aria-label={t("Discord call controls")}
-                style={{ 
-                    display: "flex", 
-                    minWidth: 0, 
-                    padding: "8px", 
-                    alignItems: "center", 
-                    gap: "10px" 
-                }}
-            >
-                <div 
-                    className={cl("section-info")} 
-                    onClick={() => {
-                        if (showCallParticipants) setExpanded(!expanded);
-                    }}
-                    style={{ cursor: showCallParticipants ? "pointer" : "default", flex: 1 }}
-                    title={showCallParticipants ? t("Click to toggle participants list") : undefined}
-                >
-                    <div className={cl("call-indicator")}><span /></div>
-                    <div className={cl("copy")}>
+        <div className={cl("section", "voice-section")}>
+            <div className={cl("voice-header")} aria-label={t("Discord call controls")}>
+                <button type="button" className={cl("section-info")}
+                    disabled={!showCallParticipants} aria-expanded={showCallParticipants ? expanded : undefined}
+                    onClick={() => setExpanded(value => !value)}
+                    title={showCallParticipants ? t("Click to toggle participants list") : undefined}>
+                    <span className={cl("call-indicator")}><HeadphonesIcon /></span>
+                    <span className={cl("copy")}>
                         <strong>{channel?.name || t("Discord call")}</strong>
                         <span>{participantCount} {participantCount === 1 ? t("participant") : t("participants")}</span>
-                    </div>
-                </div>
-                {showCallControls && (
-                    <div className={cl("controls")}>
-                        <ControlButton label={isMuted ? t("Unmute") : t("Mute")} danger={isMuted} onClick={() => IslandVoiceActions.toggleSelfMute()}>
-                            <VoiceIcon slashed={isMuted}><Microphone /></VoiceIcon>
-                        </ControlButton>
-                        <ControlButton label={isDeafened ? t("Undeafen") : t("Deafen")} danger={isDeafened} onClick={() => IslandVoiceActions.toggleSelfDeaf()}>
-                            <VoiceIcon slashed={isDeafened}><HeadphonesIcon /></VoiceIcon>
-                        </ControlButton>
-                        <ControlButton label={t("Disconnect")} danger onClick={() => IslandChannelActions.selectVoiceChannel(null)}>
-                            <Glyph path="m21.5 16.6-.13.14a.88.88 0 0 1-.97.2l-4.09-1.7a.99.99 0 0 1-.57-1.18l.73-2.7c-2.24-3-6.7-3-8.94 0l.7 2.1a.99.99 0 0 1-.48 1.19l-4.13 2.2a.87.87 0 0 1-1.03-.15l-.1-.1a5.18 5.18 0 0 1-.32-6.92 12.67 12.67 0 0 1 19.66 0 5.18 5.18 0 0 1-.32 6.92Z" />
-                        </ControlButton>
-                    </div>
-                )}
+                    </span>
+                </button>
+                {showCallControls && <div className={cl("controls")}>
+                    <ControlButton label={isMuted ? t("Unmute") : t("Mute")} danger={isMuted} onClick={() => IslandVoiceActions.toggleSelfMute()}>
+                        <VoiceIcon slashed={isMuted}><Microphone /></VoiceIcon>
+                    </ControlButton>
+                    <ControlButton label={isDeafened ? t("Undeafen") : t("Deafen")} danger={isDeafened} onClick={() => IslandVoiceActions.toggleSelfDeaf()}>
+                        <VoiceIcon slashed={isDeafened}><HeadphonesIcon /></VoiceIcon>
+                    </ControlButton>
+                    <ControlButton label={t("Disconnect")} danger onClick={() => IslandChannelActions.selectVoiceChannel(null)}>
+                        <Glyph path="m21.5 16.6-.13.14a.88.88 0 0 1-.97.2l-4.09-1.7a.99.99 0 0 1-.57-1.18l.73-2.7c-2.24-3-6.7-3-8.94 0l.7 2.1a.99.99 0 0 1-.48 1.19l-4.13 2.2a.87.87 0 0 1-1.03-.15l-.1-.1a5.18 5.18 0 0 1-.32-6.92 12.67 12.67 0 0 1 19.66 0 5.18 5.18 0 0 1-.32 6.92Z" />
+                    </ControlButton>
+                </div>}
             </div>
-            
-            {showCallParticipants && expanded && participants.length > 0 && (
-                <div 
-                    className="vc-illegalcord-dynamic-island-voice-participants-list"
-                    style={{ 
-                        display: "flex", 
-                        flexDirection: "column", 
-                        gap: "6px", 
-                        padding: "4px 8px 8px 8px",
-                        maxHeight: "220px",
-                        overflowY: "auto",
-                        borderTop: "1px solid rgba(255, 255, 255, 0.05)"
-                    }}
-                >
-                    {participants.map(p => (
-                        <ParticipantRow key={p.user.id} p={p} channel={channel} currentUser={currentUser} />
-                    ))}
-                </div>
-            )}
+            {showCallParticipants && expanded && participants.length > 0 && <div className={cl("voice-participants-list")}>
+                {participants.map(p => <ParticipantRow key={p.user.id} p={p} channel={channel} currentUser={currentUser} />)}
+            </div>}
         </div>
     );
 }
@@ -593,7 +527,7 @@ function ScreenShareSection({ startedAt, stream }: { startedAt: number; stream: 
             <div className={cl("section-info")}>
                 <div className={cl("stream-indicator")}><ScreenShareIcon /></div>
                 <div className={cl("copy")}>
-                    <strong>{channel.name || t("Screen sharing")}</strong>
+                    <strong>{channel?.name || t("Screen sharing")}</strong>
                     <span><ScreenShareTimer startedAt={startedAt} /> · {viewerCount} {viewerCount === 1 ? t("viewer") : t("viewers")}</span>
                 </div>
             </div>
@@ -622,8 +556,10 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
     const spotifyTrackId = spotifyTrack?.id;
     const soundCordState = useSoundCordState();
     const activeStream = useStateFromStores([ApplicationStreamingStore], () => ApplicationStreamingStore.getCurrentUserActiveStream());
-    const currentUser = UserStore.getCurrentUser();
-    const voiceState = useStateFromStores([VoiceStateStore], () => VoiceStateStore.getVoiceStateForUser(currentUser.id));
+    const voiceState = useStateFromStores([VoiceStateStore, UserStore], () => {
+        const userId = UserStore.getCurrentUser()?.id;
+        return userId ? VoiceStateStore.getVoiceStateForUser(userId) : undefined;
+    });
     const soundCordSettings = useSettings(SOUNDCORD_STATE_PATHS as any).plugins?.SoundCordPlayer ?? { enableDynamicIsland: true };
     const soundCordIslandEnabled = soundCordSettings.enableDynamicIsland ?? true;
 
@@ -649,10 +585,15 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
 
     const [now, setNow] = useState(new Date());
     useEffect(() => {
-        if (!idle) return;
-        const intervalId = setInterval(() => setNow(new Date()), 1000);
-        return () => clearInterval(intervalId);
-    }, [idle]);
+        if (!idle || !keepIslandVisible) return;
+        let timeoutId: number;
+        const tick = () => {
+            setNow(new Date());
+            timeoutId = window.setTimeout(tick, 60_000 - Date.now() % 60_000);
+        };
+        tick();
+        return () => clearTimeout(timeoutId);
+    }, [idle, keepIslandVisible]);
 
     useEffect(() => {
         if (streamKey) setStreamStartedAt(Date.now());
@@ -762,14 +703,17 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
         cyclePrimary(distanceX > 0 ? 1 : -1);
     };
 
+    const isOpen = expanded || isHovered;
     const primaryIsPlaying = primary === IslandType.Spotify ? isPlaying : primary === IslandType.SoundCord ? soundCordState.isPlaying : false;
-    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const dateString = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    const timeString = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const dateString = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+    const activityLabels = [stream ? t("Screen sharing") : null, track ? "Spotify" : null, scTrack ? "SoundCord" : null, channelId ? t("Discord call") : null].filter(Boolean);
+    const color = ["blur", "amoled", "white"].includes(islandColor) ? islandColor : "blur";
 
     return (
-        <div 
-            className={cl("root", `color-${islandColor}`, {
-                "root-expanded": expanded || isHovered,
+        <div
+            className={cl("root", `color-${color}`, {
+                "root-expanded": isOpen,
                 "root-idle": idle,
                 "root-notification": notification != null,
                 "root-playing": primaryIsPlaying && (primary === IslandType.Spotify || primary === IslandType.SoundCord),
@@ -777,54 +721,76 @@ function DynamicIsland({ onlySoundCord }: { onlySoundCord?: boolean }) {
             })}
             onMouseEnter={() => IS_WEB && setIsHovered(true)}
             onMouseLeave={() => IS_WEB && setIsHovered(false)}
+            onKeyDown={event => {
+                if (event.key === "Escape" && isOpen) {
+                    event.preventDefault();
+                    setExpanded(false);
+                    setIsHovered(false);
+                }
+            }}
         >
-            <Clickable
-                className={cl("summary")}
-                aria-expanded={expanded}
-                aria-label={t("Dynamic Island")}
-                onClick={activateSummary}
+            <div className={cl("summary")}
                 onPointerCancel={() => { swipeStartRef.current = null; }}
-                onPointerDown={beginSwipe}
-                onPointerUp={finishSwipe}
-            >
-                {notification
-                    ? <img key={notification.id} className={cl("notification-avatar")} src={notification.avatarUrl} alt="" draggable={false} />
-                    : primaryStream
-                        ? <ScreenShareIcon className={cl("summary-icon", "stream-icon")} />
-                        : primaryTrack
-                            ? <img key={primaryTrack.album.image.url} className={cl("summary-cover")} src={primaryTrack.album.image.url} alt="" draggable={false} />
-                            : primarySoundCord
-                                ? <img key={primarySoundCord.artworkUrl} className={cl("summary-cover")} src={primarySoundCord.artworkUrl} alt="" draggable={false} />
-                                : <IslandIcon className={cl("summary-icon")} />}
-                <div key={notification?.id ?? primary ?? "idle"} className={cl("summary-copy")}>
-                    <strong>{notification?.title ?? (primaryStream ? t("You are sharing your screen") : primaryTrack?.name ?? primarySoundCord?.title ?? (primaryChannelId ? t("Discord call") : (idle ? timeString : t("Dynamic Island"))))}</strong>
-                    <span>{notification?.body ?? (primaryStream
-                        ? <>{t("Live for")}<ScreenShareTimer startedAt={streamStartedAt} /></>
-                        : primaryTrack
-                            ? primaryTrack.artists.map(artist => artist.name).join(", ")
-                            : primarySoundCord
-                                ? primarySoundCord.artist
-                                : primaryChannelId ? t("Call controls available") : (idle ? dateString : t("Ready for your activities")))}</span>
-                </div>
-                {!notification && (primaryTrack || primarySoundCord) && (
-                    <span className={cl("visualizer")} aria-label={primaryIsPlaying ? t("Playing") : t("Paused")}>
-                        <span /><span /><span />
-                    </span>
-                )}
-                {!notification && primaryStream && (
+                onPointerDown={beginSwipe} onPointerUp={finishSwipe}>
+                <Clickable
+                    className={cl("summary-main")}
+                    aria-expanded={isOpen}
+                    aria-controls="midnightcord-dynamic-island-panel"
+                    aria-label={t("Dynamic Island")}
+                    aria-keyshortcuts={activeIslands.length > 1 ? "ArrowLeft ArrowRight" : undefined}
+                    onClick={activateSummary}
+                    onKeyDown={event => {
+                        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                            event.preventDefault();
+                            cyclePrimary(event.key === "ArrowRight" ? 1 : -1);
+                        }
+                    }}
+                >
+                    {notification
+                        ? <img key={notification.id} className={cl("notification-avatar")} src={notification.avatarUrl} alt="" draggable={false} />
+                        : isOpen
+                            ? <IslandIcon className={cl("summary-icon")} />
+                            : primaryStream
+                                ? <ScreenShareIcon className={cl("summary-icon", "stream-icon")} />
+                                : primaryTrack
+                                    ? <img className={cl("summary-cover")} src={primaryTrack.album.image.url} alt="" draggable={false} />
+                                    : primarySoundCord
+                                        ? <img className={cl("summary-cover")} src={primarySoundCord.artworkUrl} alt="" draggable={false} />
+                                        : <IslandIcon className={cl("summary-icon")} />}
+                    <div className={cl("summary-copy")} aria-live={notification ? "polite" : undefined} aria-atomic={notification ? true : undefined}>
+                        <strong>{notification?.title ?? (isOpen && !idle ? t("Dynamic Island") : primaryStream ? t("You are sharing your screen") : primaryTrack?.name ?? primarySoundCord?.title ?? (primaryChannelId ? t("Discord call") : timeString))}</strong>
+                        <span>{notification?.body ?? (isOpen && !idle
+                            ? activityLabels.join(" · ")
+                            : primaryStream
+                                ? <>{t("Live for")} <ScreenShareTimer startedAt={streamStartedAt} /></>
+                                : primaryTrack
+                                    ? primaryTrack.artists.map(artist => artist.name).join(", ")
+                                    : primarySoundCord
+                                        ? primarySoundCord.artist
+                                        : primaryChannelId ? t("Call controls available") : dateString)}</span>
+                    </div>
+                    {!notification && (primaryTrack || primarySoundCord) && (
+                        <span className={cl("visualizer")} aria-label={primaryIsPlaying ? t("Playing") : t("Paused")}>
+                            <span /><span /><span />
+                        </span>
+                    )}
+                    {!notification && primaryChannelId && <span className={cl("live-dot")} aria-label={t("Call active")} />}
+                    {!notification && activeIslands.length > 1 && (
+                        <span className={cl("pages")} aria-label={`${activeIslands.length} active Islands`}>
+                            {activeIslands.map(type => <span key={type} className={cl("page", { "page-active": type === primary })} />)}
+                        </span>
+                    )}
+                    {!notification && <Glyph className={cl("chevron")} path="m6.7 8.7 5.3 5.3 5.3-5.3 1.4 1.4-6.7 6.7-6.7-6.7 1.4-1.4Z" />}
+                </Clickable>
+                {!notification && primaryStream && !isOpen && (
                     <ControlButton compact label={t("Stop sharing")} danger onClick={() => stopScreenShare(primaryStream)}>
                         <Glyph path="M7 7h10v10H7V7Z" />
                     </ControlButton>
                 )}
-                {!notification && primaryChannelId && <span className={cl("live-dot")} aria-label={t("Call active")} />}
-                {!notification && activeIslands.length > 1 && (
-                    <span className={cl("pages")} aria-label={`${activeIslands.length} active Islands`}>
-                        {activeIslands.map(type => <span key={type} className={cl("page", { "page-active": type === primary })} />)}
-                    </span>
-                )}
-            </Clickable>
+            </div>
             {notification && <span key={notification.id} className={cl("notification-progress")} />}
-            <div className={cl("panel-shell")} aria-hidden={!expanded}>
+            <div id="midnightcord-dynamic-island-panel" className={cl("panel-shell")} aria-hidden={!isOpen}
+                ref={node => { node?.toggleAttribute("inert", !isOpen); }}>
                 <div className={cl("panel-clip")}>
                     <div className={cl("panel")}>
                         {stream && <ScreenShareSection stream={stream} startedAt={streamStartedAt} />}
