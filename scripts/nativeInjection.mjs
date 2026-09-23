@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { randomUUID } from "node:crypto";
 import {
     cpSync,
     existsSync,
@@ -314,6 +315,7 @@ export function installDistribution(sourceDist, options = {}) {
     const source = resolve(sourceDist);
     const target = resolve(options.target || getInstalledDistDir(options));
     const temporary = target + ".tmp-" + process.pid;
+    const previous = target + ".previous-" + randomUUID();
 
     if (!existsSync(join(source, "patcher.js"))) {
         throw new Error("Distribution Midnightcord invalide: " + source);
@@ -321,13 +323,33 @@ export function installDistribution(sourceDist, options = {}) {
 
     mkdirSync(dirname(target), { recursive: true });
     rmSync(temporary, { recursive: true, force: true });
-    cpSync(source, temporary, {
-        recursive: true,
-        filter: file => !file.endsWith(".map")
-    });
-
-    rmSync(target, { recursive: true, force: true });
-    renameSync(temporary, target);
+    let previousMoved = false;
+    try {
+        cpSync(source, temporary, {
+            recursive: true,
+            filter: file => !file.endsWith(".map")
+        });
+        if (existsSync(target)) {
+            renameSync(target, previous);
+            previousMoved = true;
+        }
+        try {
+            renameSync(temporary, target);
+        } catch (error) {
+            if (previousMoved) {
+                try { renameSync(previous, target); }
+                catch {
+                    throw new Error("Impossible de remplacer le build ni de le restaurer. Le build precedent est conserve dans " + previous, { cause: error });
+                }
+            }
+            throw error;
+        }
+    } finally {
+        rmSync(temporary, { recursive: true, force: true });
+    }
+    if (previousMoved) {
+        try { rmSync(previous, { recursive: true, force: true }); } catch {}
+    }
     return target;
 }
 

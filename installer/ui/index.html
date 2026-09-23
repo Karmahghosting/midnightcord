@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>Midnightcord — Installation</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <symbol id="moon" viewBox="0 0 24 24"><path d="M20.8 14.2A9 9 0 0 1 9.8 3.3 9 9 0 1 0 20.8 14.2Z"/></symbol>
+        <symbol id="grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></symbol>
+        <symbol id="restore" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
+        <symbol id="refresh" viewBox="0 0 24 24"><path d="M20 10a8 8 0 0 0-14-4L3 9m0-6v6h6m-5 5a8 8 0 0 0 14 4l3-3m0 6v-6h-6"/></symbol>
+        <symbol id="discord" viewBox="0 0 24 24"><path d="M8 5 4.5 6.5C2.8 9.5 2 12.3 2 16l4 2 1.5-2m9-11L20 6.5c1.2 3 2 5.8 2 9.5l-4 2-1.5-2M8 5l1 2a13 13 0 0 1 6 0l1-2M7 16a14 14 0 0 0 10 0"/><path d="M9 11v2m6-2v2" stroke-width="2.5"/></symbol>
+        <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+        <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+        <symbol id="folder" viewBox="0 0 24 24"><path d="M3 7V5h6l2 2h10v13H3V7Z"/></symbol>
+        <symbol id="shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+        <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></symbol>
+        <symbol id="dismiss" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+        <symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+        <symbol id="device" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></symbol>
+    </svg>
+    <header class="titlebar">
+        <span>midnightcord <span class="titlebar-divider">/</span> installer</span>
+        <div class="window-actions">
+            <button id="minimize" aria-label="Réduire la fenêtre"><svg><use href="#minus"/></svg></button>
+            <button id="close" aria-label="Fermer l’installateur"><svg><use href="#dismiss"/></svg></button>
+        </div>
+    </header>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="#" aria-label="Midnightcord, accueil">
+                <span class="brand-mark"><svg><use href="#moon"/></svg></span>
+                <span>Midnightcord<span class="brand-caption">À VOTRE IMAGE.</span></span>
+            </a>
+            <div class="sidebar-group-label">VOTRE ESPACE</div>
+            <nav aria-label="Actions de l’installateur">
+                <button id="install-mode" class="nav-item active" aria-pressed="true"><svg><use href="#grid"/></svg>Installation<span class="nav-dot"></span></button>
+                <button id="uninstall-mode" class="nav-item" aria-pressed="false"><svg><use href="#restore"/></svg>Désinstallation</button>
+            </nav>
+            <div class="sidebar-bottom">
+                <div class="local-badge"><span class="status-dot"></span>Tout reste sur votre appareil</div>
+                <div class="sidebar-meta"><span id="version">Midnightcord</span><span id="platform"></span></div>
+            </div>
+        </aside>
+        <main>
+            <section id="loading-view" class="view loading-view" aria-labelledby="loading-title">
+                <div class="loading-art" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="loading-mark"><svg><use href="#moon"/></svg></span></div>
+                <p class="eyebrow">UN PEU PLUS VOUS.</p>
+                <h1 id="loading-title">Votre espace se prépare.</h1>
+                <p class="muted">Recherche de vos installations Discord.</p>
+                <div class="loading-track" role="progressbar" aria-label="Recherche des installations"><span></span></div>
+                <span class="loading-footnote">Un nouveau regard sur votre quotidien.</span>
+            </section>
+
+            <section id="selection-view" class="view selection-view" hidden aria-labelledby="selection-title">
+                <div class="intro"><p class="eyebrow">FAITES COMME CHEZ VOUS.</p><h1 id="selection-title">Votre Discord.<br><span>Votre Midnightcord.</span></h1><p id="selection-description" class="muted">Choisissez où installer votre nouvel espace.</p></div>
+                <div class="list-heading"><h2 id="target-count">Vos installations</h2><button id="rescan" class="text-button"><svg><use href="#refresh"/></svg>Actualiser</button></div>
+                <div id="targets" class="target-grid" role="group" aria-label="Installations Discord"></div>
+                <div id="empty" class="empty-state" hidden><span class="empty-icon"><svg><use href="#device"/></svg></span><h2>Aucun Discord détecté</h2><p>Installez Discord sur cet appareil, ouvrez-le une première fois, puis cliquez sur Actualiser.</p></div>
+                <div id="notice" class="notice"><svg><use href="#info"/></svg><p id="notice-text">Fermez complètement Discord avant de continuer, y compris dans la zone de notification.</p></div>
+                <div id="scan-error" class="error-message" role="alert" hidden></div>
+                <footer class="selection-footer"><div><span id="selection-count">Aucune installation sélectionnée</span><span class="footer-hint" id="footer-hint">Votre Discord. Vos réglages.</span></div><button id="perform" class="primary-button" disabled><span id="perform-label">Installer Midnightcord</span><svg><use href="#arrow"/></svg></button></footer>
+            </section>
+
+            <section id="progress-view" class="view progress-view" hidden aria-labelledby="progress-title">
+                <span class="stage-symbol" id="stage-symbol"><svg><use href="#moon"/></svg></span>
+                <p class="eyebrow" id="progress-eyebrow">ON S’OCCUPE DE TOUT.</p>
+                <h1 id="progress-title">Une touche de Midnightcord.</h1>
+                <p class="muted" id="progress-description">Préparation de votre installation.</p>
+                <div class="progress-box"><div class="progress-caption"><span id="progress-label">Vérification</span><span id="progress-number">0 %</span></div><progress id="progress" max="100" value="0" aria-label="Progression de l’installation"></progress><div class="progress-steps"><span data-stage="checking">Vérification</span><span data-stage="copying">Préparation</span><span data-stage="injecting">Installation</span></div></div>
+                <div id="result-list" class="result-list" hidden></div>
+                <p id="progress-footnote" class="loading-footnote">Gardez cette fenêtre ouverte pendant l’installation.</p>
+                <button id="back" class="primary-button" hidden>Revenir aux installations<svg><use href="#arrow"/></svg></button>
+            </section>
+        </main>
+    </div>
+    <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+</body>
+</html>

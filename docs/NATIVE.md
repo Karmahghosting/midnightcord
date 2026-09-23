@@ -2,7 +2,22 @@
 
 Le mode natif injecte Midnightcord dans Discord Desktop et conserve les modules officiels, notamment le moteur vocal. Il est recommandé sur Windows, macOS et Linux.
 
-## Archives de release
+## Injecteur graphique recommandé
+
+Les releases proposent **Midnightcord-Installer** : un `.exe` portable pour Windows x64, un `.zip` contenant l’application macOS Intel ou Apple Silicon, et un `.tar.gz` pour Linux x64 ou ARM64.
+
+1. Fermez Discord complètement, y compris son icône dans la zone de notification.
+2. Ouvrez l’injecteur (après extraction sur macOS et Linux).
+3. Cochez les installations Discord souhaitées et cliquez sur **Installer Midnightcord**.
+4. Relancez votre Discord habituel.
+
+L’écran de chargement recherche Stable, PTB, Canary et Development. Chaque installation affiche son emplacement ; aucune n’est présélectionnée. Un Discord encore ouvert bloque l’opération : fermez-le puis cliquez sur **Actualiser**. L’injecteur ne termine pas vos processus.
+
+Pour réparer une installation déjà équipée, sélectionnez-la et utilisez **Réparer Midnightcord**. L’onglet **Désinstallation** restaure uniquement les Discord cochés. Vos réglages et le build partagé restent dans le profil, afin de conserver les autres installations Midnightcord.
+
+Le build et le runtime sont inclus ; l’injecteur n’effectue aucun téléchargement. Les permissions insuffisantes et les chargeurs d’autres mods sont signalés avant l’installation.
+
+## Archives en ligne de commande
 
 Chaque archive contient :
 
@@ -14,7 +29,7 @@ Chaque archive contient :
 
 Aucune installation de Node.js ou pnpm n’est nécessaire.
 
-## Installation
+### Installation en ligne de commande
 
 1. Fermez Discord complètement, y compris son icône de zone de notification.
 2. Extrayez l’archive.
@@ -52,16 +67,24 @@ La mise à jour ne coupe pas la vocal active. Elle attend le prochain redémarra
 
 Une mise à jour de Discord peut créer un nouveau dossier de version. Relancez le script d’installation afin d’injecter le chargeur dans ce nouveau dossier.
 
-## Désinstallation
+## Désinstallation en ligne de commande
 
 Lancez le script de désinstallation inclus. Il supprime uniquement un chargeur identifié comme Midnightcord, restaure app.asar et retire le build installé du profil utilisateur.
 
 ## Build depuis les sources
 
     corepack pnpm install --frozen-lockfile
+    corepack pnpm run package:installer
+
+L’injecteur graphique est écrit dans `release/installer/`. Après un build `corepack pnpm build --standalone`, `corepack pnpm installer` ouvre l’interface de développement, et `node scripts/packageInstaller.mjs --dir` produit une application non archivée. Les scripts `build-installer.ps1`, `.bat` et `.sh` emballent ce même build déjà compilé.
+
+Pour l’archive en ligne de commande :
+
     corepack pnpm run package:native
 
 Le paquet du système courant est écrit dans release/native/.
+
+Les tests `corepack pnpm test:installer` et `corepack pnpm test:installer-electron` utilisent des installations temporaires isolées. Ils n’injectent pas le Discord de l’utilisateur. Sous Linux sans écran, lancez le second via `xvfb-run -a`.
 
 ## Limites
 

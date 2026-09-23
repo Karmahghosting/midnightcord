@@ -7,15 +7,16 @@ Le mode natif conserve le moteur vocal officiel de Discord. Il évite le blocage
 Depuis une archive de release :
 
 1. fermez complètement Discord ;
-2. extrayez Midnightcord-Native pour votre architecture ;
-3. lancez ./install-midnightcord.sh ;
+2. extrayez **Midnightcord-Installer** pour votre architecture ;
+3. lancez `./midnightcord-installer`, cochez vos Discord et cliquez sur **Installer Midnightcord** ;
 4. relancez Discord normalement.
 
-Depuis les sources :
+L’onglet **Désinstallation** restaure les Discord cochés et conserve les réglages. Les archives **Midnightcord-Native** contenant `install-midnightcord.sh` restent disponibles pour la ligne de commande.
+
+Depuis les sources, pour l’injecteur graphique :
 
     corepack pnpm install --frozen-lockfile
-    corepack pnpm run buildDesktop
-    corepack pnpm run inject:linux
+    corepack pnpm run package:installer
 
 L’injecteur détecte Discord Stable, PTB, Canary et Development, notamment les versions utilisateur dans ~/.config/discord/app-*/resources.
 
@@ -38,7 +39,7 @@ Ces paquets autonomes utilisent WebRTC. Ils restent utiles sans installation Dis
 
 ## Wayland et X11
 
-Sur KDE Plasma, l’injecteur installe un lanceur `midnightcord.desktop` et une icône locale. Le nom du fichier desktop, l’identifiant Wayland et la classe de fenêtre restent synchronisés afin d’éviter l’icône générique ou un second groupe dans la barre des tâches.
+Sur KDE Plasma, le script en ligne de commande installe un lanceur `midnightcord.desktop` et une icône locale. Le nom du fichier desktop, l’identifiant Wayland et la classe de fenêtre restent synchronisés afin d’éviter l’icône générique ou un second groupe dans la barre des tâches. Avec l’injecteur graphique, relancez votre Discord habituel.
 
 Electron sélectionne automatiquement Wayland dans une session Wayland et X11 dans une session X11. Le lanceur utilise `--ozone-platform=auto` et conserve l’accélération GPU.
 

@@ -67,6 +67,9 @@ jobs:
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 
+      - name: Verify native Shop and Midnightcord AI entry points
+        run: pnpm test:midnightcord-ai
+
       - name: Test image processing in Chrome
         if: matrix.browser
         run: pnpm test:images
@@ -76,6 +79,9 @@ jobs:
 
       - name: Verify privacy and native injection
         run: pnpm test:privacy && pnpm test:native-injection
+
+      - name: Test graphical installer operations
+        run: pnpm test:installer
 
       - name: Install local Electron for the ASAR smoke test
         run: node node_modules/electron/install.js
@@ -96,6 +102,25 @@ jobs:
       - name: Verify OCR from the real ASAR on Linux
         if: runner.os == 'Linux'
         run: xvfb-run -a pnpm test:ocr-asar
+
+      - name: Verify installer UI and sandbox on Windows and macOS
+        if: runner.os != 'Linux'
+        run: pnpm test:installer-electron
+
+      - name: Verify installer UI and sandbox on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:installer-electron
+
+      - name: Build graphical installer
+        run: node scripts/packageInstaller.mjs
+
+      - name: Upload graphical installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: installer-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release/installer/*
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Upload native archive
         uses: actions/upload-artifact@v7

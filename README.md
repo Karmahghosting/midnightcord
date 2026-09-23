@@ -18,15 +18,17 @@ Le projet dérive de Nightcord, Equicord, Vesktop et Vencord.
 
 ## Installation recommandée
 
-Téléchargez l’archive correspondant à votre système depuis les releases GitHub, extrayez-la puis lancez le programme d’installation inclus.
+Téléchargez **Midnightcord-Installer** pour votre système depuis les [releases GitHub](https://github.com/Karmahghosting/midnightcord/releases/latest).
 
-- Windows x64 : Install-Midnightcord.cmd
-- macOS Intel ou Apple Silicon : Install Midnightcord.command
-- Linux x64 ou ARM64 : ./install-midnightcord.sh
+- Windows x64 : ouvrez le `.exe` portable.
+- macOS Intel ou Apple Silicon : extrayez le `.zip` et ouvrez **Midnightcord Installer.app**.
+- Linux x64 ou ARM64 : extrayez le `.tar.gz` et lancez **midnightcord-installer**.
 
-Les archives embarquent leur propre runtime. Node.js et pnpm ne sont pas requis pour l’installation.
+L’injecteur graphique embarque Midnightcord et son runtime. Node.js, pnpm et une connexion Internet ne sont pas requis pour l’installation.
 
-Discord Stable, PTB, Canary et Development sont détectés automatiquement. Fermez complètement Discord avant l’installation.
+Fermez complètement Discord, cochez les installations souhaitées parmi **Stable, PTB, Canary et Development**, puis cliquez sur **Installer Midnightcord**. La même fenêtre permet de réparer ou de désinstaller Midnightcord. Aucune installation n’est cochée automatiquement.
+
+Les archives **Midnightcord-Native** avec leurs scripts en ligne de commande restent disponibles.
 
 Consultez [la documentation native](./docs/NATIVE.md) pour les options, la mise à jour et la restauration, ainsi que [la documentation de confidentialité](./docs/PRIVACY.md).
 
@@ -37,9 +39,9 @@ Prérequis : Git, Node.js 20 ou plus récent et Corepack.
     git clone https://github.com/Karmahghosting/midnightcord.git
     cd midnightcord
     corepack pnpm install --frozen-lockfile
-    corepack pnpm package:native
+    corepack pnpm package:installer
 
-Le paquet natif du système courant est créé dans release/native/.
+L’injecteur du système courant est créé dans `release/installer/`. Utilisez `corepack pnpm package:native` pour produire l’archive en ligne de commande dans `release/native/`.
 
 Pour un build de développement injecté directement depuis le dépôt :
 

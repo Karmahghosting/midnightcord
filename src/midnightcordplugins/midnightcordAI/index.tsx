@@ -18,7 +18,7 @@ import { showApiKeyWarning } from "@utils/apiKeyWarning";
 import { ModalCloseButton,ModalRoot, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
-import { ChannelStore, FluxDispatcher, IconUtils, Menu,React, ReactDOM, RelationshipStore, RestAPI, useEffect, useRef, UserStore, useState } from "@webpack/common";
+import { ChannelStore, FluxDispatcher, IconUtils, Menu,React, RelationshipStore, RestAPI, useEffect, useRef, UserStore, useState } from "@webpack/common";
 import { t } from "../autoTranslateMidnightcord";
 
 import { getGroqKey, groqChat, setGroqKey, registerSettingsFallback } from "./groqManager";
@@ -701,60 +701,12 @@ Rules:
     );
 }
 
-// ── Panneau latéral (mode page) ────────────────────────────────────────────────
-
-export function MidnightcordAIPanel() {
-    return <MidnightcordAIChat panelMode={true} />;
-}
-
-// ── Bouton Midnightcord AI dans le panneau DM (remplace Boutique) ─────────────────
-
-// ── Bouton Midnightcord AI dans le panneau DM (remplace Boutique) ─────────────────
-
-function MidnightcordAINavButton({ selected, onClick }: { selected?: boolean; onClick?: (e: any) => void; }) {
-    const handleClick = (e: any) => {
-        if (e) {
-            if (typeof e.preventDefault === "function") e.preventDefault();
-            if (typeof e.stopPropagation === "function") e.stopPropagation();
-        }
-        if (onClick) onClick(e);
-        else openModal(p => <MidnightcordAIChat rootProps={p} />);
-    };
-
-    return (
-        <li className="channel__972a0 container_e45859" role="listitem">
-            <div className={`interactive_f88cfd interactive__972a0 linkButton__972a0 ${selected ? "selected__972a0" : ""}`}>
-                <a className="link__972a0" data-list-item-id="private-channels___midnightcord-ai" tabIndex={-1} href="#" onClick={handleClick}>
-                    <div className="layout__20a53 avatarWithText__972a0">
-                        <div className="avatar__20a53">
-                            <svg className="linkButtonIcon__972a0" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M7.89 13.46a1 1 0 0 1-1.78-.9L7 13l-.9-.45.01-.01.01-.02a2.24 2.24 0 0 1 .14-.23c.1-.14.23-.31.4-.5.37-.36.98-.79 1.84-.79.86 0 1.47.43 1.83.8a3.28 3.28 0 0 1 .55.72v.02h.01v.01L10 13l.9-.45a1 1 0 0 1-1.79.9 1.28 1.28 0 0 0-.19-.25c-.14-.13-.28-.2-.42-.2-.14 0-.28.07-.42.2a1.28 1.28 0 0 0-.19.25ZM13.55 13.9a1 1 0 0 0 1.34-.44c0-.02.02-.04.04-.06.03-.05.08-.13.15-.2.14-.13.28-.2.42-.2.14 0 .28.07.42.2a1.28 1.28 0 0 1 .19.25 1 1 0 0 0 1.78-.9L17 13l-.9-.45-.01-.01-.01-.02a2.1 2.1 0 0 0-.14-.23 3.28 3.28 0 0 0-.4-.5c-.37-.36-.98-.79-1.84-.79-.86 0-1.47.43-1.83.8a3.28 3.28 0 0 0-.55.72v.02h-.01v.01L14 13l-.9-.45a1 1 0 0 0 .45 1.34Z" />
-                                <path fill="currentColor" fillRule="evenodd" d="M12 21c5.52 0 10-1.86 10-6 0-5.59-2.8-10.07-4.26-11.67a1 1 0 1 0-1.48 1.34 14.8 14.8 0 0 1 2.35 3.86A10.23 10.23 0 0 0 12 6C9.47 6 7.15 7.02 5.4 8.53a14.8 14.8 0 0 1 2.34-3.86 1 1 0 1 0-1.48-1.34A18.65 18.65 0 0 0 2 15c0 4.14 4.48 6 10 6Zm0-12c3.87 0 7 2 7 4.2S15.87 17 12 17s-7-1.6-7-3.8C5 11 8.13 9 12 9Z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                        <div className="content__20a53 vc-member-list-decorators-display-names">
-                            <div className="nameAndDecorators__20a53">
-                                <div className="name__20a53 text-md/medium__20a53 vc-member-list-decorators-display-names">Midnightcord AI</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="newBadge__4ed1a">
-                        <div className="defaultColor__4bd52 eyebrow_cf4812 badge_c2b88c expressive_c2b88c" data-text-variant="eyebrow">
-                            <span className="label_c2b88c">AI</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </li>
-    );
-}
-
 // ── Plugin ─────────────────────────────────────────────────────────────────────
 
 export default definePlugin({
     name: "MidnightcordAI",
     enabledByDefault: true,
-    description: "AI Chat (Groq) integrated in Discord. Replaces 'Shop' in the DM panel.",
+    description: "AI Chat (Groq) accessible from the toolbox and message context menu.",
     authors: [{ name: "Midnightcord", id: 0n }],
     settings,
 
@@ -775,47 +727,6 @@ export default definePlugin({
         );
     },
 
-    patches: [
-        {
-            // Patch 1 : Remplace la page Boutique (Shop) par notre panneau MidnightcordAI
-            find: "CollectiblesShop",
-            replacement: [
-                {
-                    match: /CollectiblesShop\s*:\s*(\i)/,
-                    replace: "CollectiblesShop:()=>$self.renderPanel()",
-                },
-                {
-                    match: /CollectiblesShop\s*:\s*\(\)\s*=>\s*(\i)/,
-                    replace: "CollectiblesShop:()=>$self.renderPanel()",
-                },
-                {
-                    match: /([{,])CollectiblesShop:(\i)([,}])/,
-                    replace: "$1CollectiblesShop:()=>$self.renderPanel()$3",
-                },
-            ]
-        },
-        {
-            // Patch 2 : Remplace le bouton Boutique (Shop) dans la liste au-dessus des DMs (tutorialId:"direct-messages")
-            find: 'tutorialId:"direct-messages"',
-            replacement: [
-                {
-                    match: /((?:\(0,\s*\i\.[ja]sx\)|\i\.[ja]sx|\(0,\s*\i\.jsxs\)|\i\.jsxs)\s*\(\s*\i[\s\S]{1,500}?,"discord-shop"\))/,
-                    replace: "$self.renderNavButton($1)"
-                }
-            ]
-        },
-        {
-            // Patch 3 : Variante de recherche par .FRIENDS
-            find: '.FRIENDS},"friends"',
-            replacement: [
-                {
-                    match: /((?:\(0,\s*\i\.[ja]sx\)|\i\.[ja]sx|\(0,\s*\i\.jsxs\)|\i\.jsxs)\s*\(\s*\i[\s\S]{1,500}?,"discord-shop"\))/,
-                    replace: "$self.renderNavButton($1)"
-                }
-            ]
-        }
-    ],
-
     start() {
         // Migration automatique : copier la clé Settings → DataStore la première fois
         const keyFromSettings = settings.store.apiKey?.trim();
@@ -826,91 +737,6 @@ export default definePlugin({
                 }
             });
         }
-
-        // Transformateur DOM direct pour transformer instantanément le bouton Shop s'il subsiste
-        const transformShop = () => {
-            const shopLink =
-                document.querySelector<HTMLAnchorElement>('[data-list-item-id*="___shop"]') ??
-                document.querySelector<HTMLAnchorElement>('a[href="/shop"]');
-            if (!shopLink) return;
-
-            if (shopLink.getAttribute("data-midnightcord-ai") === "true") return;
-            shopLink.setAttribute("data-midnightcord-ai", "true");
-
-            shopLink.href = "#";
-            shopLink.setAttribute("data-list-item-id", "private-channels___midnightcord-ai");
-
-            const nameEl = shopLink.querySelector('[class*="name_"]') || shopLink.querySelector('.name__20a53');
-            if (nameEl) nameEl.textContent = "Midnightcord AI";
-
-            const avatarEl = shopLink.querySelector('[class*="avatar_"]') || shopLink.querySelector('.avatar__20a53');
-            if (avatarEl) {
-                avatarEl.innerHTML = `<svg class="linkButtonIcon__972a0" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M7.89 13.46a1 1 0 0 1-1.78-.9L7 13l-.9-.45.01-.01.01-.02a2.24 2.24 0 0 1 .14-.23c.1-.14.23-.31.4-.5.37-.36.98-.79 1.84-.79.86 0 1.47.43 1.83.8a3.28 3.28 0 0 1 .55.72v.02h.01v.01L10 13l.9-.45a1 1 0 0 1-1.79.9 1.28 1.28 0 0 0-.19-.25c-.14-.13-.28-.2-.42-.2-.14 0-.28.07-.42.2a1.28 1.28 0 0 0-.19.25ZM13.55 13.9a1 1 0 0 0 1.34-.44c0-.02.02-.04.04-.06.03-.05.08-.13.15-.2.14-.13.28-.2.42-.2.14 0 .28.07.42.2a1.28 1.28 0 0 1 .19.25 1 1 0 0 0 1.78-.9L17 13l-.9-.45-.01-.01-.01-.02a2.1 2.1 0 0 0-.14-.23 3.28 3.28 0 0 0-.4-.5c-.37-.36-.98-.79-1.84-.79-.86 0-1.47.43-1.83.8a3.28 3.28 0 0 0-.55.72v.02h-.01v.01L14 13l-.9-.45a1 1 0 0 0 .45 1.34Z"/><path fill="currentColor" fill-rule="evenodd" d="M12 21c5.52 0 10-1.86 10-6 0-5.59-2.8-10.07-4.26-11.67a1 1 0 1 0-1.48 1.34 14.8 14.8 0 0 1 2.35 3.86A10.23 10.23 0 0 0 12 6C9.47 6 7.15 7.02 5.4 8.53a14.8 14.8 0 0 1 2.34-3.86 1 1 0 1 0-1.48-1.34A18.65 18.65 0 0 0 2 15c0 4.14 4.48 6 10 6Zm0-12c3.87 0 7 2 7 4.2S15.87 17 12 17s-7-1.6-7-3.8C5 11 8.13 9 12 9Z" clip-rule="evenodd"/></svg>`;
-            }
-
-            const badgeLabel = shopLink.querySelector('[class*="label_"]') || shopLink.querySelector('.label_c2b88c');
-            if (badgeLabel) badgeLabel.textContent = "AI";
-
-            const clickHandler = (e: MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                openModal(p => <MidnightcordAIChat rootProps={p} />);
-            };
-            shopLink.onclick = clickHandler;
-            shopLink.addEventListener("click", clickHandler, true);
-        };
-
-        this._observer = new MutationObserver(() => transformShop());
-        this._observer.observe(document.body, { childList: true, subtree: true });
-        transformShop();
-    },
-
-    stop() {
-        this._observer?.disconnect();
-        this._observer = null;
-    },
-
-    renderNavButton(originalElement?: any) {
-        const handleClick = (e: any) => {
-            if (e) {
-                if (typeof e.preventDefault === "function") e.preventDefault();
-                if (typeof e.stopPropagation === "function") e.stopPropagation();
-            }
-            openModal(p => <MidnightcordAIChat rootProps={p} />);
-        };
-
-        const MidnightcordAIIcon = (iconProps: any) => (
-            <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                {...iconProps}
-            >
-                <path fill="currentColor" d="M7.89 13.46a1 1 0 0 1-1.78-.9L7 13l-.9-.45.01-.01.01-.02a2.24 2.24 0 0 1 .14-.23c.1-.14.23-.31.4-.5.37-.36.98-.79 1.84-.79.86 0 1.47.43 1.83.8a3.28 3.28 0 0 1 .55.72v.02h.01v.01L10 13l.9-.45a1 1 0 0 1-1.79.9 1.28 1.28 0 0 0-.19-.25c-.14-.13-.28-.2-.42-.2-.14 0-.28.07-.42.2a1.28 1.28 0 0 0-.19.25ZM13.55 13.9a1 1 0 0 0 1.34-.44c0-.02.02-.04.04-.06.03-.05.08-.13.15-.2.14-.13.28-.2.42-.2.14 0 .28.07.42.2a1.28 1.28 0 0 1 .19.25 1 1 0 0 0 1.78-.9L17 13l-.9-.45-.01-.01-.01-.02a2.1 2.1 0 0 0-.14-.23 3.28 3.28 0 0 0-.4-.5c-.37-.36-.98-.79-1.84-.79-.86 0-1.47.43-1.83.8a3.28 3.28 0 0 0-.55.72v.02h-.01v.01L14 13l-.9-.45a1 1 0 0 0 .45 1.34Z" />
-                <path fill="currentColor" fillRule="evenodd" d="M12 21c5.52 0 10-1.86 10-6 0-5.59-2.8-10.07-4.26-11.67a1 1 0 1 0-1.48 1.34 14.8 14.8 0 0 1 2.35 3.86A10.23 10.23 0 0 0 12 6C9.47 6 7.15 7.02 5.4 8.53a14.8 14.8 0 0 1 2.34-3.86 1 1 0 1 0-1.48-1.34A18.65 18.65 0 0 0 2 15c0 4.14 4.48 6 10 6Zm0-12c3.87 0 7 2 7 4.2S15.87 17 12 17s-7-1.6-7-3.8C5 11 8.13 9 12 9Z" clipRule="evenodd" />
-            </svg>
-        );
-
-        if (React.isValidElement(originalElement)) {
-            return React.cloneElement(originalElement, {
-                ...originalElement.props,
-                text: "Midnightcord AI",
-                name: "Midnightcord AI",
-                label: "Midnightcord AI",
-                icon: MidnightcordAIIcon,
-                onClick: handleClick,
-                href: undefined,
-                "data-list-item-id": "private-channels___midnightcord-ai",
-            });
-        }
-
-        return <MidnightcordAINavButton onClick={handleClick} />;
-    },
-
-    renderPanel() {
-        return <MidnightcordAIPanel />;
     },
 
     contextMenus: {

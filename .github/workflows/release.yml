@@ -55,11 +55,47 @@ jobs:
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 
+      - name: Verify native Shop and Midnightcord AI entry points
+        run: pnpm test:midnightcord-ai
+
       - name: Build native archive
         run: pnpm package:native
 
       - name: Verify privacy and native injection
         run: pnpm test:privacy && pnpm test:native-injection
+
+      - name: Test graphical installer operations
+        run: pnpm test:installer
+
+      - name: Install local Electron for the UI smoke test
+        run: node node_modules/electron/install.js
+
+      - name: Prepare Linux Electron smoke environment
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0t64 libnss3 libgbm1 libasound2t64
+          electron_sandbox="$(node -p 'require("path").join(require("path").dirname(require("electron")), "chrome-sandbox")')"
+          sudo chown root:root "$electron_sandbox"
+          sudo chmod 4755 "$electron_sandbox"
+
+      - name: Verify installer UI and sandbox on Windows and macOS
+        if: runner.os != 'Linux'
+        run: pnpm test:installer-electron
+
+      - name: Verify installer UI and sandbox on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:installer-electron
+
+      - name: Build graphical installer
+        run: node scripts/packageInstaller.mjs
+
+      - name: Upload graphical installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: installer-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release/installer/*
+          if-no-files-found: error
 
       - name: Upload native archive
         uses: actions/upload-artifact@v7

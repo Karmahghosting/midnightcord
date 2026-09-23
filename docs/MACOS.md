@@ -6,21 +6,23 @@ Des archives séparées sont produites pour les Mac Intel x64 et Apple Silicon A
 
 1. Installez Discord dans le dossier Applications ou dans votre dossier Applications utilisateur.
 2. Quittez complètement Discord avec Cmd Q.
-3. Téléchargez et extrayez l’archive correspondant à votre processeur.
-4. Ouvrez Install Midnightcord.command.
+3. Téléchargez et extrayez **Midnightcord-Installer** pour votre processeur.
+4. Ouvrez **Midnightcord Installer.app**, cochez vos Discord puis cliquez sur **Installer Midnightcord**.
 5. Relancez Discord normalement.
 
-Si macOS refuse le premier lancement du script, faites un clic droit sur le fichier, choisissez Ouvrir puis confirmez.
+Les archives **Midnightcord-Native** et leurs scripts `.command` restent disponibles pour une installation en ligne de commande.
 
 L’injecteur cherche Discord Stable, PTB, Canary et Development dans /Applications et dans ~/Applications.
 
 ## Mise à jour
 
-Après une mise à jour de Discord ou de Midnightcord, quittez Discord puis relancez Install Midnightcord.command.
+Après une mise à jour de Discord, quittez Discord et sélectionnez l’installation à réparer dans l’injecteur.
 
 ## Désinstallation
 
-Quittez Discord puis ouvrez Uninstall Midnightcord.command. La sauvegarde officielle est restaurée avant la suppression du build utilisateur.
+Quittez Discord puis utilisez l’onglet **Désinstallation** de l’injecteur. Seules les installations cochées sont restaurées ; les réglages et le build partagé sont conservés.
+
+Le script `Uninstall Midnightcord.command` de l’archive en ligne de commande restaure également la sauvegarde officielle, puis supprime le build utilisateur partagé.
 
 ## Permissions
 
@@ -29,6 +31,6 @@ Une application Discord installée par un autre compte ou appartenant à root pe
 ## Build depuis les sources
 
     corepack pnpm install --frozen-lockfile
-    corepack pnpm run package:native
+    corepack pnpm run package:installer
 
 La CI produit les deux architectures sur des runners macOS natifs.
