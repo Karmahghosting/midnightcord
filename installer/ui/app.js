@@ -157,6 +157,7 @@ function showResult(result) {
         byId("result-list").append(row);
     }
     byId("result-list").hidden = results.length === 0;
+    if (Array.isArray(result.state?.targets)) state = result.state;
     byId("progress-footnote").textContent = ok ? "Relancez votre Discord habituel pour retrouver votre espace." : "Aucune autre installation n’a été sélectionnée automatiquement.";
     byId("back").hidden = false;
     announce(byId("progress-title").textContent);
