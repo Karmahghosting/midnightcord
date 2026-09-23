@@ -13,7 +13,21 @@ Depuis une archive de release :
 
 L’onglet **Désinstallation** restaure les Discord cochés et conserve les réglages. Les archives **Midnightcord-Native** contenant `install-midnightcord.sh` restent disponibles pour la ligne de commande.
 
-Depuis les sources, pour l’injecteur graphique :
+### Si le sandbox empêche l’ouverture de l’injecteur
+
+Sur certaines distributions, notamment lorsque les espaces de noms utilisateur sont restreints, le lancement peut signaler que le helper SUID `chrome-sandbox` est mal configuré. Depuis le dossier extrait de l’archive officielle, configurez uniquement ce fichier :
+
+```sh
+sudo chown root:root ./chrome-sandbox
+sudo chmod 4755 ./chrome-sandbox
+./midnightcord-installer
+```
+
+L’injecteur se lance avec votre compte habituel, sans `sudo`. Le sandbox reste actif ; n’ajoutez pas `--no-sandbox`. Si le volume interdit SUID (`nosuid`), demandez à l’administrateur une configuration compatible. [Documentation du sandbox Chromium](https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md).
+
+### Depuis les sources
+
+Pour construire l’injecteur graphique :
 
     corepack pnpm install --frozen-lockfile
     corepack pnpm run package:installer

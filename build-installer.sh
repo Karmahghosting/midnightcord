@@ -1,5 +1,5 @@
 #!/bin/sh
-# Package on the target OS; pass --x64, --arm64, --dir or --appimage as needed.
+# Package on the target OS; pass --x64, --arm64 or --dir as needed.
 set -eu
 if ! command -v node >/dev/null 2>&1; then
     echo "Node.js is required. Install the root dependencies and build the client first." >&2

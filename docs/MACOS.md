@@ -14,6 +14,12 @@ Les archives **Midnightcord-Native** et leurs scripts `.command` restent disponi
 
 L’injecteur cherche Discord Stable, PTB, Canary et Development dans /Applications et dans ~/Applications.
 
+### Première ouverture et Gatekeeper
+
+L’injecteur porte une signature ad hoc, sans certificat Developer ID ni notarisation Apple. macOS peut donc bloquer sa première ouverture après téléchargement.
+
+Après avoir vérifié la provenance de l’archive et son fichier SHA256, essayez d’ouvrir **Midnightcord Installer.app**. Si macOS indique que le développeur ne peut pas être vérifié, ouvrez **Réglages système → Confidentialité et sécurité → Ouvrir quand même**, puis confirmez l’ouverture. Cette exception s’applique à cette application et conserve Gatekeeper actif. Suivez la [procédure officielle Apple](https://support.apple.com/fr-fr/102445).
+
 ## Mise à jour
 
 Après une mise à jour de Discord, quittez Discord et sélectionnez l’installation à réparer dans l’injecteur.

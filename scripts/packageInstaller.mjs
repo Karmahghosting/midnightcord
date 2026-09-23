@@ -4,6 +4,7 @@
  */
 
 import { build } from "electron-builder";
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { copyFile, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
@@ -11,18 +12,20 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const require = createRequire(import.meta.url);
+const execFileAsync = promisify(execFile);
 const args = new Set(process.argv.slice(2));
-const allowedArgs = new Set(["--dir", "--x64", "--arm64", "--appimage", "--help"]);
+const allowedArgs = new Set(["--dir", "--x64", "--arm64", "--help"]);
 
 for (const arg of args) {
     if (!allowedArgs.has(arg)) throw new Error(`Unknown installer packaging option: ${arg}`);
 }
 if (args.has("--help")) {
-    console.log("Usage: node scripts/packageInstaller.mjs [--x64 | --arm64] [--dir] [--appimage]");
-    console.log("Build on the target OS. Windows: portable EXE x64; macOS: ZIP; Linux: tar.gz (optional AppImage).");
+    console.log("Usage: node scripts/packageInstaller.mjs [--x64 | --arm64] [--dir]");
+    console.log("Build on the target OS. Windows: portable EXE x64; macOS: ZIP; Linux: tar.gz.");
     console.log("Archives: release/installer. Unpacked --dir builds: release/installer-unpacked/<platform>-<arch>.");
     process.exit(0);
 }
@@ -35,8 +38,6 @@ if (!platformName) throw new Error(`Unsupported installer platform: ${process.pl
 if (args.has("--x64") && args.has("--arm64")) throw new Error("Choose one architecture per build.");
 if (!["x64", "arm64"].includes(requestedArch)) throw new Error(`Unsupported installer architecture: ${requestedArch}`);
 if (process.platform === "win32" && requestedArch !== "x64") throw new Error("The Windows installer is packaged for x64 only.");
-if (args.has("--appimage") && process.platform !== "linux") throw new Error("--appimage is only available on Linux.");
-if (args.has("--appimage") && isDir) throw new Error("--appimage cannot be combined with --dir.");
 
 const rootPackage = JSON.parse(await readFile(join(rootDir, "package.json"), "utf8"));
 const electronVersion = require("electron/package.json").version;
@@ -87,7 +88,7 @@ try {
         arm64: requestedArch === "arm64",
         ...(process.platform === "win32" ? { win: isDir ? [] : ["portable"] }
             : process.platform === "darwin" ? { mac: isDir ? [] : ["zip"] }
-                : { linux: isDir ? [] : args.has("--appimage") ? ["tar.gz", "AppImage"] : ["tar.gz"] }),
+                : { linux: isDir ? [] : ["tar.gz"] }),
         config: {
             appId: "st.midnightcord.installer",
             productName: "Midnightcord Installer",
@@ -113,6 +114,12 @@ try {
                     "requested-execution-level": "asInvoker"
                 });
             },
+            ...(process.platform === "darwin" ? {
+                afterSign: async context => {
+                    const appPath = join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`);
+                    await execFileAsync("codesign", ["--verify", "--deep", "--strict", appPath]);
+                }
+            } : {}),
             forceCodeSigning: false,
             compression: "normal",
             directories: { output: buildOutputDir, buildResources: join(rootDir, "static") },
@@ -126,7 +133,7 @@ try {
             extraResources: [{ from: desktopDir, to: "payload/desktop", filter: ["**/*", "!**/*.map"] }],
             win: { icon: join(rootDir, "static", "icon.ico"), signAndEditExecutable: false, requestedExecutionLevel: "asInvoker" },
             portable: { requestExecutionLevel: "user" },
-            mac: { icon: join(rootDir, "static", "icon.png"), identity: null, hardenedRuntime: false, gatekeeperAssess: false },
+            mac: { icon: join(rootDir, "static", "icon.png"), identity: "-", hardenedRuntime: false, gatekeeperAssess: false, notarize: false },
             linux: { icon: join(rootDir, "static", "icon.png"), executableName: "midnightcord-installer", category: "Utility" }
         }
     });
@@ -136,7 +143,7 @@ try {
     } else {
         const extensions = process.platform === "win32" ? ["exe"]
             : process.platform === "darwin" ? ["zip"]
-                : args.has("--appimage") ? ["tar.gz", "AppImage"] : ["tar.gz"];
+                : ["tar.gz"];
         await mkdir(outputDir, { recursive: true });
         for (const extension of extensions) {
             const artifactName = `${artifactBaseName}.${extension}`;
