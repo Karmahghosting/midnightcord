@@ -147,7 +147,10 @@ assert(rendererUtilsSource.includes("navigator.platform.toLowerCase()"), "CachyO
 
 const packageLinuxSource = readFileSync(join(rootDir, "scripts", "packageLinux.mjs"), "utf8");
 const fetchArrpcSource = readFileSync(join(rootDir, "scripts", "build", "fetchArrpc.mjs"), "utf8");
-assert(packageLinuxSource.includes('await fetchArrpcBinary("linux", requestedArch)'), "Linux packages must bundle the Rich Presence relay");
+assert(!packageLinuxSource.includes("fetchArrpcBinary"), "Injection-only Linux packages must not download a standalone Rich Presence relay");
+const linuxConfigSource = readFileSync(join(rootDir, "electron-builder.linux.cjs"), "utf8");
+assert(linuxConfigSource.includes('main: "packaging/linux-entry.cjs"'), "Linux packages must start the injector");
+assert(!/dist\/js|midnightcord\.asar|afterPack\.mjs/.test(linuxConfigSource), "Linux packages must not include the standalone client or its relay hook");
 assert(fetchArrpcSource.includes('const ARRPC_VERSION = "1.3.5"'), "The Rich Presence relay version must be pinned");
 assert(fetchArrpcSource.includes("checksum mismatch"), "The Rich Presence relay must be checksum verified before packaging");
 
