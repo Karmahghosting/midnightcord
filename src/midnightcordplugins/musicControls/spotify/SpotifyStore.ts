@@ -105,8 +105,6 @@ export const SpotifyStore = proxyLazyWebpack(() => {
         private queuedCommand = false;
         private retryAt = 0;
 
-        initialize() { this.waitFor(SpotifySocket, ConnectedAccountsStore); }
-
         public get position() {
             return Math.min(this.track?.duration ?? Infinity, Math.max(0, this.mPosition + (this.isPlaying ? Date.now() - this._start : 0)));
         }
