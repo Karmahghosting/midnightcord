@@ -206,3 +206,223 @@ test("community join requires a one-time browser authorization and never stores 
     assert.deepEqual(await (await fetch(`${base}/v1/community/status`)).json(), { enabled: true, name: "Midnightcord" });
     assert.equal(await readFile(join(dataDir, "community-oauth.json"), "utf8").catch(() => null), null);
 });
+
+async function communityFixture(t, options = {}) {
+    const dataDir = await mkdtemp(join(tmpdir(), "midnightcord-community-state-"));
+    const env = {
+        MIDNIGHTCORD_DISCORD_CLIENT_ID: "12345678901234567",
+        MIDNIGHTCORD_DISCORD_CLIENT_SECRET: "test-client-secret",
+        MIDNIGHTCORD_DISCORD_BOT_TOKEN: "test-bot-token",
+        MIDNIGHTCORD_COMMUNITY_GUILD_ID: "98765432109876543",
+        ...options.env
+    };
+    const calls = [];
+    let server;
+    let base;
+    let clock = Date.now();
+    const fetchImpl = async (input, init) => {
+        const pathname = new URL(String(input)).pathname;
+        calls.push(pathname);
+        const override = await options.fetchImpl?.(pathname, init);
+        if (override) return override;
+        if (pathname === "/api/v10/oauth2/token") return Response.json({ access_token: "temporary-user-token", scope: "identify guilds.join" });
+        if (pathname === "/api/v10/users/@me") return Response.json({ id: "11111111111111111" });
+        if (pathname === `/api/v10/guilds/${env.MIDNIGHTCORD_COMMUNITY_GUILD_ID}/members/11111111111111111`) return new Response(null, { status: options.joinStatus ?? 201 });
+        throw new Error(`Unexpected Discord request: ${pathname}`);
+    };
+    const restart = async () => {
+        if (server) await new Promise(resolve => server.close(resolve));
+        server = createCloudServer({ dataDir, env, fetchImpl, now: () => clock });
+        await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+        base = `http://127.0.0.1:${server.address().port}`;
+    };
+    await restart();
+    t.after(async () => {
+        await new Promise(resolve => server.close(resolve));
+        await rm(dataDir, { recursive: true, force: true });
+    });
+    const request = (token, path, init = {}) => fetch(`${base}${path}`, {
+        ...init, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers }
+    });
+    const cloud = (token, action = "", method = "GET") => request(token, `/v1/cloud/community${action}`, { method });
+    const browserStart = async token => {
+        const result = await cloud(token, "/join", "POST");
+        assert.equal(result.status, 200);
+        const { url } = await result.json();
+        const ticketUrl = new URL(url);
+        assert.equal(ticketUrl.origin, "https://api.midnightcord.fr");
+        assert.match(ticketUrl.searchParams.get("ticket"), /^[A-Za-z0-9_-]{43}$/);
+        const response = await request(null, ticketUrl.pathname + ticketUrl.search, { redirect: "manual" });
+        assert.equal(response.status, 302);
+        return {
+            ticketPath: ticketUrl.pathname + ticketUrl.search,
+            state: new URL(response.headers.get("location")).searchParams.get("state"),
+            cookie: response.headers.get("set-cookie").split(";", 1)[0]
+        };
+    };
+    const callback = (flow, query = "code=approved") => request(null, `/v1/community/callback?state=${flow.state}&${query}`, { headers: { Cookie: flow.cookie } });
+    const manifest = async token => {
+        const accountId = createHash("sha256").update(`midnightcord-cloud:${token}`).digest("hex");
+        return readFile(join(dataDir, "accounts", accountId, "manifest.json"), "utf8").then(JSON.parse).catch(error => {
+            if (error.code === "ENOENT") return null;
+            throw error;
+        });
+    };
+    return { env, dataDir, calls, restart, request, cloud, browserStart, callback, manifest, advance: ms => { clock += ms; } };
+}
+
+test("community prompt is claimed atomically per account and guild and survives restarts", async t => {
+    const f = await communityFixture(t);
+    const token = credential();
+    const other = credential();
+    assert.equal((await (await f.cloud(token)).json()).status, "unseen");
+    assert.equal(await f.manifest(token), null, "Reading status must not create account data");
+    const claims = await Promise.all(Array.from({ length: 8 }, async () => (await f.cloud(token, "/prompt", "POST")).json()));
+    assert.equal(claims.filter(result => result.showPrompt).length, 1, "Only one device may display the prompt");
+    assert.ok(claims.every(result => result.status === "offered"));
+    assert.equal((await (await f.cloud(other, "/prompt", "POST")).json()).showPrompt, true);
+    await f.restart();
+    assert.equal((await (await f.cloud(token, "/prompt", "POST")).json()).showPrompt, false);
+    f.env.MIDNIGHTCORD_COMMUNITY_GUILD_ID = "55555555555555555";
+    assert.equal((await (await f.cloud(token, "/prompt", "POST")).json()).showPrompt, true, "A different guild has independent state");
+    f.env.MIDNIGHTCORD_COMMUNITY_GUILD_ID = "98765432109876543";
+    assert.equal((await (await f.cloud(token)).json()).status, "offered");
+    assert.equal((await (await f.cloud(other)).json()).status, "offered");
+});
+
+test("community endpoints require Cloud authentication and disabled configuration never consumes a prompt", async t => {
+    const f = await communityFixture(t, { env: { MIDNIGHTCORD_DISCORD_CLIENT_SECRET: "" } });
+    const token = credential();
+    for (const [action, method] of [["", "GET"], ["/prompt", "POST"], ["/decline", "PUT"], ["/join", "POST"]]) {
+        assert.equal((await f.cloud(null, action, method)).status, 401);
+    }
+    assert.deepEqual(await (await f.cloud(token, "/prompt", "POST")).json(), { enabled: false, name: "Midnightcord", guildId: null, status: "unseen", showPrompt: false });
+    assert.equal(await f.manifest(token), null);
+    assert.equal((await f.cloud(token, "/join", "POST")).status, 503);
+    f.env.MIDNIGHTCORD_DISCORD_CLIENT_SECRET = "configured";
+    assert.equal((await (await f.cloud(token, "/prompt", "POST")).json()).showPrompt, true);
+    assert.equal((await f.cloud(token, "/join", "GET")).status, 405);
+    const preflight = await f.request(null, "/v1/cloud/community/prompt", { method: "OPTIONS", headers: { Origin: "https://discord.com", "Access-Control-Request-Method": "POST" } });
+    assert.equal(preflight.status, 204);
+    assert.match(preflight.headers.get("access-control-allow-methods"), /POST/);
+});
+
+for (const joinStatus of [201, 204]) {
+    test(`community records Discord ${joinStatus} success once and never re-adds a joined Cloud account`, async t => {
+        const f = await communityFixture(t, { joinStatus });
+        const token = credential();
+        const flow = await f.browserStart(token);
+        assert.equal((await f.request(null, flow.ticketPath, { redirect: "manual" })).status, 400, "The browser ticket cannot be reused");
+        assert.equal((await f.callback(flow)).status, 200);
+        assert.equal(f.calls.length, 3);
+        assert.equal((await (await f.cloud(token)).json()).status, "joined");
+        assert.equal((await f.callback(flow)).status, 400, "OAuth callbacks cannot be replayed");
+        await f.restart();
+        assert.deepEqual(await (await f.cloud(token, "/join", "POST")).json(), { joined: true });
+        assert.equal((await (await f.cloud(token, "/decline", "PUT")).json()).status, "joined", "Declining must not erase a completed join");
+        assert.equal((await (await f.cloud(token, "/prompt", "POST")).json()).showPrompt, false);
+        assert.equal(f.calls.length, 3, "Restarting or clicking again must never issue a second Discord join");
+        const stored = JSON.stringify(await f.manifest(token));
+        for (const secret of ["temporary-user-token", "11111111111111111", "test-bot-token", "test-client-secret", flow.state, flow.ticketPath]) {
+            assert.equal(stored.includes(secret), false, "Only pseudonymous Cloud status may be persisted");
+        }
+    });
+}
+
+test("community refusals suppress future prompts while an explicit retry remains possible", async t => {
+    const f = await communityFixture(t);
+    const token = credential();
+    let flow = await f.browserStart(token);
+    assert.equal((await f.callback(flow, "error=access_denied")).status, 200);
+    assert.equal((await (await f.cloud(token)).json()).status, "declined");
+    assert.equal((await (await f.cloud(token, "/prompt", "POST")).json()).showPrompt, false);
+    assert.equal(f.calls.length, 0);
+    flow = await f.browserStart(token);
+    assert.equal((await (await f.cloud(token, "/decline", "PUT")).json()).status, "declined");
+    assert.equal((await f.callback(flow)).status, 400, "Declining invalidates an already opened browser flow");
+    assert.equal(f.calls.length, 0);
+    const retry = await f.browserStart(token);
+    assert.equal((await f.callback(retry)).status, 200);
+    assert.equal((await (await f.cloud(token)).json()).status, "joined");
+});
+
+test("community tickets and browser authorizations expire and cannot be retargeted by configuration changes", async t => {
+    const f = await communityFixture(t);
+    const token = credential();
+    const ticket = new URL((await (await f.cloud(token, "/join", "POST")).json()).url);
+    f.advance(10 * 60_000);
+    assert.equal((await f.request(null, ticket.pathname + ticket.search, { redirect: "manual" })).status, 400);
+    let flow = await f.browserStart(token);
+    f.advance(10 * 60_000);
+    assert.equal((await f.callback(flow)).status, 400);
+    flow = await f.browserStart(token);
+    f.env.MIDNIGHTCORD_COMMUNITY_GUILD_ID = "55555555555555555";
+    assert.equal((await f.callback(flow)).status, 400);
+    f.env.MIDNIGHTCORD_COMMUNITY_GUILD_ID = "98765432109876543";
+    flow = await f.browserStart(token);
+    f.env.MIDNIGHTCORD_DISCORD_CLIENT_ID = "44444444444444444";
+    assert.equal((await f.callback(flow)).status, 400);
+    assert.equal(f.calls.length, 0);
+});
+
+test("new community attempts invalidate earlier tickets and browser states without crossing accounts", async t => {
+    const f = await communityFixture(t);
+    const token = credential();
+    const other = credential();
+    const ticket = new URL((await (await f.cloud(token, "/join", "POST")).json()).url);
+    const old = await f.browserStart(token);
+    assert.equal((await f.request(null, ticket.pathname + ticket.search, { redirect: "manual" })).status, 400);
+    const otherFlow = await f.browserStart(other);
+    const current = await f.browserStart(token);
+    assert.equal((await f.callback(old)).status, 400);
+    assert.equal((await f.callback(current)).status, 200);
+    assert.equal((await (await f.cloud(other)).json()).status, "offered");
+    assert.equal((await f.callback(otherFlow)).status, 200);
+    assert.equal(f.calls.length, 6);
+});
+
+test("deleting a Cloud account invalidates tickets and in-flight authorization without recreating account data", async t => {
+    let resolveToken;
+    let enteredToken;
+    const tokenEntered = new Promise(resolve => { enteredToken = resolve; });
+    const heldToken = new Promise(resolve => { resolveToken = resolve; });
+    const f = await communityFixture(t, {
+        fetchImpl: async pathname => {
+            if (pathname === "/api/v10/oauth2/token") {
+                enteredToken();
+                await heldToken;
+            }
+        }
+    });
+    const token = credential();
+    const pendingTicket = new URL((await (await f.cloud(token, "/join", "POST")).json()).url);
+    const remove = () => f.request(token, "/v1/cloud/account", { method: "DELETE", headers: { "X-Midnightcord-Confirm": "delete-account" } });
+    assert.equal((await remove()).status, 204);
+    assert.equal((await f.request(null, pendingTicket.pathname + pendingTicket.search, { redirect: "manual" })).status, 400);
+    const flow = await f.browserStart(token);
+    const pendingCallback = f.callback(flow);
+    await tokenEntered;
+    try {
+        assert.equal((await remove()).status, 204);
+    } finally {
+        resolveToken();
+    }
+    assert.equal((await pendingCallback).status, 400);
+    assert.deepEqual(f.calls, ["/api/v10/oauth2/token"], "No membership request may follow account deletion");
+    assert.equal(await f.manifest(token), null);
+});
+
+test("a failed Discord join can be retried manually without another automatic prompt", async t => {
+    let failed = true;
+    const f = await communityFixture(t, {
+        fetchImpl: async pathname => pathname.includes("/members/") && failed ? new Response(null, { status: 403 }) : undefined
+    });
+    const token = credential();
+    const flow = await f.browserStart(token);
+    assert.equal((await f.callback(flow)).status, 502);
+    assert.equal((await (await f.cloud(token)).json()).status, "offered");
+    assert.equal((await (await f.cloud(token, "/prompt", "POST")).json()).showPrompt, false);
+    failed = false;
+    assert.equal((await f.callback(await f.browserStart(token))).status, 200);
+    assert.equal((await (await f.cloud(token)).json()).status, "joined");
+});

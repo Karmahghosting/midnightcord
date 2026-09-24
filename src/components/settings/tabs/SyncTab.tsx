@@ -14,7 +14,6 @@ import {
 import { t } from "@api/i18n";
 import { useSettings } from "@api/Settings";
 import {
-    CLOUD_API_BASE,
     createCloudIdentity,
     getCloudKey,
     getCurrentCloudFingerprint,
@@ -29,6 +28,8 @@ import {
     putCloudSettings,
     restoreCloudRevision
 } from "@api/SettingsSync/cloudSync";
+import { addCommunityChangeListener, getCommunityStatus, offerCommunityJoin, openCommunityJoin } from "@api/SettingsSync/community";
+import type { CommunityStatus } from "@api/SettingsSync/communityFlow";
 import type { CloudItemKey, CloudManifestEntry } from "@api/SettingsSync/types";
 import { Button, LinkButton } from "@components/Button";
 import { Card } from "@components/Card";
@@ -80,7 +81,11 @@ function SyncTab() {
     const [history, setHistory] = useState<Record<CloudItemKey, CloudManifestEntry[]>>({ settings: [], quickCss: [] });
     const [historyLoading, setHistoryLoading] = useState(false);
     const [historyError, setHistoryError] = useState<string>();
-    const [communityJoinAvailable, setCommunityJoinAvailable] = useState(false);
+    const [communityStatus, setCommunityStatus] = useState<CommunityStatus | null>(null);
+    const [communityLoading, setCommunityLoading] = useState(false);
+    const [communityError, setCommunityError] = useState(false);
+    const [communityBusy, setCommunityBusy] = useState(false);
+    const [communityRefresh, setCommunityRefresh] = useState(0);
     const [hidden, setHidden] = useState<BadgeSource[]>(getOwnHiddenBadgeSources());
 
     async function refreshIdentity() {
@@ -108,10 +113,6 @@ function SyncTab() {
 
     useEffect(() => {
         void refreshIdentity();
-        void fetch(new URL("/v1/community/status", CLOUD_API_BASE))
-            .then(response => response.ok ? response.json() : null)
-            .then(result => setCommunityJoinAvailable(result?.enabled === true))
-            .catch(() => setCommunityJoinAvailable(false));
         const listener = () => setHidden([...getOwnHiddenBadgeSources()]);
         addBadgeVisibilityListener(listener);
         return () => removeBadgeVisibilityListener(listener);
@@ -135,7 +136,7 @@ function SyncTab() {
             setCloudKey(key);
             setFingerprint(await getCurrentCloudFingerprint());
             setRevealKey(true);
-            offerCommunityJoin();
+            void offerCommunityJoin();
         } else {
             settings.cloud.enabled = false;
         }
@@ -148,7 +149,7 @@ function SyncTab() {
             setKeyInput("");
             setKeyError(undefined);
             await refreshIdentity();
-            offerCommunityJoin();
+            void offerCommunityJoin();
         } catch {
             setKeyError(t("Invalid Midnightcord Cloud key"));
         }
@@ -167,28 +168,51 @@ function SyncTab() {
         await setOwnHiddenBadgeSources(next);
     }
 
-    function openCommunityJoin() {
-        const url = new URL("/v1/community/join", CLOUD_API_BASE).toString();
-        if (typeof VencordNative !== "undefined" && VencordNative?.native?.openExternal) {
-            VencordNative.native.openExternal(url);
-        } else {
-            window.open(url, "_blank", "noopener,noreferrer");
+    async function joinCommunity() {
+        if (communityBusy) return;
+        setCommunityBusy(true);
+        try {
+            await openCommunityJoin();
+        } finally {
+            setCommunityBusy(false);
         }
-    }
-
-    function offerCommunityJoin() {
-        if (!communityJoinAvailable) return;
-        Alerts.show({
-            title: t("Join the Midnightcord community server?"),
-            body: t("Cloud only synchronizes your settings. If you also want to join the community, continue to Discord and approve the separate request there."),
-            confirmText: t("Continue to Discord"),
-            cancelText: t("Cloud only"),
-            onConfirm: openCommunityJoin
-        });
     }
 
     const linked = Boolean(cloudKey);
     const syncEnabled = settings.cloud.enabled && linked && (settings.cloud.settingsSync || settings.cloud.quickCssSync);
+
+    useEffect(() => {
+        let active = true;
+        let revision = 0;
+        setCommunityStatus(null);
+        setCommunityError(false);
+        setCommunityLoading(false);
+        if (!cloudKey || !settings.cloud.enabled) return;
+
+        const refresh = async () => {
+            const request = ++revision;
+            setCommunityLoading(true);
+            try {
+                const status = await getCommunityStatus();
+                if (!active || request !== revision) return;
+                setCommunityStatus(status);
+                setCommunityError(false);
+            } catch {
+                if (active && request === revision) setCommunityError(true);
+            } finally {
+                if (active && request === revision) setCommunityLoading(false);
+            }
+        };
+        const onFocus = () => void refresh();
+        const unsubscribe = addCommunityChangeListener(onFocus);
+        window.addEventListener("focus", onFocus);
+        void refresh();
+        return () => {
+            active = false;
+            unsubscribe();
+            window.removeEventListener("focus", onFocus);
+        };
+    }, [cloudKey, settings.cloud.enabled, communityRefresh]);
 
     useEffect(() => {
         if (linked) void refreshCloudHistory();
@@ -356,18 +380,36 @@ function SyncTab() {
                 </>
             )}
 
-            {settings.cloud.enabled && (
+            {settings.cloud.enabled && linked && (
                 <>
                     <Divider className={Margins.top20} />
                     <Heading className={Margins.top20}>{t("Midnightcord community server")}</Heading>
                     <Paragraph className={Margins.bottom16}>
-                        {t("Joining the community is optional and separate from Cloud sync. Discord will ask you to authorize this account before it joins the official Midnightcord server.")}
+                        {t("Joining is optional. Continue to Discord to authorize a one-time join to the official Midnightcord server. Cloud sync works with either choice.")}
                     </Paragraph>
-                    {communityJoinAvailable ? (
-                        <Button onClick={openCommunityJoin}>
-                            {t("Authorize with Discord and join")}
-                        </Button>
-                    ) : (
+                    {communityLoading && <Paragraph>{t("Checking community invitation…")}</Paragraph>}
+                    {communityError && (
+                        <Notice.Info>
+                            <Paragraph>{t("Could not check the community invitation. Cloud sync is still available.")}</Paragraph>
+                            <Button size="small" variant="secondary" disabled={communityLoading} onClick={() => setCommunityRefresh(value => value + 1)}>
+                                {t("Retry")}
+                            </Button>
+                        </Notice.Info>
+                    )}
+                    {communityStatus?.status === "joined" ? (
+                        <Notice.Info>
+                            {t("This Cloud identity has already joined the Midnightcord server. Leaving the server will not trigger another join.")}
+                        </Notice.Info>
+                    ) : communityStatus?.enabled ? (
+                        <>
+                            {communityStatus.status === "declined" && <Paragraph className={Margins.bottom16}>
+                                {t("You chose Cloud only. The invitation will not be shown again automatically; you can still join here.")}
+                            </Paragraph>}
+                            <Button disabled={communityBusy} onClick={() => void joinCommunity()}>
+                                {t("Authorize with Discord and join")}
+                            </Button>
+                        </>
+                    ) : communityStatus && (
                         <Notice.Info>
                             {t("The join option will appear here after the community server and its Discord application are configured.")}
                         </Notice.Info>

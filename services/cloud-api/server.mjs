@@ -15,6 +15,7 @@ const MAX_ACCOUNT_BYTES = 6 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_ITEM_BYTES + 1;
 const MAX_HISTORY_VERSIONS = 5;
 const COMMUNITY_STATE_TTL_MS = 10 * 60_000;
+const MAX_COMMUNITY_ATTEMPTS = 10_000;
 const COMMUNITY_REDIRECT_URI = "https://api.midnightcord.fr/v1/community/callback";
 const ALLOWED_ORIGIN = /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com$/i;
 
@@ -125,6 +126,14 @@ async function readManifest(paths) {
             for (const [key, entries] of Object.entries(parsed.history)) {
                 if (!VALID_KEYS.has(key) || !Array.isArray(entries) || entries.length > MAX_HISTORY_VERSIONS || entries.some(entry => !isStoredEntry(key, entry)))
                     throw new Error("invalid manifest history entry");
+            }
+        }
+        if (parsed.community !== undefined) {
+            if (!parsed.community || typeof parsed.community !== "object" || Array.isArray(parsed.community)) throw new Error("invalid community state");
+            for (const [guildId, entry] of Object.entries(parsed.community)) {
+                if (!/^\d{17,20}$/.test(guildId) || !entry || !["offered", "declined", "joined"].includes(entry.status)
+                    || typeof entry.updatedAt !== "string" || (entry.attempt !== undefined && !CHECKSUM_PATTERN.test(entry.attempt)))
+                    throw new Error("invalid community state entry");
             }
         }
         return parsed;
@@ -244,16 +253,243 @@ function sendCommunityPage(request, response, status, title, message) {
 
 async function fetchWithTimeout(fetchImpl, input, init = {}) {
     const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (init.signal?.aborted) controller.abort();
+    else init.signal?.addEventListener("abort", abort, { once: true });
     const timeout = setTimeout(() => controller.abort(), 10_000);
     try {
         return await fetchImpl(input, { ...init, signal: controller.signal });
     } finally {
         clearTimeout(timeout);
+        init.signal?.removeEventListener("abort", abort);
     }
 }
 
-export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DATA_DIR, env = process.env, fetchImpl = fetch } = {}) {
+export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DATA_DIR, env = process.env, fetchImpl = fetch, now = Date.now } = {}) {
     const communityFlows = new Map();
+    const communityTickets = new Map();
+    const communityAttempts = new Map();
+
+    function forgetAttempt(attempt) {
+        communityAttempts.delete(attempt.id);
+        if (attempt.ticket) communityTickets.delete(attempt.ticket);
+        if (attempt.state) communityFlows.delete(attempt.state);
+    }
+
+    function cancelAttempt(attempt) {
+        attempt.cancelled = true;
+        attempt.controller.abort();
+        forgetAttempt(attempt);
+    }
+
+    function cleanupAttempts() {
+        for (const attempt of communityAttempts.values()) {
+            if (attempt.expiresAt <= now()) cancelAttempt(attempt);
+        }
+    }
+
+    function cancelAccountAttempts(accountId, guildId) {
+        for (const attempt of communityAttempts.values()) {
+            if (attempt.accountId === accountId && (!guildId || attempt.guildId === guildId)) cancelAttempt(attempt);
+        }
+    }
+
+    function newAttempt(config, accountId) {
+        const attempt = {
+            id: randomBytes(32).toString("base64url"), accountId,
+            guildId: config.guildId, clientId: config.clientId,
+            expiresAt: now() + COMMUNITY_STATE_TTL_MS,
+            controller: new AbortController(), cancelled: false
+        };
+        communityAttempts.set(attempt.id, attempt);
+        return attempt;
+    }
+
+    function activeAttempt(attempt) {
+        const config = communityOAuthConfig(env);
+        return attempt && !attempt.cancelled && attempt.expiresAt > now()
+            && config?.guildId === attempt.guildId && config.clientId === attempt.clientId;
+    }
+
+    function communityStatus(config, manifest) {
+        const entry = config ? manifest.community?.[config.guildId] : undefined;
+        return {
+            enabled: Boolean(config), name: "Midnightcord", guildId: config?.guildId ?? null,
+            status: entry?.status ?? "unseen", ...(entry ? { updatedAt: entry.updatedAt } : {})
+        };
+    }
+
+    async function withCurrentAttempt(attempt, operation) {
+        if (!activeAttempt(attempt)) return false;
+        if (!attempt.accountId) {
+            await operation(null, null);
+            return true;
+        }
+        return withAccountLock(attempt.accountId, async () => {
+            const paths = accountPaths(dataDir, attempt.accountId);
+            const manifest = await readManifest(paths);
+            const entry = manifest.community?.[attempt.guildId];
+            if (!activeAttempt(attempt) || entry?.attempt !== attempt.id || entry.status === "joined") return false;
+            await operation(manifest, paths);
+            return true;
+        });
+    }
+
+    function expiredPage(request, response) {
+        sendCommunityPage(request, response, 400, "Demande expirée", "La demande Discord est invalide, annulée ou a expiré. Relance-la depuis les réglages Midnightcord.");
+    }
+
+    async function handleCommunityBrowser(request, response, url) {
+        const isJoin = url.pathname === "/v1/community/join";
+        if (!isJoin && url.pathname !== "/v1/community/callback") return false;
+        if (request.method !== "GET") {
+            jsonError(request, response, 405, "method_not_allowed", "This endpoint only accepts GET requests.", { Allow: "GET" });
+            return true;
+        }
+        if (!consumeRateLimit(`community:${clientAddress(request)}`)) {
+            sendCommunityPage(request, response, 429, "Réessaie dans quelques minutes", "Trop de demandes de connexion sont en cours. Réessaie plus tard.");
+            return true;
+        }
+        cleanupAttempts();
+        const config = communityOAuthConfig(env);
+
+        if (isJoin) {
+            if (!config) {
+                sendCommunityPage(request, response, 503, "Le serveur Midnightcord n’est pas encore configuré", "Cette option sera disponible lorsque le serveur communautaire et son application Discord seront prêts.");
+                return true;
+            }
+            let attempt;
+            if (url.searchParams.has("ticket")) {
+                const ticket = url.searchParams.get("ticket");
+                attempt = communityTickets.get(ticket);
+                communityTickets.delete(ticket);
+                if (!attempt || !await withCurrentAttempt(attempt, async () => {}) || !activeAttempt(attempt)) {
+                    if (attempt) cancelAttempt(attempt);
+                    expiredPage(request, response);
+                    return true;
+                }
+            } else {
+                if (communityAttempts.size >= MAX_COMMUNITY_ATTEMPTS) {
+                    sendCommunityPage(request, response, 429, "Réessaie dans quelques minutes", "Trop de demandes de connexion sont en cours. Réessaie plus tard.");
+                    return true;
+                }
+                attempt = newAttempt(config);
+            }
+
+            const state = randomBytes(32).toString("base64url");
+            attempt.state = state;
+            communityFlows.set(state, attempt);
+            const authorize = new URL("https://discord.com/oauth2/authorize");
+            authorize.search = new URLSearchParams({
+                client_id: config.clientId, response_type: "code", redirect_uri: COMMUNITY_REDIRECT_URI,
+                scope: "identify guilds.join", state, prompt: "consent"
+            }).toString();
+            response.writeHead(302, {
+                ...baseHeaders(request), Location: authorize.toString(),
+                "Set-Cookie": `midnightcord_community_oauth=${state}; Path=/v1/community/callback; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
+            });
+            response.end();
+            return true;
+        }
+
+        const state = url.searchParams.get("state") || "";
+        const cookie = readCookie(request, "midnightcord_community_oauth") || "";
+        const attempt = communityFlows.get(state);
+        communityFlows.delete(state);
+        const stateBytes = Buffer.from(state);
+        const cookieBytes = Buffer.from(cookie);
+        const stateMatches = stateBytes.length > 0 && stateBytes.length === cookieBytes.length && timingSafeEqual(stateBytes, cookieBytes);
+        if (!stateMatches || !activeAttempt(attempt)) {
+            if (attempt) cancelAttempt(attempt);
+            expiredPage(request, response);
+            return true;
+        }
+
+        try {
+            if (!await withCurrentAttempt(attempt, async () => {})) {
+                expiredPage(request, response);
+                return true;
+            }
+            if (url.searchParams.has("error")) {
+                if (url.searchParams.get("error") === "access_denied") {
+                    await withCurrentAttempt(attempt, async (manifest, paths) => {
+                        if (!manifest) return;
+                        manifest.community[attempt.guildId] = { status: "declined", updatedAt: new Date(now()).toISOString() };
+                        await writeManifest(paths, manifest);
+                    });
+                }
+                sendCommunityPage(request, response, 200, "Adhésion annulée", "Aucun changement n’a été appliqué à ton compte Discord.");
+                return true;
+            }
+            const code = url.searchParams.get("code");
+            if (!code || code.length > 2048) {
+                sendCommunityPage(request, response, 400, "Autorisation incomplète", "Discord n’a pas renvoyé une autorisation valide. Relance la demande depuis Midnightcord.");
+                return true;
+            }
+
+            const tokenResponse = await fetchWithTimeout(fetchImpl, "https://discord.com/api/v10/oauth2/token", {
+                method: "POST", signal: attempt.controller.signal,
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: config.clientId, client_secret: config.clientSecret,
+                    grant_type: "authorization_code", code, redirect_uri: COMMUNITY_REDIRECT_URI
+                })
+            });
+            if (!tokenResponse.ok) {
+                sendCommunityPage(request, response, 502, "Discord n’a pas validé l’autorisation", "Aucun jeton utilisateur n’a été conservé. Tu peux réessayer depuis Midnightcord.");
+                return true;
+            }
+            const token = await tokenResponse.json();
+            const scopes = typeof token.scope === "string" ? token.scope.split(" ") : [];
+            if (typeof token.access_token !== "string" || !scopes.includes("identify") || !scopes.includes("guilds.join")) {
+                sendCommunityPage(request, response, 502, "Autorisation Discord incomplète", "Midnightcord a besoin de l’autorisation de rejoindre le serveur. Aucun jeton utilisateur n’a été conservé.");
+                return true;
+            }
+            if (!activeAttempt(attempt)) {
+                expiredPage(request, response);
+                return true;
+            }
+
+            const userResponse = await fetchWithTimeout(fetchImpl, "https://discord.com/api/v10/users/@me", {
+                signal: attempt.controller.signal, headers: { Authorization: `Bearer ${token.access_token}` }
+            });
+            if (!userResponse.ok) {
+                sendCommunityPage(request, response, 502, "Impossible de vérifier ton compte Discord", "Aucun changement n’a été appliqué. Tu peux réessayer depuis Midnightcord.");
+                return true;
+            }
+            const user = await userResponse.json();
+            if (typeof user.id !== "string" || !/^\d{17,20}$/.test(user.id)) {
+                sendCommunityPage(request, response, 502, "Compte Discord invalide", "Aucun changement n’a été appliqué. Tu peux réessayer depuis Midnightcord.");
+                return true;
+            }
+
+            const completed = await withCurrentAttempt(attempt, async (manifest, paths) => {
+                const joinResponse = await fetchWithTimeout(fetchImpl, `https://discord.com/api/v10/guilds/${attempt.guildId}/members/${user.id}`, {
+                    method: "PUT", signal: attempt.controller.signal,
+                    headers: { Authorization: `Bot ${config.botToken}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ access_token: token.access_token })
+                });
+                if (joinResponse.status === 201 || joinResponse.status === 204) {
+                    if (manifest && activeAttempt(attempt)) {
+                        manifest.community[attempt.guildId] = { status: "joined", updatedAt: new Date(now()).toISOString() };
+                        await writeManifest(paths, manifest);
+                    }
+                    sendCommunityPage(request, response, 200,
+                        joinResponse.status === 201 ? "Tu as rejoint Midnightcord" : "Tu es déjà membre",
+                        "Ton compte Discord est dans le serveur Midnightcord. Si une vérification est activée, termine les étapes affichées par Discord.");
+                } else {
+                    sendCommunityPage(request, response, 502, "Adhésion impossible pour le moment", "Le serveur n’est peut-être pas encore disponible. Aucun jeton utilisateur n’a été conservé.");
+                }
+            });
+            if (!completed) expiredPage(request, response);
+        } catch {
+            if (!activeAttempt(attempt)) expiredPage(request, response);
+            else sendCommunityPage(request, response, 502, "Connexion à Discord interrompue", "Aucun jeton utilisateur n’a été conservé. Réessaie depuis Midnightcord.");
+        } finally {
+            forgetAttempt(attempt);
+        }
+        return true;
+    }
     return createServer(async (request, response) => {
         const url = new URL(request.url || "/", "http://localhost");
 
@@ -267,7 +503,7 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
             response.writeHead(204, {
                 ...baseHeaders(request),
                 "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-Midnightcord-Checksum, X-Midnightcord-Client, X-Midnightcord-Confirm",
-                "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, PUT",
+                "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, POST, PUT",
                 "Access-Control-Max-Age": "600"
             });
             response.end();
@@ -284,136 +520,13 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
             return;
         }
 
-        if (url.pathname === "/v1/community/join") {
-            const config = communityOAuthConfig(env);
-            if (!config) {
-                sendCommunityPage(request, response, 503, "Le serveur Midnightcord n’est pas encore configuré", "Cette option sera disponible lorsque le serveur communautaire et son application Discord seront prêts.");
-                return;
-            }
-            if (request.method !== "GET") {
-                jsonError(request, response, 405, "method_not_allowed", "This endpoint only accepts GET requests.", { Allow: "GET" });
-                return;
-            }
-
-            const now = Date.now();
-            for (const [state, expiresAt] of communityFlows) {
-                if (expiresAt <= now) communityFlows.delete(state);
-            }
-            if (communityFlows.size >= 10_000) {
-                sendCommunityPage(request, response, 429, "Réessaie dans quelques minutes", "Trop de demandes de connexion sont en cours. Réessaie plus tard.");
-                return;
-            }
-
-            const state = randomBytes(32).toString("base64url");
-            communityFlows.set(state, now + COMMUNITY_STATE_TTL_MS);
-            const authorize = new URL("https://discord.com/oauth2/authorize");
-            authorize.search = new URLSearchParams({
-                client_id: config.clientId,
-                response_type: "code",
-                redirect_uri: COMMUNITY_REDIRECT_URI,
-                scope: "identify guilds.join",
-                state,
-                prompt: "consent"
-            }).toString();
-            response.writeHead(302, {
-                ...baseHeaders(request),
-                "Cache-Control": "no-store",
-                Location: authorize.toString(),
-                "Set-Cookie": `midnightcord_community_oauth=${state}; Path=/v1/community/callback; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-            });
-            response.end();
+        try {
+            if (await handleCommunityBrowser(request, response, url)) return;
+        } catch {
+            if (!response.headersSent) sendCommunityPage(request, response, 500, "Service momentanément indisponible", "La demande n’a pas pu être traitée. Réessaie depuis Midnightcord.");
+            else response.destroy();
             return;
         }
-
-        if (url.pathname === "/v1/community/callback") {
-            if (request.method !== "GET") {
-                jsonError(request, response, 405, "method_not_allowed", "This endpoint only accepts GET requests.", { Allow: "GET" });
-                return;
-            }
-            const config = communityOAuthConfig(env);
-            const state = url.searchParams.get("state") || "";
-            const cookie = readCookie(request, "midnightcord_community_oauth") || "";
-            const expiresAt = communityFlows.get(state);
-            communityFlows.delete(state);
-            const stateBytes = Buffer.from(state);
-            const cookieBytes = Buffer.from(cookie);
-            const stateMatches = stateBytes.length > 0 && stateBytes.length === cookieBytes.length && timingSafeEqual(stateBytes, cookieBytes);
-            if (!stateMatches || !expiresAt || expiresAt <= Date.now()) {
-                sendCommunityPage(request, response, 400, "Demande expirée", "La demande Discord est invalide ou a expiré. Relance-la depuis les réglages Midnightcord.");
-                return;
-            }
-            if (url.searchParams.has("error")) {
-                sendCommunityPage(request, response, 200, "Adhésion annulée", "Aucun changement n’a été appliqué à ton compte Discord.");
-                return;
-            }
-            if (!config) {
-                sendCommunityPage(request, response, 503, "Service momentanément indisponible", "L’intégration Discord n’est pas configurée. Aucune donnée n’a été conservée.");
-                return;
-            }
-
-            const code = url.searchParams.get("code");
-            if (!code || code.length > 2048) {
-                sendCommunityPage(request, response, 400, "Autorisation incomplète", "Discord n’a pas renvoyé une autorisation valide. Relance la demande depuis Midnightcord.");
-                return;
-            }
-
-            try {
-                const tokenResponse = await fetchWithTimeout(fetchImpl, "https://discord.com/api/v10/oauth2/token", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({
-                        client_id: config.clientId,
-                        client_secret: config.clientSecret,
-                        grant_type: "authorization_code",
-                        code,
-                        redirect_uri: COMMUNITY_REDIRECT_URI
-                    })
-                });
-                if (!tokenResponse.ok) {
-                    sendCommunityPage(request, response, 502, "Discord n’a pas validé l’autorisation", "Aucun jeton utilisateur n’a été conservé. Tu peux réessayer depuis Midnightcord.");
-                    return;
-                }
-                const token = await tokenResponse.json();
-                const scopes = typeof token.scope === "string" ? token.scope.split(" ") : [];
-                if (typeof token.access_token !== "string" || !scopes.includes("identify") || !scopes.includes("guilds.join")) {
-                    sendCommunityPage(request, response, 502, "Autorisation Discord incomplète", "Midnightcord a besoin de l’autorisation de rejoindre le serveur. Aucune donnée n’a été conservée.");
-                    return;
-                }
-
-                const userResponse = await fetchWithTimeout(fetchImpl, "https://discord.com/api/v10/users/@me", {
-                    headers: { Authorization: `Bearer ${token.access_token}` }
-                });
-                if (!userResponse.ok) {
-                    sendCommunityPage(request, response, 502, "Impossible de vérifier ton compte Discord", "Aucun changement n’a été appliqué. Tu peux réessayer depuis Midnightcord.");
-                    return;
-                }
-                const user = await userResponse.json();
-                if (typeof user.id !== "string" || !/^\d{17,20}$/.test(user.id)) {
-                    sendCommunityPage(request, response, 502, "Compte Discord invalide", "Aucun changement n’a été appliqué. Tu peux réessayer depuis Midnightcord.");
-                    return;
-                }
-
-                const joinResponse = await fetchWithTimeout(fetchImpl, `https://discord.com/api/v10/guilds/${config.guildId}/members/${user.id}`, {
-                    method: "PUT",
-                    headers: {
-                        Authorization: `Bot ${config.botToken}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ access_token: token.access_token })
-                });
-                if (joinResponse.status === 201) {
-                    sendCommunityPage(request, response, 200, "Tu as rejoint Midnightcord", "Ton compte Discord a rejoint le serveur. Si la vérification du serveur est activée, termine les étapes affichées par Discord.");
-                } else if (joinResponse.status === 204) {
-                    sendCommunityPage(request, response, 200, "Tu es déjà membre", "Ton compte Discord est déjà dans le serveur Midnightcord.");
-                } else {
-                    sendCommunityPage(request, response, 502, "Adhésion impossible pour le moment", "Le serveur n’est peut-être pas encore disponible. Aucun jeton utilisateur n’a été conservé.");
-                }
-            } catch {
-                sendCommunityPage(request, response, 502, "Connexion à Discord interrompue", "Aucun jeton utilisateur n’a été conservé. Réessaie depuis Midnightcord.");
-            }
-            return;
-        }
-
         const auth = authenticate(request);
         if (!auth) {
             jsonError(request, response, 401, "unauthorized", "A valid Midnightcord Cloud credential is required.", {
@@ -430,6 +543,81 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
         const paths = accountPaths(dataDir, auth.accountId);
 
         try {
+            if (url.pathname === "/v1/cloud/community" && (request.method === "GET" || request.method === "HEAD")) {
+                send(request, response, 200, communityStatus(communityOAuthConfig(env), await readManifest(paths)));
+                return;
+            }
+
+            const communityAction = /^\/v1\/cloud\/community\/(prompt|decline|join)$/.exec(url.pathname)?.[1];
+            if (communityAction) {
+                const method = communityAction === "decline" ? "PUT" : "POST";
+                if (request.method !== method) {
+                    jsonError(request, response, 405, "method_not_allowed", `This endpoint only accepts ${method} requests.`, { Allow: method });
+                    return;
+                }
+                cleanupAttempts();
+                if (communityAction === "decline") {
+                    const config = communityOAuthConfig(env);
+                    if (config) cancelAccountAttempts(auth.accountId, config.guildId);
+                }
+                await withAccountLock(auth.accountId, async () => {
+                    const config = communityOAuthConfig(env);
+                    const manifest = await readManifest(paths);
+                    const status = communityStatus(config, manifest);
+                    if (!config) {
+                        if (communityAction === "join") jsonError(request, response, 503, "community_unavailable", "The community server is not configured.");
+                        else send(request, response, 200, { ...status, ...(communityAction === "prompt" ? { showPrompt: false } : {}) });
+                        return;
+                    }
+
+                    if (communityAction === "prompt") {
+                        const showPrompt = status.status === "unseen";
+                        if (showPrompt) {
+                            manifest.community ??= {};
+                            manifest.community[config.guildId] = { status: "offered", updatedAt: new Date(now()).toISOString() };
+                            await writeManifest(paths, manifest);
+                        }
+                        send(request, response, 200, { ...communityStatus(config, manifest), showPrompt });
+                        return;
+                    }
+
+                    if (communityAction === "decline") {
+                        cancelAccountAttempts(auth.accountId, config.guildId);
+                        if (status.status !== "joined") {
+                            manifest.community ??= {};
+                            manifest.community[config.guildId] = { status: "declined", updatedAt: new Date(now()).toISOString() };
+                            await writeManifest(paths, manifest);
+                        }
+                        send(request, response, 200, communityStatus(config, manifest));
+                        return;
+                    }
+
+                    if (status.status === "joined") {
+                        send(request, response, 200, { joined: true });
+                        return;
+                    }
+                    cancelAccountAttempts(auth.accountId, config.guildId);
+                    if (communityAttempts.size >= MAX_COMMUNITY_ATTEMPTS) {
+                        jsonError(request, response, 429, "community_busy", "Too many community authorizations are in progress. Try again shortly.");
+                        return;
+                    }
+                    const attempt = newAttempt(config, auth.accountId);
+                    try {
+                        manifest.community ??= {};
+                        manifest.community[config.guildId] = { status: "offered", updatedAt: new Date(now()).toISOString(), attempt: attempt.id };
+                        await writeManifest(paths, manifest);
+                    } catch (error) {
+                        cancelAttempt(attempt);
+                        throw error;
+                    }
+                    const ticket = randomBytes(32).toString("base64url");
+                    attempt.ticket = ticket;
+                    communityTickets.set(ticket, attempt);
+                    send(request, response, 200, { url: `https://api.midnightcord.fr/v1/community/join?ticket=${ticket}` });
+                });
+                return;
+            }
+
             if (url.pathname === "/v1/cloud/manifest" && (request.method === "GET" || request.method === "HEAD")) {
                 const manifest = await readManifest(paths);
                 const entries = Object.entries(manifest.entries).map(([key, entry]) => publicEntry(key, entry));
@@ -575,7 +763,9 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
                     jsonError(request, response, 400, "confirmation_required", "Account deletion requires an explicit confirmation header.");
                     return;
                 }
+                cancelAccountAttempts(auth.accountId);
                 await withAccountLock(auth.accountId, async () => {
+                    cancelAccountAttempts(auth.accountId);
                     await rm(paths.directory, { recursive: true, force: true });
                     response.writeHead(204, baseHeaders(request));
                     response.end();

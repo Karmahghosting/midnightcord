@@ -31,6 +31,8 @@ Quand Cloud est activé, Midnightcord peut afficher une action distincte pour re
 
 Le serveur communautaire et le bot doivent déjà exister et être configurés. Si le serveur n'est pas encore disponible, l'utilisateur devra relancer l'action après son ouverture ; Midnightcord ne met pas les comptes en attente et ne stocke pas de jetons pour les ajouter ultérieurement.
 
+La proposition automatique est présentée une seule fois par compte Cloud et serveur communautaire, y compris pour les comptes déjà créés. Le service conserve son état (proposée, refusée ou adhésion effectuée), sa date, l'identifiant du serveur et un identifiant aléatoire de tentative afin de respecter ce choix sur les différents appareils. Ces métadonnées techniques sont associées au compte Cloud pseudonyme et ne sont pas chiffrées avec la clé de récupération. Elles ne contiennent ni identifiant de compte Discord ni jeton OAuth et sont effacées à la suppression du compte Cloud. Une adhésion terminée n'est pas relancée automatiquement si l'utilisateur quitte le serveur. Après un refus ou un échec, l'utilisateur peut reprendre lui-même l'autorisation depuis les réglages.
+
 ## Mises à jour GitHub
 
 L'auto-update natif contacte uniquement `api.github.com` et `github.com/Karmahghosting/midnightcord`. La requête contient un User-Agent avec la version Midnightcord. Aucun réglage, compte Discord, message, salon ou identifiant utilisateur n'est envoyé.

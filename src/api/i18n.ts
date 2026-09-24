@@ -94,6 +94,17 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
     "Configure how Midnightcord handles notifications.": { fr: "Configurez la gestion des notifications de Midnightcord.", es: "Configura cómo Midnightcord maneja las notificaciones.", ru: "Настройте обработку уведомлений в Midnightcord.", zh: "配置 Midnightcord 处理通知的方式。", ar: "قم بتهيئة طريقة تعامل Midnightcord مع الإشعارات." },
 
     // ── Sync tab ─────────────────────────────────────────────────────────────
+    "Join the Midnightcord community server?": { fr: "Rejoindre le serveur communautaire Midnightcord ?" },
+    "Joining is optional. Continue to Discord to authorize a one-time join to the official Midnightcord server. Cloud sync works with either choice.": { fr: "Rejoindre le serveur est facultatif. Continuez vers Discord pour autoriser un ajout unique au serveur officiel Midnightcord. La synchronisation Cloud fonctionne quel que soit votre choix." },
+    "Continue to Discord": { fr: "Continuer vers Discord" },
+    "Cloud only": { fr: "Cloud uniquement" },
+    "Could not update the community invitation. Try again from Cloud settings.": { fr: "Impossible de mettre à jour l'invitation. Réessayez depuis les paramètres Cloud." },
+    "Checking community invitation…": { fr: "Vérification de l'invitation communautaire…" },
+    "Could not check the community invitation. Cloud sync is still available.": { fr: "Impossible de vérifier l'invitation communautaire. La synchronisation Cloud reste disponible." },
+    "This Cloud identity has already joined the Midnightcord server. Leaving the server will not trigger another join.": { fr: "Cette identité Cloud a déjà rejoint le serveur Midnightcord. Si vous quittez le serveur, vous ne serez pas ajouté à nouveau." },
+    "You chose Cloud only. The invitation will not be shown again automatically; you can still join here.": { fr: "Vous avez choisi le Cloud uniquement. L'invitation ne sera plus proposée automatiquement ; vous pouvez toujours rejoindre le serveur ici." },
+    "Midnightcord community server": { fr: "Serveur communautaire Midnightcord" },
+    "Authorize with Discord and join": { fr: "Autoriser avec Discord et rejoindre" },
     "Midnightcord Sync": { fr: "Synchronisation Midnightcord", es: "Sincronización de Midnightcord", ru: "Синхронизация Midnightcord", zh: "Midnightcord 同步", ar: "مزامنة Midnightcord" },
     "Your custom profile is synced. Other Midnightcord users can see your profile, and you can see theirs.": { fr: "Votre profil personnalisé est synchronisé. Les autres utilisateurs Midnightcord peuvent voir votre profil.", es: "Tu perfil personalizado está sincronizado. Otros usuarios de Midnightcord pueden ver tu perfil.", ru: "Ваш профиль синхронизирован. Другие пользователи Midnightcord могут видеть ваш профиль.", zh: "您的自定义档案已同步。其他 Midnightcord 用户可以看到您的档案。", ar: "تمت مزامنة ملفك الشخصي المخصص. يمكن لمستخدمي Midnightcord الآخرين رؤية ملفك الشخصي." },
     "Enable to share your custom profile with other Midnightcord users and see their profiles.": { fr: "Activez pour partager votre profil avec d'autres utilisateurs Midnightcord.", es: "Activa para compartir tu perfil con otros usuarios de Midnightcord.", ru: "Включите, чтобы поделиться своим профилем с другими пользователями Midnightcord.", zh: "启用以与其他 Midnightcord 用户共享您的自定义档案。", ar: "فعِّل لمشاركة ملفك الشخصي مع مستخدمي Midnightcord الآخرين ورؤية ملفاتهم الشخصية." },

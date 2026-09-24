@@ -91,6 +91,7 @@ export * as WebpackPatcher from "./webpack/patchWebpack";
 export { PlainSettings, Settings };
 
 import { syncCloudOnStartup } from "@api/SettingsSync/cloudSync";
+import { offerCommunityJoin } from "@api/SettingsSync/community";
 import { coreStyleRootNode, initStyles } from "@api/Styles";
 import { openSettingsTabModal, UpdaterTab } from "@components/settings";
 import { IS_WINDOWS } from "@utils/constants";
@@ -158,6 +159,7 @@ async function init() {
 
     setTimeout(() => void checkForStartupUpdate(), 5_000);
     setTimeout(() => void syncCloudOnStartup(), 7_500);
+    setTimeout(() => void offerCommunityJoin(), 10_000);
     setInterval(() => void syncCloudOnStartup(), 60_000);
 
     initTrayIpc();

@@ -71,6 +71,9 @@ jobs:
       - name: Test Midnightcord privacy extensions
         run: pnpm test:quiet-hours && pnpm test:privacy-shield
 
+      - name: Test Cloud and community authorization
+        run: pnpm test:cloud
+
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 
