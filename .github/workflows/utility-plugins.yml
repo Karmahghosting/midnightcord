@@ -68,6 +68,9 @@ jobs:
       - name: Test utility plugins and offline OCR
         run: pnpm test:utilities
 
+      - name: Test Midnightcord privacy extensions
+        run: pnpm test:quiet-hours && pnpm test:privacy-shield
+
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 

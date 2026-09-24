@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { realpathSync } from "node:fs";
 import { createServer } from "node:http";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
@@ -13,6 +13,9 @@ const CHECKSUM_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const MAX_ITEM_BYTES = 2 * 1024 * 1024;
 const MAX_ACCOUNT_BYTES = 6 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_ITEM_BYTES + 1;
+const MAX_HISTORY_VERSIONS = 5;
+const COMMUNITY_STATE_TTL_MS = 10 * 60_000;
+const COMMUNITY_REDIRECT_URI = "https://api.midnightcord.fr/v1/community/callback";
 const ALLOWED_ORIGIN = /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com$/i;
 
 const locks = new Map();
@@ -106,9 +109,23 @@ async function readManifest(paths) {
         const parsed = JSON.parse(await readFile(paths.manifest, "utf8"));
         if (parsed?.schema !== 1 || typeof parsed.entries !== "object" || parsed.entries == null)
             throw new Error("invalid manifest");
+        const isStoredEntry = (key, entry) => entry && typeof entry === "object"
+            && Number.isSafeInteger(entry.version) && entry.version > 0
+            && typeof entry.checksum === "string" && CHECKSUM_PATTERN.test(entry.checksum)
+            && Number.isSafeInteger(entry.size) && entry.size > 0 && entry.size <= MAX_ITEM_BYTES
+            && typeof entry.updatedAt === "string"
+            && entry.etag === `\"${entry.version}-${entry.checksum}\"`
+            && typeof entry.file === "string" && new RegExp(`^${key}-[1-9][0-9]*-[A-Za-z0-9_-]{12}\\.bin$`).test(entry.file);
         for (const [key, entry] of Object.entries(parsed.entries)) {
-            if (!VALID_KEYS.has(key) || !entry || typeof entry !== "object" || !new RegExp(`^${key}-[1-9][0-9]*-[A-Za-z0-9_-]{12}\\.bin$`).test(entry.file))
+            if (!VALID_KEYS.has(key) || !isStoredEntry(key, entry))
                 throw new Error("invalid manifest entry");
+        }
+        if (parsed.history !== undefined) {
+            if (!parsed.history || typeof parsed.history !== "object" || Array.isArray(parsed.history)) throw new Error("invalid manifest history");
+            for (const [key, entries] of Object.entries(parsed.history)) {
+                if (!VALID_KEYS.has(key) || !Array.isArray(entries) || entries.length > MAX_HISTORY_VERSIONS || entries.some(entry => !isStoredEntry(key, entry)))
+                    throw new Error("invalid manifest history entry");
+            }
         }
         return parsed;
     } catch (error) {
@@ -179,7 +196,64 @@ function parseRoute(pathname) {
     return VALID_KEYS.has(key) ? key : null;
 }
 
-export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DATA_DIR } = {}) {
+function parseHistoryRoute(pathname) {
+    const match = pathname.match(/^\/v1\/cloud\/history\/([^/]+)(?:\/([1-9][0-9]*))?$/);
+    if (!match) return null;
+    let key;
+    try {
+        key = decodeURIComponent(match[1]);
+    } catch {
+        return null;
+    }
+    const version = match[2] ? Number(match[2]) : undefined;
+    return VALID_KEYS.has(key) && (version === undefined || Number.isSafeInteger(version)) ? { key, version } : null;
+}
+
+function communityOAuthConfig(env) {
+    const clientId = env.MIDNIGHTCORD_DISCORD_CLIENT_ID;
+    const clientSecret = env.MIDNIGHTCORD_DISCORD_CLIENT_SECRET;
+    const botToken = env.MIDNIGHTCORD_DISCORD_BOT_TOKEN;
+    const guildId = env.MIDNIGHTCORD_COMMUNITY_GUILD_ID;
+    if (!clientId || !clientSecret || !botToken || !/^\d{17,20}$/.test(guildId || "")) return null;
+    return { clientId, clientSecret, botToken, guildId };
+}
+
+function readCookie(request, name) {
+    for (const part of (request.headers.cookie || "").split(";")) {
+        const separator = part.indexOf("=");
+        if (separator < 0) continue;
+        if (part.slice(0, separator).trim() === name) return part.slice(separator + 1).trim();
+    }
+    return null;
+}
+
+function clearCommunityStateCookie() {
+    return "midnightcord_community_oauth=; Path=/v1/community/callback; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
+}
+
+function sendCommunityPage(request, response, status, title, message) {
+    const html = `<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><main><h1>${title}</h1><p>${message}</p><p>Tu peux fermer cette fenêtre et revenir à Midnightcord.</p></main></html>`;
+    response.writeHead(status, {
+        ...baseHeaders(request),
+        "Cache-Control": "no-store",
+        "Content-Type": "text/html; charset=utf-8",
+        "Set-Cookie": clearCommunityStateCookie()
+    });
+    response.end(html);
+}
+
+async function fetchWithTimeout(fetchImpl, input, init = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    try {
+        return await fetchImpl(input, { ...init, signal: controller.signal });
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DATA_DIR, env = process.env, fetchImpl = fetch } = {}) {
+    const communityFlows = new Map();
     return createServer(async (request, response) => {
         const url = new URL(request.url || "/", "http://localhost");
 
@@ -205,6 +279,141 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
             return;
         }
 
+        if (url.pathname === "/v1/community/status" && (request.method === "GET" || request.method === "HEAD")) {
+            send(request, response, 200, { enabled: Boolean(communityOAuthConfig(env)), name: "Midnightcord" });
+            return;
+        }
+
+        if (url.pathname === "/v1/community/join") {
+            const config = communityOAuthConfig(env);
+            if (!config) {
+                sendCommunityPage(request, response, 503, "Le serveur Midnightcord n’est pas encore configuré", "Cette option sera disponible lorsque le serveur communautaire et son application Discord seront prêts.");
+                return;
+            }
+            if (request.method !== "GET") {
+                jsonError(request, response, 405, "method_not_allowed", "This endpoint only accepts GET requests.", { Allow: "GET" });
+                return;
+            }
+
+            const now = Date.now();
+            for (const [state, expiresAt] of communityFlows) {
+                if (expiresAt <= now) communityFlows.delete(state);
+            }
+            if (communityFlows.size >= 10_000) {
+                sendCommunityPage(request, response, 429, "Réessaie dans quelques minutes", "Trop de demandes de connexion sont en cours. Réessaie plus tard.");
+                return;
+            }
+
+            const state = randomBytes(32).toString("base64url");
+            communityFlows.set(state, now + COMMUNITY_STATE_TTL_MS);
+            const authorize = new URL("https://discord.com/oauth2/authorize");
+            authorize.search = new URLSearchParams({
+                client_id: config.clientId,
+                response_type: "code",
+                redirect_uri: COMMUNITY_REDIRECT_URI,
+                scope: "identify guilds.join",
+                state,
+                prompt: "consent"
+            }).toString();
+            response.writeHead(302, {
+                ...baseHeaders(request),
+                "Cache-Control": "no-store",
+                Location: authorize.toString(),
+                "Set-Cookie": `midnightcord_community_oauth=${state}; Path=/v1/community/callback; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
+            });
+            response.end();
+            return;
+        }
+
+        if (url.pathname === "/v1/community/callback") {
+            if (request.method !== "GET") {
+                jsonError(request, response, 405, "method_not_allowed", "This endpoint only accepts GET requests.", { Allow: "GET" });
+                return;
+            }
+            const config = communityOAuthConfig(env);
+            const state = url.searchParams.get("state") || "";
+            const cookie = readCookie(request, "midnightcord_community_oauth") || "";
+            const expiresAt = communityFlows.get(state);
+            communityFlows.delete(state);
+            const stateBytes = Buffer.from(state);
+            const cookieBytes = Buffer.from(cookie);
+            const stateMatches = stateBytes.length > 0 && stateBytes.length === cookieBytes.length && timingSafeEqual(stateBytes, cookieBytes);
+            if (!stateMatches || !expiresAt || expiresAt <= Date.now()) {
+                sendCommunityPage(request, response, 400, "Demande expirée", "La demande Discord est invalide ou a expiré. Relance-la depuis les réglages Midnightcord.");
+                return;
+            }
+            if (url.searchParams.has("error")) {
+                sendCommunityPage(request, response, 200, "Adhésion annulée", "Aucun changement n’a été appliqué à ton compte Discord.");
+                return;
+            }
+            if (!config) {
+                sendCommunityPage(request, response, 503, "Service momentanément indisponible", "L’intégration Discord n’est pas configurée. Aucune donnée n’a été conservée.");
+                return;
+            }
+
+            const code = url.searchParams.get("code");
+            if (!code || code.length > 2048) {
+                sendCommunityPage(request, response, 400, "Autorisation incomplète", "Discord n’a pas renvoyé une autorisation valide. Relance la demande depuis Midnightcord.");
+                return;
+            }
+
+            try {
+                const tokenResponse = await fetchWithTimeout(fetchImpl, "https://discord.com/api/v10/oauth2/token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({
+                        client_id: config.clientId,
+                        client_secret: config.clientSecret,
+                        grant_type: "authorization_code",
+                        code,
+                        redirect_uri: COMMUNITY_REDIRECT_URI
+                    })
+                });
+                if (!tokenResponse.ok) {
+                    sendCommunityPage(request, response, 502, "Discord n’a pas validé l’autorisation", "Aucun jeton utilisateur n’a été conservé. Tu peux réessayer depuis Midnightcord.");
+                    return;
+                }
+                const token = await tokenResponse.json();
+                const scopes = typeof token.scope === "string" ? token.scope.split(" ") : [];
+                if (typeof token.access_token !== "string" || !scopes.includes("identify") || !scopes.includes("guilds.join")) {
+                    sendCommunityPage(request, response, 502, "Autorisation Discord incomplète", "Midnightcord a besoin de l’autorisation de rejoindre le serveur. Aucune donnée n’a été conservée.");
+                    return;
+                }
+
+                const userResponse = await fetchWithTimeout(fetchImpl, "https://discord.com/api/v10/users/@me", {
+                    headers: { Authorization: `Bearer ${token.access_token}` }
+                });
+                if (!userResponse.ok) {
+                    sendCommunityPage(request, response, 502, "Impossible de vérifier ton compte Discord", "Aucun changement n’a été appliqué. Tu peux réessayer depuis Midnightcord.");
+                    return;
+                }
+                const user = await userResponse.json();
+                if (typeof user.id !== "string" || !/^\d{17,20}$/.test(user.id)) {
+                    sendCommunityPage(request, response, 502, "Compte Discord invalide", "Aucun changement n’a été appliqué. Tu peux réessayer depuis Midnightcord.");
+                    return;
+                }
+
+                const joinResponse = await fetchWithTimeout(fetchImpl, `https://discord.com/api/v10/guilds/${config.guildId}/members/${user.id}`, {
+                    method: "PUT",
+                    headers: {
+                        Authorization: `Bot ${config.botToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ access_token: token.access_token })
+                });
+                if (joinResponse.status === 201) {
+                    sendCommunityPage(request, response, 200, "Tu as rejoint Midnightcord", "Ton compte Discord a rejoint le serveur. Si la vérification du serveur est activée, termine les étapes affichées par Discord.");
+                } else if (joinResponse.status === 204) {
+                    sendCommunityPage(request, response, 200, "Tu es déjà membre", "Ton compte Discord est déjà dans le serveur Midnightcord.");
+                } else {
+                    sendCommunityPage(request, response, 502, "Adhésion impossible pour le moment", "Le serveur n’est peut-être pas encore disponible. Aucun jeton utilisateur n’a été conservé.");
+                }
+            } catch {
+                sendCommunityPage(request, response, 502, "Connexion à Discord interrompue", "Aucun jeton utilisateur n’a été conservé. Réessaie depuis Midnightcord.");
+            }
+            return;
+        }
+
         const auth = authenticate(request);
         if (!auth) {
             jsonError(request, response, 401, "unauthorized", "A valid Midnightcord Cloud credential is required.", {
@@ -225,6 +434,32 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
                 const manifest = await readManifest(paths);
                 const entries = Object.entries(manifest.entries).map(([key, entry]) => publicEntry(key, entry));
                 send(request, response, 200, { schema: 1, entries });
+                return;
+            }
+
+            const historyRoute = parseHistoryRoute(url.pathname);
+            if (historyRoute && (request.method === "GET" || request.method === "HEAD")) {
+                const manifest = await readManifest(paths);
+                if (historyRoute.version === undefined) {
+                    const entries = (manifest.history?.[historyRoute.key] ?? []).map(entry => publicEntry(historyRoute.key, entry));
+                    send(request, response, 200, { key: historyRoute.key, entries });
+                    return;
+                }
+                const entry = (manifest.history?.[historyRoute.key] ?? []).find(item => item.version === historyRoute.version);
+                if (!entry) {
+                    jsonError(request, response, 404, "not_found", "This Cloud version is no longer available.");
+                    return;
+                }
+                const body = await readFile(paths.data(entry.file));
+                response.writeHead(200, {
+                    ...baseHeaders(request),
+                    "Content-Length": body.length,
+                    "Content-Type": "application/octet-stream",
+                    ETag: entry.etag,
+                    "X-Midnightcord-Checksum": entry.checksum,
+                    "X-Midnightcord-Version": String(entry.version)
+                });
+                response.end(request.method === "HEAD" ? undefined : body);
                 return;
             }
 
@@ -287,6 +522,12 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
                     const etag = `\"${version}-${checksum}\"`;
                     const file = `${key}-${version}-${checksum.slice(0, 12)}.bin`;
                     const entry = { version, checksum, size: body.length, updatedAt: new Date().toISOString(), etag, file };
+                    manifest.history ??= {};
+                    const history = manifest.history[key] ??= [];
+                    if (previous) history.unshift(previous);
+                    const retired = history.splice(MAX_HISTORY_VERSIONS);
+                    if (!history.length) delete manifest.history[key];
+                    if (!Object.keys(manifest.history).length) delete manifest.history;
                     await writeAtomic(paths.data(file), body);
                     manifest.entries[key] = entry;
                     try {
@@ -295,7 +536,9 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
                         await rm(paths.data(file), { force: true });
                         throw error;
                     }
-                    if (previous?.file && previous.file !== file) await rm(paths.data(previous.file), { force: true });
+                    for (const old of retired) {
+                        if (old.file !== file) await rm(paths.data(old.file), { force: true });
+                    }
                     send(request, response, previous ? 200 : 201, publicEntry(key, entry), { ETag: etag });
                 });
                 return;
@@ -315,8 +558,12 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
                         return;
                     }
                     delete manifest.entries[key];
+                    const history = manifest.history?.[key] ?? [];
+                    delete manifest.history?.[key];
+                    if (manifest.history && !Object.keys(manifest.history).length) delete manifest.history;
                     await writeManifest(paths, manifest);
                     await rm(paths.data(entry.file), { force: true });
+                    await Promise.all(history.map(item => rm(paths.data(item.file), { force: true })));
                     response.writeHead(204, baseHeaders(request));
                     response.end();
                 });

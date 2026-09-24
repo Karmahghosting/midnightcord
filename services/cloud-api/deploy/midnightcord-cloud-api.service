@@ -9,6 +9,7 @@ User=midnightcord-cloud
 Group=midnightcord-cloud
 WorkingDirectory=/opt/midnightcord-cloud/current
 Environment=NODE_ENV=production
+EnvironmentFile=-/etc/midnightcord-cloud/community-oauth.env
 Environment=HOST=127.0.0.1
 Environment=PORT=4175
 Environment=DATA_DIR=/var/lib/midnightcord-cloud

@@ -55,6 +55,9 @@ jobs:
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 
+      - name: Test Midnightcord privacy extensions
+        run: pnpm test:quiet-hours && pnpm test:privacy-shield
+
       - name: Verify native Shop and Midnightcord AI entry points
         run: pnpm test:midnightcord-ai
 

@@ -14,6 +14,7 @@ import {
 import { t } from "@api/i18n";
 import { useSettings } from "@api/Settings";
 import {
+    CLOUD_API_BASE,
     createCloudIdentity,
     getCloudKey,
     getCurrentCloudFingerprint,
@@ -23,9 +24,12 @@ import {
 import {
     deleteCloudSettings,
     eraseAllCloudData,
+    getCloudHistory,
     getCloudSettings,
-    putCloudSettings
+    putCloudSettings,
+    restoreCloudRevision
 } from "@api/SettingsSync/cloudSync";
+import type { CloudItemKey, CloudManifestEntry } from "@api/SettingsSync/types";
 import { Button, LinkButton } from "@components/Button";
 import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
@@ -73,6 +77,10 @@ function SyncTab() {
     const [keyInput, setKeyInput] = useState("");
     const [keyError, setKeyError] = useState<string | undefined>();
     const [busy, setBusy] = useState(false);
+    const [history, setHistory] = useState<Record<CloudItemKey, CloudManifestEntry[]>>({ settings: [], quickCss: [] });
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string>();
+    const [communityJoinAvailable, setCommunityJoinAvailable] = useState(false);
     const [hidden, setHidden] = useState<BadgeSource[]>(getOwnHiddenBadgeSources());
 
     async function refreshIdentity() {
@@ -81,8 +89,29 @@ function SyncTab() {
         setFingerprint(await getCurrentCloudFingerprint());
     }
 
+    async function refreshCloudHistory() {
+        if (!cloudKey) return;
+        setHistoryLoading(true);
+        try {
+            const [settingsHistory, quickCssHistory] = await Promise.all([
+                getCloudHistory("settings"),
+                getCloudHistory("quickCss")
+            ]);
+            setHistory({ settings: settingsHistory, quickCss: quickCssHistory });
+            setHistoryError(undefined);
+        } catch (error) {
+            setHistoryError(t(error instanceof Error ? error.message : "Could not load Cloud history."));
+        } finally {
+            setHistoryLoading(false);
+        }
+    }
+
     useEffect(() => {
         void refreshIdentity();
+        void fetch(new URL("/v1/community/status", CLOUD_API_BASE))
+            .then(response => response.ok ? response.json() : null)
+            .then(result => setCommunityJoinAvailable(result?.enabled === true))
+            .catch(() => setCommunityJoinAvailable(false));
         const listener = () => setHidden([...getOwnHiddenBadgeSources()]);
         addBadgeVisibilityListener(listener);
         return () => removeBadgeVisibilityListener(listener);
@@ -106,6 +135,7 @@ function SyncTab() {
             setCloudKey(key);
             setFingerprint(await getCurrentCloudFingerprint());
             setRevealKey(true);
+            offerCommunityJoin();
         } else {
             settings.cloud.enabled = false;
         }
@@ -118,6 +148,7 @@ function SyncTab() {
             setKeyInput("");
             setKeyError(undefined);
             await refreshIdentity();
+            offerCommunityJoin();
         } catch {
             setKeyError(t("Invalid Midnightcord Cloud key"));
         }
@@ -136,8 +167,42 @@ function SyncTab() {
         await setOwnHiddenBadgeSources(next);
     }
 
+    function openCommunityJoin() {
+        const url = new URL("/v1/community/join", CLOUD_API_BASE).toString();
+        if (typeof VencordNative !== "undefined" && VencordNative?.native?.openExternal) {
+            VencordNative.native.openExternal(url);
+        } else {
+            window.open(url, "_blank", "noopener,noreferrer");
+        }
+    }
+
+    function offerCommunityJoin() {
+        if (!communityJoinAvailable) return;
+        Alerts.show({
+            title: t("Join the Midnightcord community server?"),
+            body: t("Cloud only synchronizes your settings. If you also want to join the community, continue to Discord and approve the separate request there."),
+            confirmText: t("Continue to Discord"),
+            cancelText: t("Cloud only"),
+            onConfirm: openCommunityJoin
+        });
+    }
+
     const linked = Boolean(cloudKey);
     const syncEnabled = settings.cloud.enabled && linked && (settings.cloud.settingsSync || settings.cloud.quickCssSync);
+
+    useEffect(() => {
+        if (linked) void refreshCloudHistory();
+    }, [linked, settings.cloud.lastSyncAt]);
+
+    function confirmRestore(key: CloudItemKey, entry: CloudManifestEntry) {
+        Alerts.show({
+            title: t("Restore this Cloud version?"),
+            body: t("The current Cloud version will be kept in history. This selected version will replace the Cloud copy and be restored on this device."),
+            confirmText: t("Restore version"),
+            cancelText: t("Cancel"),
+            onConfirm: () => void run(() => restoreCloudRevision(key, entry.version))
+        });
+    }
 
     return (
         <SettingsTab>
@@ -257,6 +322,58 @@ function SyncTab() {
             <Paragraph className={Margins.top8}>
                 {t("Last synchronization")}: {formatLastSync(settings.cloud.lastSyncAt)}
             </Paragraph>
+
+            {linked && (
+                <>
+                    <Divider className={Margins.top20} />
+                    <Heading className={Margins.top20}>{t("Cloud version history")}</Heading>
+                    <Paragraph className={Margins.bottom16}>
+                        {t("The five previous encrypted versions of each item are kept. Restoring a version also preserves the current copy as the newest history entry.")}
+                    </Paragraph>
+                    {historyLoading && <Paragraph>{t("Loading Cloud history…")}</Paragraph>}
+                    {historyError && <Notice.Info>{historyError}</Notice.Info>}
+                    {(["settings", "quickCss"] as CloudItemKey[]).map(key => {
+                        const label = key === "settings" ? t("Plugin settings") : "QuickCSS";
+                        const entries = history[key];
+                        return (
+                            <div key={key}>
+                                <Heading className={Margins.top16}>{label}</Heading>
+                                {entries.length ? entries.map(entry => (
+                                    <Card className={Margins.bottom8} key={`${key}-${entry.version}`} defaultPadding>
+                                        <Flex alignItems="center" justifyContent="space-between" gap="12px" style={{ flexWrap: "wrap" }}>
+                                            <Paragraph>
+                                                {t("Version")} {entry.version} · {formatLastSync(Date.parse(entry.updatedAt))}
+                                            </Paragraph>
+                                            <Button size="small" variant="secondary" disabled={busy} onClick={() => confirmRestore(key, entry)}>
+                                                {t("Restore version")}
+                                            </Button>
+                                        </Flex>
+                                    </Card>
+                                )) : <Paragraph className={Margins.bottom8}>{t("No previous versions yet. New Cloud updates will appear here.")}</Paragraph>}
+                            </div>
+                        );
+                    })}
+                </>
+            )}
+
+            {settings.cloud.enabled && (
+                <>
+                    <Divider className={Margins.top20} />
+                    <Heading className={Margins.top20}>{t("Midnightcord community server")}</Heading>
+                    <Paragraph className={Margins.bottom16}>
+                        {t("Joining the community is optional and separate from Cloud sync. Discord will ask you to authorize this account before it joins the official Midnightcord server.")}
+                    </Paragraph>
+                    {communityJoinAvailable ? (
+                        <Button onClick={openCommunityJoin}>
+                            {t("Authorize with Discord and join")}
+                        </Button>
+                    ) : (
+                        <Notice.Info>
+                            {t("The join option will appear here after the community server and its Discord application are configured.")}
+                        </Notice.Info>
+                    )}
+                </>
+            )}
 
             <Divider className={Margins.top20} />
 

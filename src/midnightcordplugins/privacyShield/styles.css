@@ -1,0 +1,49 @@
+/* PrivacyShield only affects Discord's rendered UI while the current user streams. */
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-identities [class*="username_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-identities [class*="nameTag_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-identities [class*="nickname_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-identities [class*="avatar_"] {
+    filter: blur(8px) !important;
+    user-select: none !important;
+}
+
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="messageContent_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="markup_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [id^="message-accessories-"] article,
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="imageWrapper_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="attachment_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="embedWrapper_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="stickerAsset_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="voiceMessage_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="video_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="wrapperPaused_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="wrapperPlaying_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="newMosaicStyle_"] {
+    filter: blur(12px) !important;
+    user-select: none !important;
+}
+
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="messageContent_"] a,
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-content [class*="markup_"] a {
+    pointer-events: none !important;
+}
+
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-dms [class*="privateChannels_"] [class*="channel_"][class*="interactive_"] {
+    filter: blur(8px) !important;
+    user-select: none !important;
+}
+
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-notifications [class*="vc-notification-root"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-notifications [class*="notificationContainer_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-notifications [class*="toast_"],
+.midnightcord-privacy-shield-active.midnightcord-privacy-shield-notifications [class*="messagePreview_"] {
+    filter: blur(10px) !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .midnightcord-privacy-shield-active [class*="username_"],
+    .midnightcord-privacy-shield-active [class*="messageContent_"],
+    .midnightcord-privacy-shield-active [class*="privateChannels_"] [class*="channel_"] {
+        transition: filter 120ms ease-out;
+    }
+}

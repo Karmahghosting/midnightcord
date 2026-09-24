@@ -222,6 +222,80 @@ export async function getCloudSettings(shouldNotify = true, force = false) {
     }
 }
 
+export async function getCloudHistory(key: CloudItemKey): Promise<CloudManifestEntry[]> {
+    let response: Response;
+    try {
+        response = await cloudFetch(`/v1/cloud/history/${key}`);
+    } catch (error) {
+        if (error instanceof CloudRequestError && error.status === 404)
+            throw new Error("Cloud version history is not available on this server yet.");
+        throw error;
+    }
+    const result = await response.json() as { key?: unknown; entries?: unknown };
+    if (result.key !== key || !Array.isArray(result.entries)) throw new Error("Invalid Cloud history response");
+    return result.entries.filter((entry): entry is CloudManifestEntry =>
+        entry && typeof entry === "object"
+        && (entry as CloudManifestEntry).key === key
+        && Number.isSafeInteger((entry as CloudManifestEntry).version)
+        && typeof (entry as CloudManifestEntry).etag === "string"
+        && typeof (entry as CloudManifestEntry).checksum === "string"
+        && typeof (entry as CloudManifestEntry).updatedAt === "string"
+    );
+}
+
+export async function restoreCloudRevision(key: CloudItemKey, version: number): Promise<boolean> {
+    if (!Number.isSafeInteger(version) || version < 1) throw new Error("Invalid Cloud version");
+    if (!await getCloudKey()) throw new Error("Link this device with a Cloud key first.");
+
+    try {
+        const cloudKey = (await getCloudKey())!;
+        const manifest = await fetchManifest();
+        const current = entryMap(manifest).get(key);
+        if (!current) throw new Error("This Cloud item no longer exists.");
+
+        const response = await cloudFetch(`/v1/cloud/history/${key}/${version}`);
+        const encrypted = new Uint8Array(await response.arrayBuffer());
+        const checksum = response.headers.get("X-Midnightcord-Checksum");
+        if (response.headers.get("X-Midnightcord-Version") !== String(version)
+            || !checksum || await checksumBytes(encrypted) !== checksum)
+            throw new Error(`Cloud history checksum verification failed for ${key}`);
+        const plaintext = await decryptCloudPayload(cloudKey, encrypted);
+
+        const restoredResponse = await cloudFetch(`/v1/cloud/data/${key}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/octet-stream",
+                "If-Match": current.etag,
+                "X-Midnightcord-Checksum": checksum
+            },
+            body: toCloudArrayBuffer(encrypted)
+        });
+        const restored = await restoredResponse.json() as CloudManifestEntry;
+        await applyPayload(key, plaintext);
+
+        const state = await getLocalState();
+        state.entries[key] = {
+            remoteEtag: restored.etag,
+            remoteVersion: restored.version,
+            localDigest: await digestCloudText(plaintext)
+        };
+        await saveLocalState(state);
+        await finishSync();
+        notify(
+            "Midnightcord Cloud",
+            key === "settings"
+                ? "Ancienne configuration restaurée et synchronisée. Clique ici pour redémarrer Midnightcord."
+                : "Ancienne version de QuickCSS restaurée et synchronisée.",
+            "var(--green-360)",
+            key === "settings" ? (IS_WEB ? () => location.reload() : relaunch) : undefined
+        );
+        return true;
+    } catch (error) {
+        handleError(error, true);
+        return false;
+    }
+}
+
 export async function deleteCloudSettings() {
     try {
         const manifest = await fetchManifest();
