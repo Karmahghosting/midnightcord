@@ -6,9 +6,8 @@
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, mkdtemp, open, readFile, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
@@ -68,7 +67,7 @@ async function filesBelow(directory) {
 function start(file, args, options = {}) {
     const child = spawn(file, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"], ...options });
     let output = "";
-    for (const stream of [child.stdout, child.stderr]) stream.on("data", chunk => { output = (output + chunk).slice(-12_000); });
+    for (const stream of [child.stdout, child.stderr].filter(Boolean)) stream.on("data", chunk => { output = (output + chunk).slice(-12_000); });
     const result = new Promise((resolve, reject) => {
         child.once("error", reject);
         child.once("exit", (code, signal) => resolve({ code, signal, output }));
@@ -91,12 +90,21 @@ async function extract(format, source, destination) {
     assert.deepEqual(metadata, ["midnightcord", rootPackage.version, process.arch === "arm64" ? "aarch64" : "x86_64"]);
     const listing = (await command("rpm", ["-qpl", source])).stdout.trim().split("\n");
     assert(listing.length > 5 && listing.every(path => /^\/(?:opt|usr|etc)(?:\/|$)/.test(path) && !path.split("/").includes("..")), "Unexpected RPM destination");
-    const reader = spawn("rpm2cpio", [source], { stdio: ["ignore", "pipe", "pipe"] });
-    const unpacker = spawn("cpio", ["-idm", "--no-absolute-filenames"], { cwd: destination, stdio: ["pipe", "ignore", "pipe"] });
-    let errors = "";
-    for (const process of [reader, unpacker]) process.stderr.on("data", data => { errors = (errors + data).slice(-4000); });
-    const finished = child => new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", code => code === 0 ? resolve() : reject(new Error(`Archive extraction failed (${code}): ${errors}`))); });
-    await Promise.all([finished(reader), finished(unpacker), pipeline(reader.stdout, unpacker.stdin)]);
+    // cpio may close a pipe before rpm2cpio finishes writing trailer padding.
+    // A temporary file lets both tools finish independently with verified exit codes.
+    const archive = `${destination}.cpio`;
+    try {
+        const output = await open(archive, "wx");
+        try {
+            const result = await start("rpm2cpio", [source], { stdio: ["ignore", output.fd, "pipe"] }).result;
+            assert.equal(result.code, 0, `rpm2cpio failed: ${result.output}`);
+        } finally { await output.close(); }
+        const input = await open(archive, "r");
+        try {
+            const result = await start("cpio", ["-idm", "--no-absolute-filenames"], { cwd: destination, stdio: [input.fd, "ignore", "pipe"] }).result;
+            assert.equal(result.code, 0, `cpio failed: ${result.output}`);
+        } finally { await input.close(); }
+    } finally { await rm(archive, { force: true }); }
 }
 
 async function inspectPackage(root) {
