@@ -1,0 +1,45 @@
+[Unit]
+Description=Midnightcord encrypted Cloud API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=midnightcord-cloud
+Group=midnightcord-cloud
+WorkingDirectory=/opt/midnightcord-cloud/current
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4175
+Environment=DATA_DIR=/var/lib/midnightcord-cloud
+ExecStart=/usr/bin/node /opt/midnightcord-cloud/current/server.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=10
+TimeoutStopSec=10
+UMask=0077
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/midnightcord-cloud
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+MemoryMax=192M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

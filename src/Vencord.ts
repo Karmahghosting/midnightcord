@@ -90,6 +90,7 @@ export * as Webpack from "./webpack";
 export * as WebpackPatcher from "./webpack/patchWebpack";
 export { PlainSettings, Settings };
 
+import { syncCloudOnStartup } from "@api/SettingsSync/cloudSync";
 import { coreStyleRootNode, initStyles } from "@api/Styles";
 import { openSettingsTabModal, UpdaterTab } from "@components/settings";
 import { IS_WINDOWS } from "@utils/constants";
@@ -156,6 +157,8 @@ async function init() {
     startAllPlugins(StartAt.WebpackReady);
 
     setTimeout(() => void checkForStartupUpdate(), 5_000);
+    setTimeout(() => void syncCloudOnStartup(), 7_500);
+    setInterval(() => void syncCloudOnStartup(), 60_000);
 
     initTrayIpc();
 

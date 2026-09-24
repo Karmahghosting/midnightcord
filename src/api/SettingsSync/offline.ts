@@ -69,6 +69,8 @@ export async function importSettings(data: string, type: BackupType = "all", clo
     if (!isSafeObject(parsed))
         throw new Error("Unsafe Settings");
 
+    if (cloud && parsed.settings && typeof parsed.settings === "object") delete parsed.settings.cloud;
+
     switch (type) {
         case "all": {
             if (!cloud && (!("settings" in parsed)))
@@ -123,19 +125,32 @@ const SENSITIVE_PLUGIN_KEYS = new Set([
 const SENSITIVE_DATASTORE_KEYS = new Set([
     "TokenImporter_accounts",
     "midnightcord-mi-token-cache",
+    "midnightcord_cloud_key",
+    "midnightcord_cloud_state_v1",
     "ThemeLibrary_uniqueToken",
     "groq-shared-api-key",
 ]);
 
+const SENSITIVE_PLUGIN_KEY_PATTERN = /api.?key|authorization|auth(?:$|header|key|token)|cookie|credential|password|secret(?:$|key|token)|token|webhook/i;
+
+function stripSensitivePluginValues(value: any): any {
+    if (Array.isArray(value)) return value.map(stripSensitivePluginValues);
+    if (!value || typeof value !== "object") return value;
+
+    for (const key of Object.keys(value)) {
+        if (SENSITIVE_PLUGIN_KEYS.has(key) || SENSITIVE_PLUGIN_KEY_PATTERN.test(key)) delete value[key];
+        else value[key] = stripSensitivePluginValues(value[key]);
+    }
+    return value;
+}
+
 function stripSensitiveData(settings: any): any {
-    if (!settings?.plugins) return settings;
     const stripped = JSON.parse(JSON.stringify(settings));
-    for (const pluginName in stripped.plugins) {
-        const plugin = stripped.plugins[pluginName];
-        if (!plugin || typeof plugin !== "object") continue;
-        for (const key of SENSITIVE_PLUGIN_KEYS) {
-            if (key in plugin) delete plugin[key];
-        }
+    // Cloud identity, direction and timestamps are intentionally device-local.
+    delete stripped.cloud;
+    if (stripped?.plugins) {
+        for (const pluginName of Object.keys(stripped.plugins))
+            stripped.plugins[pluginName] = stripSensitivePluginValues(stripped.plugins[pluginName]);
     }
     return stripped;
 }

@@ -1,39 +1,13 @@
 # Privacy Policy
 
-This file is a short summary. The full, always up to date Privacy Policy is published at
-**https://nightcord.st/privacy** — that page is the canonical version; if anything here ever
-conflicts with it, the website version applies.
+Midnightcord works without a Midnightcord account. Midnightcord Cloud is optional and disabled by default. The current public policy is available at **https://midnightcord.fr/privacy**.
 
-## Summary
+When Cloud is enabled, the app creates or imports a recovery key on the device. Separate authentication and AES-256-GCM encryption keys are derived from it. Plugin settings and QuickCSS are encrypted before upload to `api.midnightcord.fr`; the recovery and decryption keys never leave the user's devices.
 
-Midnightcord is a client modification for Discord. Most functionality (plugins, themes, settings,
-keybinds) runs entirely on your device and is never sent to us.
+The service stores opaque encrypted payloads and the minimum operational metadata: item type, encrypted size and checksum, version, update time, and a pseudonymous account identifier derived from the authentication secret. It does not receive Discord account identifiers, tokens, passwords, messages, calls, or local files through Cloud sync. Temporary in-memory network and account rate limits protect the service from abuse.
 
-A small set of **opt-in** features talk to our backend at `api.nightcord.st`:
+Users can delete individual Cloud data, delete the complete active Cloud account, or unlink only the current device. Encrypted security backups expire within 14 days. A lost recovery key cannot be recovered by Midnightcord.
 
-- Signing in with Discord (OAuth2, scopes `identify` and `guilds.join`) — stores your Discord
-  user ID, username, display name, avatar URL, and OAuth access/refresh tokens so you stay
-  signed in. We never see your Discord password.
-- Cloud Settings Sync — your full plugin configuration, if you turn this on, linked to your
-  Discord user ID so it can be restored on another device.
-- Per-plugin sync — individual plugins may store settings server-side, keyed by plugin name and
-  your Discord user ID, with a private/public toggle you control.
-- Custom profile badges — any badge image you choose to upload, linked to your Discord user ID.
-- Community-role cosmetic badges — your Discord user ID plus the roles you hold in the official
-  Midnightcord server, used only to grant cosmetic badges.
-- Username-history lookups — on demand only, forwards the looked-up Discord user ID to a
-  third-party username-history provider.
+The optional public badge lookup sends only the viewed Discord user ID to `api.midnightcord.fr/v1/badge`. Update checks contact the Midnightcord GitHub repository. Some optional plugins can contact services selected by the user. Discord itself continues to process normal Discord activity under [Discord's Privacy Policy](https://discord.com/privacy/).
 
-If you never sign in with Discord inside Midnightcord, none of the above applies to you.
-
-Our servers also process standard technical logs (IP address, user agent, timestamps) for
-rate-limiting and abuse prevention, like virtually any web service. We do not use third-party
-analytics or advertising trackers, do not read or store your messages/DMs/calls, and do not sell
-or share data with advertisers or data brokers.
-
-Since Midnightcord modifies the official Discord client, all messaging, calls, and server activity
-still happen through Discord's own infrastructure and is governed by
-[Discord's Privacy Policy](https://discord.com/privacy/).
-
-For the full breakdown (data retention, deletion, browser extension permissions, contact
-details), see **https://nightcord.st/privacy**.
+Midnightcord does not add advertising trackers and does not sell Cloud data.

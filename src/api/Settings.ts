@@ -17,6 +17,7 @@
 */
 
 import { SettingsStore as SettingsStoreClass } from "@shared/SettingsStore";
+import { localStorage } from "@utils/localStorage";
 import { Logger } from "@utils/Logger";
 import { mergeDefaults } from "@utils/mergeDefaults";
 import { DefinedSettings, OptionType, SettingsChecks, SettingsDefinition } from "@utils/types";
@@ -106,6 +107,14 @@ export interface Settings {
         logLimit: number;
     };
 
+    cloud: {
+        enabled: boolean;
+        settingsSync: boolean;
+        quickCssSync: boolean;
+        direction: "both" | "push" | "pull" | "manual";
+        lastSyncAt: number;
+    };
+
     ignoreResetWarning: boolean;
 
     userCssVars: {
@@ -156,15 +165,24 @@ const DefaultSettings: Settings = {
         logLimit: 50
     },
 
+    cloud: {
+        enabled: false,
+        settingsSync: true,
+        quickCssSync: true,
+        direction: "both",
+        lastSyncAt: 0
+    },
+
     ignoreResetWarning: false,
     userCssVars: {},
 };
 
 const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;
+const hadLegacyCloudSettings = Boolean((settings as any).cloud?.url || "authenticated" in ((settings as any).cloud ?? {}));
 mergeDefaults(settings, DefaultSettings);
 
-// Keep previous installations offline even if cloud options were enabled before this update.
-delete (settings as any).cloud;
+// Discard credentials and backend choices from the removed, unencrypted Cloud implementation.
+if (hadLegacyCloudSettings) settings.cloud = { ...DefaultSettings.cloud };
 settings.seeAllCustomProfile = false;
 settings.syncOwnCustomProfile = false;
 
@@ -257,6 +275,7 @@ export const SettingsStore = new SettingsStoreClass(settings, {
 if (!IS_REPORTER) {
     SettingsStore.addGlobalChangeListener((_, path) => {
         VencordNative.settings.set(SettingsStore.plain, path);
+        if (typeof path === "string" && !path.startsWith("cloud")) localStorage.Vencord_settingsDirty = true;
     });
 }
 

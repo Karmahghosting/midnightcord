@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily encrypted Midnightcord Cloud backup
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30m
+Unit=midnightcord-cloud-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -73,13 +73,11 @@ Construisez-les avec `corepack pnpm package:linux:x64` ou `corepack pnpm package
 
 Les builds de production sont minifiés, sans obfuscation et sans source maps dans les archives. Le chargeur natif ajoute seulement Midnightcord au processus Discord existant, sans lancer une seconde application Electron.
 
-## Confidentialité
+## Midnightcord Cloud et confidentialité
 
-Les releases natives ne contiennent ni synchronisation cloud Midnightcord, ni Mellowtel, ni interrogation automatique du fil Midnightcord. Les profils, badges et préférences restent locaux. `NoTrack` bloque les Analytics, les métriques et Sentry de Discord.
+Midnightcord Cloud synchronise, au choix, les réglages de plugins et QuickCSS. Il est désactivé par défaut. Chaque bloc est chiffré sur l’appareil avec AES-256-GCM ; le serveur ne reçoit ni la clé de récupération, ni la clé de déchiffrement, ni l’identité Discord. Les modes bidirectionnel, envoi, réception et manuel évitent les écrasements silencieux grâce aux versions et ETags.
 
-La seule vérification automatique intégrée contacte les releases GitHub Midnightcord. Elle télécharge un payload vérifié par SHA256 et l’applique au prochain lancement.
-
-Les plugins optionnels qui utilisent un service externe restent sous le contrôle de l’utilisateur. Consultez [la documentation de confidentialité](./docs/PRIVACY.md) pour le détail.
+`NoTrack` bloque les Analytics, les métriques et Sentry de Discord. Les mises à jour viennent uniquement des releases GitHub Midnightcord et leur payload est vérifié par SHA256. Consultez [la documentation de confidentialité](./docs/PRIVACY.md) et la page [Midnightcord Cloud](https://midnightcord.fr/cloud) pour le détail.
 
 ## Crédits
 

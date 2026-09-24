@@ -59,6 +59,22 @@ assert(!/package:native[^\n]+disable-updater/.test(nativePackageScript), "Native
 const packageJson = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8"));
 assert(!packageJson.dependencies?.mellowtel, "Mellowtel must not be a dependency");
 
+const cloudCryptoSource = readFileSync(join(rootDir, "src", "api", "SettingsSync", "cloudCrypto.ts"), "utf8");
+assert(cloudCryptoSource.includes('name: "HKDF"'), "Cloud authentication and encryption keys must be independently derived");
+assert(cloudCryptoSource.includes('name: "AES-GCM"'), "Cloud payloads must use authenticated encryption");
+assert(cloudCryptoSource.includes("additionalData"), "Cloud payloads must bind their protocol version as authenticated data");
+
+const cloudSetupSource = readFileSync(join(rootDir, "src", "api", "SettingsSync", "cloudSetup.ts"), "utf8");
+assert(cloudSetupSource.includes('CLOUD_API_BASE = "https://api.midnightcord.fr/"'), "Cloud sync must use the isolated Midnightcord API");
+assert(!cloudSetupSource.includes("discord.com/api/oauth2"), "Cloud sync must not require a Discord identity");
+
+const offlineSyncSource = readFileSync(join(rootDir, "src", "api", "SettingsSync", "offline.ts"), "utf8");
+assert(offlineSyncSource.includes('"midnightcord_cloud_key"'), "Cloud recovery material must be excluded from DataStore exports");
+assert(offlineSyncSource.includes("delete stripped.cloud"), "Cloud identity settings must be excluded from synchronized settings");
+assert(offlineSyncSource.includes("SENSITIVE_PLUGIN_KEY_PATTERN"), "Nested plugin credentials must be removed before Cloud encryption");
+const cloudSyncSource = readFileSync(join(rootDir, "src", "api", "SettingsSync", "cloudSync.ts"), "utf8");
+assert(cloudSyncSource.includes('importSettings(value, "plugins", true)'), "Cloud settings downloads must not import unrelated payload sections");
+
 const fakeVoiceSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "FakeVoice", "index.tsx"), "utf8");
 assert(/name:\s*"FakeVoice"[\s\S]*?enabledByDefault:\s*false/.test(fakeVoiceSource), "Fake Voice must remain disabled by default");
 

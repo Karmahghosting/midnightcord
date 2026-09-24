@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { BackupRestoreIcon, LogIcon, MagnifyingGlassIcon,MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, ShieldIcon, UpdaterIcon } from "@components/Icons";
+import { BackupRestoreIcon, CloudIcon, LogIcon, MagnifyingGlassIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, UpdaterIcon } from "@components/Icons";
 import { LangIcon } from "@components/LangIcon";
 import {
     BackupAndRestoreTab,
@@ -293,10 +293,10 @@ export default definePlugin({
                 }),
                 buildEntry({
                     key: "midnightcord_sync",
-                    title: "Privacy",
-                    panelTitle: "Midnightcord Privacy",
+                    title: "Cloud",
+                    panelTitle: "Midnightcord Cloud",
                     Component: SyncTab,
-                    Icon: ShieldIcon
+                    Icon: CloudIcon
                 }),
                 buildEntry({
                     key: "midnightcord_language",
