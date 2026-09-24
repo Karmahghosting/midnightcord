@@ -94,6 +94,10 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
     "Configure how Midnightcord handles notifications.": { fr: "Configurez la gestion des notifications de Midnightcord.", es: "Configura cómo Midnightcord maneja las notificaciones.", ru: "Настройте обработку уведомлений в Midnightcord.", zh: "配置 Midnightcord 处理通知的方式。", ar: "قم بتهيئة طريقة تعامل Midnightcord مع الإشعارات." },
 
     // ── Sync tab ─────────────────────────────────────────────────────────────
+    "Enable Midnightcord Cloud?": { fr: "Activer Midnightcord Cloud ?" },
+    "Keep an encrypted copy of your settings and QuickCSS across your devices. Open Cloud settings to create a recovery key or link an existing one. Nothing is enabled until you choose, and you can set it up later.": { fr: "Conservez une copie chiffrée de vos réglages et de votre QuickCSS sur vos appareils. Ouvrez les paramètres Cloud pour créer une clé de récupération ou utiliser une clé existante. Rien n'est activé avant votre choix et vous pourrez le configurer plus tard." },
+    "Configure Cloud": { fr: "Configurer le Cloud" },
+    "Not now": { fr: "Pas maintenant" },
     "Join the Midnightcord community server?": { fr: "Rejoindre le serveur communautaire Midnightcord ?" },
     "Joining is optional. Continue to Discord to authorize a one-time join to the official Midnightcord server. Cloud sync works with either choice.": { fr: "Rejoindre le serveur est facultatif. Continuez vers Discord pour autoriser un ajout unique au serveur officiel Midnightcord. La synchronisation Cloud fonctionne quel que soit votre choix." },
     "Continue to Discord": { fr: "Continuer vers Discord" },

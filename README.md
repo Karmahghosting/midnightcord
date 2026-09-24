@@ -77,6 +77,8 @@ Les builds de production sont minifiés, sans obfuscation et sans source maps da
 
 Midnightcord Cloud synchronise, au choix, les réglages de plugins et QuickCSS. Il est désactivé par défaut. Chaque bloc est chiffré sur l’appareil avec AES-256-GCM ; le serveur ne reçoit ni la clé de récupération, ni la clé de déchiffrement, ni l’identité Discord. Les modes bidirectionnel, envoi, réception et manuel évitent les écrasements silencieux grâce aux versions et ETags.
 
+À la première installation, une proposition permet d'ouvrir la configuration Cloud pour créer une clé de récupération ou importer une clé existante. « Pas maintenant » conserve le Cloud désactivé et la proposition ne revient pas. Les installations déjà configurées ne reçoivent pas cette proposition lors d'une mise à jour. L'adhésion au serveur communautaire reste facultative et nécessite une autorisation Discord distincte.
+
 `NoTrack` bloque les Analytics, les métriques et Sentry de Discord. Les mises à jour viennent uniquement des releases GitHub Midnightcord et leur payload est vérifié par SHA256. Consultez [la documentation de confidentialité](./docs/PRIVACY.md) et la page [Midnightcord Cloud](https://midnightcord.fr/cloud) pour le détail.
 
 ## Crédits

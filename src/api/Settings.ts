@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { CloudOnboardingState, initialCloudOnboardingState } from "@api/SettingsSync/cloudOnboardingFlow";
 import { SettingsStore as SettingsStoreClass } from "@shared/SettingsStore";
 import { localStorage } from "@utils/localStorage";
 import { Logger } from "@utils/Logger";
@@ -114,6 +115,7 @@ export interface Settings {
         direction: "both" | "push" | "pull" | "manual";
         lastSyncAt: number;
     };
+    cloudOnboarding?: CloudOnboardingState;
 
     ignoreResetWarning: boolean;
 
@@ -178,6 +180,7 @@ const DefaultSettings: Settings = {
 };
 
 const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;
+if (!IS_REPORTER) settings.cloudOnboarding = initialCloudOnboardingState(settings as unknown as Record<string, unknown>, Object.keys(DefaultSettings));
 const hadLegacyCloudSettings = Boolean((settings as any).cloud?.url || "authenticated" in ((settings as any).cloud ?? {}));
 mergeDefaults(settings, DefaultSettings);
 
@@ -273,6 +276,9 @@ export const SettingsStore = new SettingsStoreClass(settings, {
 });
 
 if (!IS_REPORTER) {
+    if (settings.cloudOnboarding === "pending") {
+        void VencordNative.settings.set(settings).catch(() => logger.warn("Could not persist pending Cloud setup."));
+    }
     SettingsStore.addGlobalChangeListener((_, path) => {
         VencordNative.settings.set(SettingsStore.plain, path);
         if (typeof path === "string" && !path.startsWith("cloud")) localStorage.Vencord_settingsDirty = true;

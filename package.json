@@ -1,7 +1,7 @@
 {
     "name": "midnightcord",
     "private": "true",
-    "version": "1.27.19",
+    "version": "1.27.20",
     "desktopName": "midnightcord.desktop",
     "description": "A fast cross-platform Discord client mod with native voice",
     "main": "dist/js/main.js",
@@ -72,7 +72,7 @@
         "test:utilities": "node scripts/testUtilityPlugins.mjs",
         "test:images": "node scripts/testImageOptimizer.mjs",
         "test:spotify": "node scripts/testSpotifySync.mjs",
-        "test:cloud": "node scripts/testCloudCrypto.mjs && node scripts/testCommunityJoin.mjs && node --test services/cloud-api/test/server.test.mjs",
+        "test:cloud": "node scripts/testCloudCrypto.mjs && node scripts/testCloudOnboarding.mjs && node scripts/testCommunityJoin.mjs && node --test services/cloud-api/test/server.test.mjs",
         "test:quiet-hours": "node scripts/testQuietHours.mjs",
         "test:privacy-shield": "node scripts/testPrivacyShield.mjs",
         "test:ocr-asar": "node scripts/testLocalOcrAsar.mjs"

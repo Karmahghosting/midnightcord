@@ -90,6 +90,7 @@ export * as Webpack from "./webpack";
 export * as WebpackPatcher from "./webpack/patchWebpack";
 export { PlainSettings, Settings };
 
+import { offerCloudOnboarding } from "@api/SettingsSync/cloudOnboarding";
 import { syncCloudOnStartup } from "@api/SettingsSync/cloudSync";
 import { offerCommunityJoin } from "@api/SettingsSync/community";
 import { coreStyleRootNode, initStyles } from "@api/Styles";
@@ -159,6 +160,7 @@ async function init() {
 
     setTimeout(() => void checkForStartupUpdate(), 5_000);
     setTimeout(() => void syncCloudOnStartup(), 7_500);
+    setTimeout(() => void offerCloudOnboarding(), 9_000);
     setTimeout(() => void offerCommunityJoin(), 10_000);
     setInterval(() => void syncCloudOnStartup(), 60_000);
 

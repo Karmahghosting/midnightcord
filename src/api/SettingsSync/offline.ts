@@ -69,6 +69,7 @@ export async function importSettings(data: string, type: BackupType = "all", clo
     if (!isSafeObject(parsed))
         throw new Error("Unsafe Settings");
 
+    if (parsed.settings && typeof parsed.settings === "object") delete parsed.settings.cloudOnboarding;
     if (cloud && parsed.settings && typeof parsed.settings === "object") delete parsed.settings.cloud;
 
     switch (type) {
@@ -148,6 +149,7 @@ function stripSensitiveData(settings: any): any {
     const stripped = JSON.parse(JSON.stringify(settings));
     // Cloud identity, direction and timestamps are intentionally device-local.
     delete stripped.cloud;
+    delete stripped.cloudOnboarding;
     if (stripped?.plugins) {
         for (const pluginName of Object.keys(stripped.plugins))
             stripped.plugins[pluginName] = stripSensitivePluginValues(stripped.plugins[pluginName]);
