@@ -1,0 +1,13 @@
+{
+  "name": "midnightcord-community-bot",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": { "node": ">=22.12.0" },
+  "packageManager": "pnpm@10.30.3",
+  "scripts": {
+    "start": "node bot.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": { "discord.js": "14.27.0" }
+}

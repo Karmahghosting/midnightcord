@@ -1,0 +1,41 @@
+[Unit]
+Description=Midnightcord Discord community bot presence
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=midnightcord-bot
+Group=midnightcord-bot
+WorkingDirectory=/opt/midnightcord-community-bot/current
+Environment=NODE_ENV=production
+Environment=PORT=4176
+LoadCredential=discord-token:/etc/midnightcord-cloud/community-bot.token
+ExecStart=/usr/bin/node /opt/midnightcord-community-bot/current/bot.mjs
+Restart=always
+RestartPreventExitStatus=78
+RestartSec=30
+TimeoutStopSec=10
+UMask=0077
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+MemoryMax=192M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target
