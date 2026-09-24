@@ -55,6 +55,8 @@ const stagingDir = await mkdtemp(join(stagingParent, "midnightcord-linux-"));
 
 try {
     const rootPackage = JSON.parse(await readFile(join(rootDir, "package.json"), "utf8"));
+    // Keep download names consistent across formats; package metadata uses each distro's architecture name.
+    config.artifactName = `Midnightcord-${rootPackage.version}-linux-${requestedArch}.\${ext}`;
     await writeFile(join(stagingDir, "package.json"), JSON.stringify({
         name: "midnightcord",
         version: rootPackage.version,

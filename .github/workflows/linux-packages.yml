@@ -43,7 +43,7 @@ jobs:
         run: pnpm package:linux:${{ matrix.arch }}
 
       - name: Verify DEB and RPM contents and sandboxed installer
-        run: xvfb-run -a node scripts/testLinuxInstallerPackage.mjs --deb release/*-linux-${{ matrix.arch }}.deb --rpm release/*-linux-${{ matrix.arch }}.rpm
+        run: xvfb-run -a node scripts/testLinuxInstallerPackage.mjs --release-dir release
 
       - name: Upload verified Linux packages
         uses: actions/upload-artifact@v7
