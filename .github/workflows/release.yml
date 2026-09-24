@@ -104,44 +104,9 @@ jobs:
           path: release/native/*
           if-no-files-found: error
 
-  linux-standalone:
-    name: Linux standalone x64
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install RPM tools
-        run: sudo apt-get update && sudo apt-get install -y rpm
-
-      - name: Build Linux standalone packages
-        run: pnpm package:linux:x64
-
-      - name: Upload Linux packages
-        uses: actions/upload-artifact@v7
-        with:
-          name: linux-standalone-x64
-          path: |
-            release/*.AppImage
-            release/*.deb
-            release/*.rpm
-            release/*.yml
-            release/*.blockmap
-            release/*.tar.gz
-          if-no-files-found: error
+  linux-injector:
+    name: Linux injector packages
+    uses: ./.github/workflows/linux-packages.yml
 
   update-payload:
     name: Native update payload
@@ -180,7 +145,7 @@ jobs:
     name: Publish GitHub release
     needs:
       - native
-      - linux-standalone
+      - linux-injector
       - update-payload
     runs-on: ubuntu-latest
 

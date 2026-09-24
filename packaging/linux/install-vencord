@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+launcher_path=$(readlink -f -- "$0")
+launcher_dir=$(dirname -- "$launcher_path")
+if [ -x "$launcher_dir/midnightcord-installer" ]; then
+    exec "$launcher_dir/midnightcord-installer" --install-vencord "$@"
+fi
+exec /opt/Midnightcord/midnightcord-installer --install-vencord "$@"

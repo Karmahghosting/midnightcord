@@ -15,6 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  linux-injector:
+    name: Linux injector packages
+    uses: ./.github/workflows/linux-packages.yml
+
   native:
     name: Utilities and native ${{ matrix.platform }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}

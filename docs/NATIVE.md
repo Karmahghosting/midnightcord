@@ -6,6 +6,8 @@ Le mode natif injecte Midnightcord dans Discord Desktop et conserve les modules 
 
 Les releases proposent **Midnightcord-Installer** : un `.exe` portable pour Windows x64, un `.zip` contenant l’application macOS Intel ou Apple Silicon, et un `.tar.gz` pour Linux x64 ou ARM64.
 
+Sous Linux, les paquets DEB/RPM ajoutent **Install Vencord** au menu des applications ; ce lanceur ouvre l’injecteur graphite Midnightcord. Les formats AppImage et tar.gz contiennent aussi uniquement l’injecteur. Le client autonome Linux a été retiré ; voir le [guide Linux](./LINUX.md).
+
 1. Fermez Discord complètement, y compris son icône dans la zone de notification.
 2. Ouvrez l’injecteur (après extraction sur macOS et Linux).
 3. Cochez les installations Discord souhaitées et cliquez sur **Installer Midnightcord**.

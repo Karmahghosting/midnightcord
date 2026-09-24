@@ -72,11 +72,12 @@ async function startInstaller(options = {}) {
     const uiPath = join(__dirname, "ui", "index.html");
     const uiUrl = pathToFileURL(uiPath).href;
     const window = new BrowserWindow({
-        title: "Midnightcord Installer", width: 980, height: 700, minWidth: 800, minHeight: 620,
+        title: options.title ?? "Midnightcord Installer", width: 980, height: 700, minWidth: 800, minHeight: 620,
         backgroundColor: "#08090b", frame: false, show: false, icon: join(__dirname, "..", "static", "icon.png"),
         webPreferences: { preload: join(__dirname, "preload.cjs"), contextIsolation: true, sandbox: true, nodeIntegration: false }
     });
     window.setMenuBarVisibility(false);
+    if (options.title) window.on("page-title-updated", event => event.preventDefault());
     let lastProgress = { stage: "checking", percent: 0, message: "" };
     const onProgress = progress => {
         lastProgress = progress;

@@ -1,8 +1,20 @@
 # Midnightcord sous Linux
 
-## Mode natif recommandé
+## Injection uniquement
 
-Le mode natif conserve le moteur vocal officiel de Discord. Il évite le blocage de négociation DTLS rencontré avec le client Electron autonome sur certains serveurs.
+Les paquets Linux contiennent uniquement l’injecteur graphite **Install Vencord**. Malgré ce nom de lanceur, il installe bien **Midnightcord** dans votre Discord officiel et conserve son moteur vocal. Le client autonome Linux est retiré.
+
+Installez le paquet correspondant à votre architecture, puis ouvrez **Install Vencord** depuis le menu des applications :
+
+```sh
+sudo apt install ./Midnightcord-*-linux-x64.deb
+# Ou, sur une distribution RPM :
+sudo dnf install ./Midnightcord-*-linux-x64.rpm
+```
+
+Pour ARM64, remplacez `x64` par `arm64`. La commande `install-vencord` ouvre également l’injecteur. L’installation du paquet ne modifie aucun Discord : choisissez ensuite les installations dans la fenêtre.
+
+La mise à niveau depuis l’ancien paquet `midnightcord` remplace le client autonome par l’injecteur. Les réglages utilisateur existants sont conservés.
 
 Depuis une archive de release :
 
@@ -12,6 +24,17 @@ Depuis une archive de release :
 4. relancez Discord normalement.
 
 L’onglet **Désinstallation** restaure les Discord cochés et conserve les réglages. Les archives **Midnightcord-Native** contenant `install-midnightcord.sh` restent disponibles pour la ligne de commande.
+
+### Formats portables
+
+Pour l’AppImage, rendez le fichier exécutable puis ouvrez-le :
+
+```sh
+chmod +x Midnightcord-*-linux-x64.AppImage
+./Midnightcord-*-linux-x64.AppImage
+```
+
+Pour ajouter **Install Vencord** au menu, conservez l’AppImage à un emplacement permanent et lancez-la une fois avec `--register-installer`. Pour l’archive tar.gz, extrayez-la dans un dossier permanent, puis exécutez `./register-installer.sh` depuis ce dossier. Ce raccourci appartient à votre compte ; aucun accès administrateur n’est nécessaire pour l’enregistrer.
 
 ### Si le sandbox empêche l’ouverture de l’injecteur
 
@@ -24,6 +47,8 @@ sudo chmod 4755 ./chrome-sandbox
 ```
 
 L’injecteur se lance avec votre compte habituel, sans `sudo`. Le sandbox reste actif ; n’ajoutez pas `--no-sandbox`. Si le volume interdit SUID (`nosuid`), demandez à l’administrateur une configuration compatible. [Documentation du sandbox Chromium](https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md).
+
+Une AppImage montée est en lecture seule : si votre système bloque son sandbox, utilisez de préférence le DEB/RPM ou l’archive tar.gz avec le réglage ci-dessus.
 
 ### Depuis les sources
 
@@ -40,16 +65,16 @@ Pour restaurer Discord :
 
 ## Paquets produits
 
-La commande corepack pnpm package:linux:x64 crée quatre formats autonomes dans release/ :
+La commande `corepack pnpm package:linux:x64` crée quatre formats de l’injecteur dans `release/` :
 
 - AppImage ;
 - paquet Debian ;
 - paquet RPM pour Fedora, RHEL, Rocky Linux, AlmaLinux et openSUSE ;
 - archive tar.gz.
 
-L’équivalent ARM64 est produit avec corepack pnpm package:linux:arm64.
+L’équivalent ARM64 est produit avec `corepack pnpm package:linux:arm64`.
 
-Ces paquets autonomes utilisent WebRTC. Ils restent utiles sans installation Discord séparée, mais le mode natif est préférable pour la voix.
+Tous contiennent le même injecteur, son runtime Electron et le build Midnightcord natif, avec OCR local. Ils nécessitent une installation Discord compatible à modifier ; aucun client autonome ni serveur arRPC n’est embarqué.
 
 ## Wayland et X11
 
@@ -83,7 +108,7 @@ Midnightcord vérifie les releases GitHub après le démarrage. Une nouvelle ver
 
 Après une mise à jour de Discord qui crée un nouveau dossier `app-*`, relancez l’injecteur afin de placer le chargeur dans cette nouvelle version.
 
-L’AppImage autonome prend en charge l’auto-update Electron. Les paquets DEB et RPM restent gérés manuellement par le gestionnaire de paquets tant qu’aucun dépôt APT ou DNF n’est configuré.
+Les mises à jour de l’injecteur se font en installant le nouveau DEB/RPM ou en remplaçant le fichier portable. Aucun dépôt APT ou DNF n’est configuré automatiquement. Le build Midnightcord injecté conserve sa propre mise à jour au prochain lancement de Discord.
 
 Les paquets Flatpak et Snap sont isolés ou en lecture seule. Ils ne sont pas modifiés automatiquement.
 

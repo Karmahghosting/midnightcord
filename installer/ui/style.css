@@ -159,18 +159,16 @@ button:disabled:focus-visible {
 }
 
 .brand-mark {
-    width: 38px;
+    width: 42px;
     height: 42px;
     display: grid;
     place-items: center;
 }
 
-.brand-mark svg {
-    width: 33px;
-    height: 33px;
-    fill: #efefed;
-    stroke: none;
-    transform: rotate(-12deg);
+.midnightcord-logo {
+    display: block;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .brand-caption {
@@ -656,14 +654,6 @@ h2 {
     box-shadow: 0 12px 50px #0007, 0 0 70px #ffffff03;
 }
 
-.loading-mark svg {
-    width: 41px;
-    height: 41px;
-    fill: #dddde0;
-    stroke: none;
-    transform: rotate(-12deg);
-}
-
 .orbit {
     position: absolute;
     inset: 0;
@@ -889,8 +879,9 @@ progress::-moz-progress-bar {
         margin-left: 5px;
     }
 
-    .brand-mark svg {
-        width: 28px;
+    .brand-mark, .brand-mark img {
+        width: 36px;
+        height: 36px;
     }
 
     .brand-caption {

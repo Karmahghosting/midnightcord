@@ -3,35 +3,38 @@ const rootPackage = require("./package.json");
 
 /** @type {import("electron-builder").Configuration} */
 module.exports = {
-    appId: "st.midnightcord.app",
+    appId: "st.midnightcord.installer",
     productName: "Midnightcord",
-    electronVersion: rootPackage.devDependencies.electron.replace(/^[^0-9]*/, ""),
+    electronVersion: require("electron/package.json").version,
     copyright: "Copyright 2026 Midnightcord contributors",
     artifactName: "${productName}-${version}-linux-${arch}.${ext}",
 
-    // A single archive means fewer filesystem lookups and a smaller install.
-    asar: true,
+    // The installer worker and injection helper need physical filesystem paths.
+    asar: false,
     compression: "maximum",
-    npmRebuild: false,
+    beforeBuild: async () => false,
     removePackageScripts: true,
     electronLanguages: ["fr", "en-US"],
 
     extraMetadata: {
         version: rootPackage.version,
-        main: "dist/js/main.js",
-        desktopName: "midnightcord.desktop",
+        main: "packaging/linux-entry.cjs",
+        desktopName: "midnightcord-installer.desktop",
         homepage: "https://github.com/Karmahghosting/midnightcord"
     },
     files: [
         "package.json",
-        { from: path.resolve(__dirname, "dist/js"), to: "dist/js", filter: ["**/*", "!**/*.map", "!**/*.ts"] },
-        { from: path.resolve(__dirname, "static"), to: "static", filter: ["**/*"] },
-        { from: path.resolve(__dirname, "LICENSE"), to: "LICENSE" }
+        { from: path.resolve(__dirname, "packaging"), to: "packaging", filter: ["linux-entry.cjs", "start-installer.cjs"] },
+        { from: path.resolve(__dirname, "installer"), to: "installer", filter: ["**/*", "!**/*.test.*", "!**/*.map", "!**/fixtures{,/**}"] },
+        { from: path.resolve(__dirname, "scripts"), to: "scripts", filter: ["nativeInjection.mjs"] },
+        { from: path.resolve(__dirname, "static"), to: "static", filter: ["icon.png"] },
+        { from: __dirname, to: ".", filter: ["LICENSE"] }
     ],
     extraResources: [
         {
-            from: path.resolve(__dirname, "dist/midnightcord.asar"),
-            to: "midnightcord.asar"
+            from: path.resolve(__dirname, "dist/desktop"),
+            to: "payload/desktop",
+            filter: ["**/*", "!**/*.map"]
         }
     ],
     directories: {
@@ -39,37 +42,27 @@ module.exports = {
         output: path.resolve(__dirname, "release"),
         buildResources: path.resolve(__dirname, "static")
     },
-    protocols: [
-        {
-            name: "Midnightcord",
-            schemes: ["midnightcord"]
-        }
-    ],
-    beforePack: path.resolve(__dirname, "scripts/build/beforePack.mjs"),
-    afterPack: path.resolve(__dirname, "scripts/build/afterPack.mjs"),
-
-    publish: {
-        provider: "github",
-        owner: "Karmahghosting",
-        repo: "midnightcord",
-        releaseType: "release"
-    },
+    publish: null,
 
     linux: {
         target: ["AppImage", "deb", "rpm", "tar.gz"],
-        executableName: "midnightcord",
+        executableName: "midnightcord-installer",
+        // A nonempty argument prevents AppImage's default --no-sandbox flag.
+        executableArgs: ["--install-vencord"],
         desktop: {
             entry: {
-                Name: "Midnightcord",
-                Comment: "Optimized Discord desktop client",
-                StartupWMClass: "midnightcord",
+                Name: "Install Vencord",
+                Comment: "Install, repair or remove Midnightcord in Discord",
+                StartupWMClass: "midnightcord-installer",
             }
         },
-        icon: "static/icon.png",
-        category: "Network",
+        icon: path.resolve(__dirname, "static/icon.png"),
+        category: "Utility",
         maintainer: "Midnightcord contributors",
         vendor: "Midnightcord",
-        synopsis: "Optimized Discord desktop client",
-        description: "Midnightcord is a cross-platform Discord client mod based on Nightcord, Equicord and Vencord."
-    }
+        synopsis: "Install Midnightcord in Discord",
+        description: "Install, repair or remove Midnightcord in an existing official Discord installation."
+    },
+    deb: { packageName: "midnightcord" },
+    rpm: { packageName: "midnightcord" }
 };

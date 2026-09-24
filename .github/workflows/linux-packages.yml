@@ -1,0 +1,59 @@
+name: Linux injector packages
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Linux injector ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          architecture: ${{ matrix.arch }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare packaging and Electron tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm rpm2cpio desktop-file-utils xvfb libgtk-3-0t64 libnss3 libgbm1 libasound2t64
+
+      - name: Verify Linux installer startup
+        run: pnpm test:linux-installer
+
+      - name: Build Linux injector packages
+        run: pnpm package:linux:${{ matrix.arch }}
+
+      - name: Verify DEB and RPM contents and sandboxed installer
+        run: xvfb-run -a node scripts/testLinuxInstallerPackage.mjs --deb release/*-linux-${{ matrix.arch }}.deb --rpm release/*-linux-${{ matrix.arch }}.rpm
+
+      - name: Upload verified Linux packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-injector-${{ matrix.arch }}
+          path: |
+            release/*.AppImage
+            release/*.deb
+            release/*.rpm
+            release/*.tar.gz
+            release/*.sha256
+          if-no-files-found: error
+          retention-days: 7

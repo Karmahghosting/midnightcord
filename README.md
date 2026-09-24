@@ -22,7 +22,7 @@ Téléchargez **Midnightcord-Installer** pour votre système depuis les [release
 
 - Windows x64 : ouvrez le `.exe` portable.
 - macOS Intel ou Apple Silicon : extrayez le `.zip` et ouvrez **Midnightcord Installer.app**.
-- Linux x64 ou ARM64 : extrayez le `.tar.gz` et lancez **midnightcord-installer**.
+- Linux x64 ou ARM64 : installez le paquet `.deb` ou `.rpm`, puis ouvrez **Install Vencord** dans le menu des applications. L’AppImage et l’archive `.tar.gz` permettent aussi d’ouvrir l’injecteur.
 
 L’injecteur graphique embarque Midnightcord et son runtime. Node.js, pnpm et une connexion Internet ne sont pas requis pour l’installation.
 
@@ -63,9 +63,11 @@ Pour la musique, reliez votre compte Spotify dans les **Connexions** de Discord,
 puis activez **DynamicIslande** et son option Spotify. L'île affiche le morceau
 en cours, sa pochette et sa progression, avec les commandes de lecture.
 
-## Paquets Linux autonomes
+## Paquets Linux
 
-Les sorties AppImage, Debian, RPM et tar.gz restent disponibles avec corepack pnpm package:linux:x64. Elles utilisent WebRTC au lieu du moteur vocal Discord. Le mode natif est recommandé pour la voix.
+Les paquets AppImage, Debian, RPM et tar.gz contiennent uniquement l’injecteur graphite **Install Vencord**, qui installe Midnightcord dans Discord officiel. Le client autonome Linux est retiré. Les paquets embarquent le runtime et le build natif, avec le logo Midnightcord.
+
+Construisez-les avec `corepack pnpm package:linux:x64` ou `corepack pnpm package:linux:arm64`. Consultez le [guide Linux](./docs/LINUX.md) pour l’installation et les formats portables.
 
 ## Performances
 

@@ -26,6 +26,16 @@ function element(tag, className, text) {
     return node;
 }
 
+function logo() {
+    const image = element("img", "midnightcord-logo");
+    image.src = "../../static/icon.png";
+    image.alt = "";
+    image.width = 52;
+    image.height = 52;
+    image.draggable = false;
+    return image;
+}
+
 function showView(name) {
     for (const view of ["loading", "selection", "progress"]) byId(`${view}-view`).hidden = view !== name;
 }
@@ -168,7 +178,7 @@ async function perform() {
     if (working || scanning || !selected.size || state.error || state.running?.length) return;
     lockControls(true);
     byId("progress-view").classList.remove("complete", "failed");
-    byId("stage-symbol").replaceChildren(icon(mode === "uninstall" ? "restore" : "moon"));
+    byId("stage-symbol").replaceChildren(mode === "uninstall" ? icon("restore") : logo());
     byId("progress-eyebrow").textContent = "ON S’OCCUPE DE TOUT.";
     byId("progress-title").textContent = mode === "uninstall" ? "Retour à votre Discord." : "Une touche de Midnightcord.";
     byId("progress-description").textContent = mode === "uninstall" ? "Restauration des installations sélectionnées." : "Personnalisation des installations sélectionnées.";
