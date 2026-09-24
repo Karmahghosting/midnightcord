@@ -91,7 +91,7 @@ test("existing renderer preferences and reporter builds do not receive first-ins
         assert.equal(state.prompts.length, 0);
     }
     const reporter = load({}, true);
-    assert.equal(reporter.PlainSettings.cloudOnboarding, undefined);
+    assert.equal(reporter.PlainSettings.cloudOnboarding, "handled");
     const { state, offer } = onboarding(reporter);
     await offer();
     assert.equal(state.prompts.length, 0);

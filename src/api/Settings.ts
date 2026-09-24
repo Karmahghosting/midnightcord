@@ -115,7 +115,7 @@ export interface Settings {
         direction: "both" | "push" | "pull" | "manual";
         lastSyncAt: number;
     };
-    cloudOnboarding?: CloudOnboardingState;
+    cloudOnboarding: CloudOnboardingState;
 
     ignoreResetWarning: boolean;
 
@@ -174,6 +174,7 @@ const DefaultSettings: Settings = {
         direction: "both",
         lastSyncAt: 0
     },
+    cloudOnboarding: "handled",
 
     ignoreResetWarning: false,
     userCssVars: {},
