@@ -383,15 +383,24 @@ export const SpotifyStore = proxyLazyWebpack(() => {
         }
     }
 
-    const store = new SpotifyStore(FluxDispatcher, {
-        SPOTIFY_PLAYER_STATE: (event: PlayerState) => store.playerState(event),
-        SPOTIFY_SET_DEVICES: ({ accountId, devices }: { accountId: string; devices: Device[]; }) => store.devices(accountId, devices),
-        SPOTIFY_SET_ACTIVE_DEVICE: ({ accountId }: { accountId: string; }) => store.devices(accountId),
-        SPOTIFY_ACCOUNT_ACCESS_TOKEN: ({ accountId }: { accountId: string; }) => store.connection("token", accountId),
-        SPOTIFY_ACCOUNT_ACCESS_TOKEN_REVOKE: ({ accountId }: { accountId: string; }) => store.connection("revoke", accountId),
-        CONNECTION_OPEN: () => store.connection("open"),
-        USER_CONNECTIONS_UPDATE: () => store.connection("update"),
-        LOGOUT: () => store.connection("logout")
+    const storeRef: { current: SpotifyStore | null; } = { current: null };
+    const pendingDispatches: Array<(instance: SpotifyStore) => void> = [];
+    const withStore = <T>(handler: (instance: SpotifyStore, event: T) => void) => (event: T) => {
+        if (storeRef.current) handler(storeRef.current, event);
+        else pendingDispatches.push(instance => handler(instance, event));
+    };
+
+    const instance = new SpotifyStore(FluxDispatcher, {
+        SPOTIFY_PLAYER_STATE: withStore((store, event: PlayerState) => store.playerState(event)),
+        SPOTIFY_SET_DEVICES: withStore((store, { accountId, devices }: { accountId: string; devices: Device[]; }) => store.devices(accountId, devices)),
+        SPOTIFY_SET_ACTIVE_DEVICE: withStore((store, { accountId }: { accountId: string; }) => store.devices(accountId)),
+        SPOTIFY_ACCOUNT_ACCESS_TOKEN: withStore((store, { accountId }: { accountId: string; }) => store.connection("token", accountId)),
+        SPOTIFY_ACCOUNT_ACCESS_TOKEN_REVOKE: withStore((store, { accountId }: { accountId: string; }) => store.connection("revoke", accountId)),
+        CONNECTION_OPEN: withStore(store => store.connection("open")),
+        USER_CONNECTIONS_UPDATE: withStore(store => store.connection("update")),
+        LOGOUT: withStore(store => store.connection("logout"))
     });
-    return store;
+    storeRef.current = instance;
+    for (const dispatch of pendingDispatches.splice(0)) dispatch(instance);
+    return instance;
 });
