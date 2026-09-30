@@ -1236,7 +1236,6 @@
   "Hides messages, links, images, DMs, but not the screen share/voice grid. Toggle via chat bar button.",
   "Hides the Dearrow button from YouTube embeds",
   "Hides the button if there are no replies to the message",
-  "Hides unwanted native Discord buttons (Logs, Help, DevTools, Inbox)",
   "Highlight number buttons when typing the passcode from the keyboard",
   "Highlights URLs in messages that match your patterns.",
   "Hold on!",
