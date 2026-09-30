@@ -97,7 +97,7 @@ export async function encryptCloudPayload(cloudKey: string, plaintext: string): 
 }
 
 export async function decryptCloudPayload(cloudKey: string, payload: Uint8Array): Promise<string> {
-    if (payload.length <= 1 + IV_BYTES + 16 || payload[0] !== PAYLOAD_VERSION)
+    if (payload.length < 1 + IV_BYTES + 16 || payload[0] !== PAYLOAD_VERSION)
         throw new Error("Unsupported or incomplete Cloud payload");
     const secret = parseCloudKey(cloudKey);
     const key = await deriveEncryptionKey(secret);

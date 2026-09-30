@@ -51,3 +51,27 @@ test("Cloud payloads use randomized authenticated encryption", async () => {
     await assert.rejects(() => cryptoModule.decryptCloudPayload(key, tampered));
     assert.notEqual(await cryptoModule.checksumBytes(first), await cryptoModule.checksumBytes(tampered));
 });
+
+test("Cloud accepts empty QuickCSS but rejects incomplete or unauthentic payloads", async () => {
+    const key = cryptoModule.createCloudKey();
+    const emptyCss = await cryptoModule.encryptCloudPayload(key, "");
+
+    assert.equal(emptyCss.length, 29, "empty content still contains its version, IV and authentication tag");
+    assert.equal(await cryptoModule.decryptCloudPayload(key, emptyCss), "");
+    await assert.rejects(() => cryptoModule.decryptCloudPayload(cryptoModule.createCloudKey(), emptyCss));
+
+    for (const length of [0, 1, 12, 13, 28]) {
+        await assert.rejects(
+            () => cryptoModule.decryptCloudPayload(key, emptyCss.subarray(0, length)),
+            /Unsupported or incomplete Cloud payload/
+        );
+    }
+
+    const unsupported = emptyCss.slice();
+    unsupported[0] = 2;
+    await assert.rejects(() => cryptoModule.decryptCloudPayload(key, unsupported), /Unsupported or incomplete Cloud payload/);
+
+    const tampered = emptyCss.slice();
+    tampered[tampered.length - 1] ^= 1;
+    await assert.rejects(() => cryptoModule.decryptCloudPayload(key, tampered));
+});
