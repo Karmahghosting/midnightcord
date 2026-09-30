@@ -123,6 +123,119 @@ test("Cloud API isolates encrypted, versioned data and deletes the account", asy
     assert.equal(files, null, "read-only access must not create an account on disk");
 });
 
+test("Cloud API allows the website dashboard and Discord without widening browser access", async t => {
+    const dataDir = await mkdtemp(join(tmpdir(), "midnightcord-cloud-cors-"));
+    const server = createCloudServer({ dataDir });
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+    t.after(async () => {
+        await new Promise(resolve => server.close(resolve));
+        await rm(dataDir, { recursive: true, force: true });
+    });
+    const base = `http://127.0.0.1:${server.address().port}`;
+    const token = credential();
+    const request = (path, init = {}) => fetch(`${base}${path}`, {
+        ...init,
+        headers: { Authorization: `Bearer ${token}`, ...init.headers }
+    });
+    const allowedOrigins = [
+        "https://midnightcord.fr",
+        "https://www.midnightcord.fr",
+        "https://discord.com",
+        "https://canary.discord.com",
+        "https://ptb.discord.com",
+        "https://discordapp.com",
+        "https://canary.discordapp.com",
+        "https://ptb.discordapp.com"
+    ];
+    for (const origin of allowedOrigins) {
+        const preflight = await fetch(`${base}/v1/cloud/manifest`, {
+            method: "OPTIONS",
+            headers: { Origin: origin, "Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "authorization" }
+        });
+        assert.equal(preflight.status, 204, origin);
+        assert.equal(preflight.headers.get("access-control-allow-origin"), origin);
+        assert.match(preflight.headers.get("access-control-allow-methods"), /\bGET\b/);
+        assert.match(preflight.headers.get("access-control-allow-headers"), /\bAuthorization\b/);
+        assert.equal(preflight.headers.get("access-control-allow-credentials"), null);
+        assert.equal(preflight.headers.get("vary"), "Origin");
+
+        const response = await request("/v1/cloud/manifest", { headers: { Origin: origin } });
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get("access-control-allow-origin"), origin);
+        assert.equal(response.headers.get("access-control-allow-credentials"), null);
+        assert.deepEqual(await response.json(), { schema: 1, entries: [] });
+    }
+
+    for (const origin of allowedOrigins.slice(0, 2)) {
+        const response = await fetch(`${base}/v1/cloud/manifest`, { headers: { Origin: origin } });
+        assert.equal(response.status, 401, "An allowed website origin must not bypass bearer authentication");
+        assert.equal(response.headers.get("access-control-allow-origin"), origin);
+    }
+
+    const deniedOrigins = [
+        "https://example.com",
+        "http://midnightcord.fr",
+        "http://www.midnightcord.fr",
+        "https://midnightcord.fr.evil.example",
+        "https://www.midnightcord.fr.evil.example",
+        "https://evil.midnightcord.fr",
+        "https://midnightcord.fr:444",
+        "https://midnightcord.fr@evil.example",
+        "https://discord.com.evil.example",
+        "null"
+    ];
+    for (const origin of deniedOrigins) {
+        const headers = { Origin: origin };
+        const preflight = await fetch(`${base}/v1/cloud/manifest`, {
+            method: "OPTIONS",
+            headers: { ...headers, "Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "authorization" }
+        });
+        assert.equal(preflight.status, 403, origin);
+        assert.equal(preflight.headers.get("access-control-allow-origin"), null);
+        const response = await request("/v1/cloud/manifest", { headers });
+        assert.equal(response.headers.get("access-control-allow-origin"), null, "Disallowed origins must not receive a readable CORS response");
+        assert.equal(response.headers.get("access-control-expose-headers"), null);
+    }
+    assert.equal((await fetch(`${base}/v1/cloud/manifest`, { method: "OPTIONS" })).status, 403);
+
+    const first = randomBytes(128);
+    let response = await request("/v1/cloud/data/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream", "If-Match": "*", "X-Midnightcord-Checksum": checksum(first) },
+        body: first
+    });
+    assert.equal(response.status, 201);
+    const created = await response.json();
+    const second = randomBytes(160);
+    response = await request("/v1/cloud/data/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream", "If-Match": created.etag, "X-Midnightcord-Checksum": checksum(second) },
+        body: second
+    });
+    assert.equal(response.status, 200);
+    const updated = await response.json();
+
+    for (const origin of allowedOrigins.slice(0, 2)) {
+        for (const [path, body, entry] of [
+            ["/v1/cloud/data/settings", second, updated],
+            ["/v1/cloud/history/settings/1", first, created]
+        ]) {
+            response = await request(path, { headers: { Origin: origin } });
+            assert.equal(response.status, 200);
+            assert.equal(response.headers.get("access-control-allow-origin"), origin);
+            assert.equal(response.headers.get("access-control-allow-credentials"), null);
+            const exposed = response.headers.get("access-control-expose-headers").toLowerCase().split(/,\s*/);
+            for (const header of ["etag", "x-midnightcord-checksum", "x-midnightcord-version"]) {
+                assert.ok(exposed.includes(header), `${header} must be readable by the browser dashboard`);
+            }
+            assert.equal(response.headers.get("etag"), entry.etag);
+            assert.equal(response.headers.get("x-midnightcord-checksum"), checksum(body));
+            assert.equal(response.headers.get("x-midnightcord-version"), String(entry.version));
+            assert.deepEqual(Buffer.from(await response.arrayBuffer()), body);
+        }
+    }
+});
+
 test("Cloud API validates checksums, keys and request preconditions", async t => {
     const dataDir = await mkdtemp(join(tmpdir(), "midnightcord-cloud-"));
     const server = createCloudServer({ dataDir });

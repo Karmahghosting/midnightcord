@@ -17,10 +17,15 @@ const MAX_HISTORY_VERSIONS = 5;
 const COMMUNITY_STATE_TTL_MS = 10 * 60_000;
 const MAX_COMMUNITY_ATTEMPTS = 10_000;
 const COMMUNITY_REDIRECT_URI = "https://api.midnightcord.fr/v1/community/callback";
-const ALLOWED_ORIGIN = /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com$/i;
+const DISCORD_ORIGIN = /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com$/i;
+const WEBSITE_ORIGINS = new Set(["https://midnightcord.fr", "https://www.midnightcord.fr"]);
 
 const locks = new Map();
 const rateBuckets = new Map();
+
+function isAllowedOrigin(origin) {
+    return typeof origin === "string" && (WEBSITE_ORIGINS.has(origin) || DISCORD_ORIGIN.test(origin));
+}
 
 function baseHeaders(request) {
     const origin = request.headers.origin;
@@ -30,8 +35,9 @@ function baseHeaders(request) {
         "Cross-Origin-Resource-Policy": "cross-origin",
         "Referrer-Policy": "no-referrer",
         "X-Content-Type-Options": "nosniff",
-        ...(origin && ALLOWED_ORIGIN.test(origin) ? {
+        ...(isAllowedOrigin(origin) ? {
             "Access-Control-Allow-Origin": origin,
+            "Access-Control-Expose-Headers": "ETag, X-Midnightcord-Checksum, X-Midnightcord-Version",
             Vary: "Origin"
         } : {})
     };
@@ -495,7 +501,7 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
 
         if (request.method === "OPTIONS") {
             const origin = request.headers.origin;
-            if (!origin || !ALLOWED_ORIGIN.test(origin)) {
+            if (!isAllowedOrigin(origin)) {
                 response.writeHead(403, baseHeaders(request));
                 response.end();
                 return;

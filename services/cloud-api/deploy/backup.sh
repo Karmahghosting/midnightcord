@@ -11,4 +11,4 @@ temporary="$backup_dir/.$stamp.tar.gz.tmp"
 mkdir -p "$data_dir/accounts" "$backup_dir"
 tar -C "$data_dir" -czf "$temporary" accounts
 mv "$temporary" "$archive"
-find "$backup_dir" -type f -name 'midnightcord-cloud-*.tar.gz' -mtime +13 -delete
+find "$backup_dir" -maxdepth 1 -type f -name 'midnightcord-cloud-*.tar.gz' -mtime +13 -delete
