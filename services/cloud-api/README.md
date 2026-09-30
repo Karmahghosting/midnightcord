@@ -5,6 +5,7 @@ This service stores client-encrypted Midnightcord settings and QuickCSS, plus mi
 ## API
 
 - `GET /v1/cloud/health`
+- `GET|HEAD /v1/cloud/stats` (public aggregate: `{ "schema": 1, "accountsWithBackups": 12, "updatedAt": "2026-09-30T12:00:00.000Z" }`)
 - `GET /v1/community/status`
 - `GET /v1/community/join` (starts an explicit Discord OAuth2 authorization)
 - `GET /v1/community/callback` (uses the temporary authorization to join that user to the configured guild)
@@ -20,6 +21,10 @@ This service stores client-encrypted Midnightcord settings and QuickCSS, plus mi
 - `DELETE /v1/cloud/account`
 
 Writes use `If-Match` to prevent silent overwrites when another device has a newer version. Each item is limited to 2 MiB and active items to 6 MiB per account. The service retains the five most recent previous encrypted versions per item; deleting an item or account deletes its retained versions too.
+
+Public statistics count Cloud accounts with at least one current settings or QuickCSS entry in a validated manifest. Two items in the same account count once; empty accounts and community-only records do not count. This is not a count of unique people, Discord members, or currently connected devices. No account identifier, invitation state, manifest, or encrypted payload is returned, and counting never reads payload files.
+
+The service shares one in-flight statistics scan, reads at most eight manifests concurrently, and caches each result for 60 seconds. Cache headers reflect the remaining freshness; changes and deletions appear after the next refresh. An unavailable data directory or malformed manifest returns a generic `503` instead of a misleading count, with failed scans also held for 60 seconds. The existing `/v1/cloud/` Nginx location forwards this public route; all private Cloud routes still require their Bearer credential.
 
 Run `npm test` before deploying. Production files belong under `/opt/midnightcord-cloud/releases`, while encrypted runtime data stays in `/var/lib/midnightcord-cloud` across releases.
 

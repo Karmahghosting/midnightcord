@@ -1,7 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { realpathSync } from "node:fs";
 import { createServer } from "node:http";
-import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +14,8 @@ const MAX_ITEM_BYTES = 2 * 1024 * 1024;
 const MAX_ACCOUNT_BYTES = 6 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_ITEM_BYTES + 1;
 const MAX_HISTORY_VERSIONS = 5;
+const STATS_TTL_MS = 60_000;
+const STATS_READ_CONCURRENCY = 8;
 const COMMUNITY_STATE_TTL_MS = 10 * 60_000;
 const MAX_COMMUNITY_ATTEMPTS = 10_000;
 const COMMUNITY_REDIRECT_URI = "https://api.midnightcord.fr/v1/community/callback";
@@ -149,6 +151,36 @@ async function readManifest(paths) {
     }
 }
 
+async function countAccountsWithBackups(dataDir) {
+    let directories;
+    try {
+        directories = await readdir(join(dataDir, "accounts"), { withFileTypes: true });
+    } catch (error) {
+        if (error?.code !== "ENOENT") throw error;
+        // An existing data directory with no accounts is a fresh installation;
+        // a missing/unavailable data directory must not report a false zero.
+        if (!(await stat(dataDir)).isDirectory()) throw new Error("Cloud data directory is unavailable");
+        return 0;
+    }
+    const accounts = directories.filter(entry => entry.isDirectory() && /^[a-f0-9]{64}$/.test(entry.name));
+    let cursor = 0;
+    let count = 0;
+    let failure;
+    await Promise.all(Array.from({ length: Math.min(STATS_READ_CONCURRENCY, accounts.length) }, async () => {
+        while (!failure && cursor < accounts.length) {
+            const account = accounts[cursor++];
+            try {
+                const manifest = await readManifest(accountPaths(dataDir, account.name));
+                if (Object.keys(manifest.entries).length) count++;
+            } catch (error) {
+                failure ??= error;
+            }
+        }
+    }));
+    if (failure) throw failure;
+    return count;
+}
+
 async function writeAtomic(path, data, mode = 0o600) {
     await mkdir(dirname(path), { recursive: true, mode: 0o700 });
     const temporary = `${path}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
@@ -275,6 +307,30 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
     const communityFlows = new Map();
     const communityTickets = new Map();
     const communityAttempts = new Map();
+    let statsCache;
+    let statsPending;
+
+    async function cloudStats() {
+        if (statsCache && statsCache.expiresAt > now()) return statsCache;
+        if (!statsPending) {
+            statsPending = (async () => {
+                try {
+                    const accountsWithBackups = await countAccountsWithBackups(dataDir);
+                    const completedAt = now();
+                    statsCache = {
+                        value: { schema: 1, accountsWithBackups, updatedAt: new Date(completedAt).toISOString() },
+                        expiresAt: completedAt + STATS_TTL_MS
+                    };
+                } catch {
+                    // Cache failures too: unavailable storage must not trigger
+                    // a new directory scan for every unauthenticated request.
+                    statsCache = { value: null, expiresAt: now() + STATS_TTL_MS };
+                }
+                return statsCache;
+            })().finally(() => { statsPending = undefined; });
+        }
+        return statsPending;
+    }
 
     function forgetAttempt(attempt) {
         communityAttempts.delete(attempt.id);
@@ -518,6 +574,21 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
 
         if (url.pathname === "/v1/cloud/health" && (request.method === "GET" || request.method === "HEAD")) {
             send(request, response, 200, { ok: true, service: "midnightcord-cloud", schema: 1 });
+            return;
+        }
+
+        if (url.pathname === "/v1/cloud/stats") {
+            if (request.method !== "GET" && request.method !== "HEAD") {
+                jsonError(request, response, 405, "method_not_allowed", "This endpoint only accepts GET and HEAD requests.", { Allow: "GET, HEAD" });
+                return;
+            }
+            const snapshot = await cloudStats();
+            const maxAge = Math.max(0, Math.min(60, Math.ceil((snapshot.expiresAt - now()) / 1000)));
+            if (!snapshot.value) {
+                jsonError(request, response, 503, "stats_unavailable", "Cloud statistics are temporarily unavailable.", { "Retry-After": String(Math.max(1, maxAge)) });
+                return;
+            }
+            send(request, response, 200, snapshot.value, { "Cache-Control": `public, max-age=${maxAge}`, Vary: "Origin" });
             return;
         }
 

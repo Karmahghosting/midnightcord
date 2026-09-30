@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -14,6 +14,140 @@ function credential() {
 function checksum(body) {
     return createHash("sha256").update(body).digest("base64url");
 }
+
+async function statsFixture(t) {
+    const dataDir = await mkdtemp(join(tmpdir(), "midnightcord-cloud-stats-"));
+    let clock = Date.parse("2026-09-30T12:00:00.000Z");
+    const server = createCloudServer({ dataDir, now: () => clock });
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+    t.after(async () => {
+        await new Promise(resolve => server.close(resolve));
+        await rm(dataDir, { recursive: true, force: true });
+    });
+    const base = `http://127.0.0.1:${server.address().port}`;
+    const accountPath = token => join(dataDir, "accounts", createHash("sha256").update(`midnightcord-cloud:${token}`).digest("hex"));
+    const request = (path = "/v1/cloud/stats", init = {}) => fetch(`${base}${path}`, init);
+    return {
+        dataDir, accountPath, request,
+        advance: milliseconds => { clock += milliseconds; },
+        timestamp: () => new Date(clock).toISOString(),
+        async manifest(token, value) {
+            const path = accountPath(token);
+            await mkdir(path, { recursive: true });
+            await writeFile(join(path, "manifest.json"), JSON.stringify(value));
+        },
+        async upload(token, key) {
+            const body = randomBytes(48);
+            const response = await request(`/v1/cloud/data/${key}`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/octet-stream", "If-Match": "*", "X-Midnightcord-Checksum": checksum(body) },
+                body
+            });
+            assert.equal(response.status, 201);
+            return response.json();
+        }
+    };
+}
+
+test("public Cloud stats count backup accounts once, omit private data and cache for one minute", async t => {
+    const f = await statsFixture(t);
+    let response = await f.request();
+    assert.equal(response.status, 200, "Statistics must not require authentication");
+    const empty = { schema: 1, accountsWithBackups: 0, updatedAt: f.timestamp() };
+    assert.deepEqual(await response.json(), empty);
+    assert.equal(response.headers.get("cache-control"), "public, max-age=60");
+    assert.equal(response.headers.get("vary"), "Origin");
+
+    const token = credential();
+    const otherToken = credential();
+    const settings = await f.upload(token, "settings");
+    const css = await f.upload(token, "quickCss");
+    await f.manifest(credential(), { schema: 1, entries: {} });
+    await f.manifest(credential(), {
+        schema: 1, entries: {},
+        community: { "12345678901234567": { status: "joined", updatedAt: f.timestamp() } }
+    });
+    await mkdir(join(f.dataDir, "accounts", "not-an-account"));
+    await writeFile(join(f.dataDir, "accounts", "not-an-account", "manifest.json"), "invalid, ignored directory");
+    await writeFile(join(f.dataDir, "accounts", "f".repeat(64)), "not a directory");
+    f.advance(30_000);
+    response = await f.request();
+    assert.deepEqual(await response.json(), empty, "Writes must not force an unauthenticated rescan before cache expiry");
+    assert.equal(response.headers.get("cache-control"), "public, max-age=30");
+    f.advance(30_000);
+
+    const responses = await Promise.all(Array.from({ length: 12 }, () => f.request()));
+    for (const result of responses) {
+        assert.equal(result.status, 200);
+        assert.deepEqual(await result.json(), { schema: 1, accountsWithBackups: 1, updatedAt: f.timestamp() }, "Two backup items belong to one account; no identifiers or manifests may be published");
+    }
+    response = await f.request(undefined, { method: "HEAD", headers: { Origin: "https://midnightcord.fr" } });
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), "");
+    assert.equal(response.headers.get("access-control-allow-origin"), "https://midnightcord.fr");
+    assert.equal(response.headers.get("access-control-allow-credentials"), null);
+    assert.equal((await f.request(undefined, { method: "POST" })).status, 405);
+    assert.equal((await f.request("/v1/cloud/manifest")).status, 401, "Private endpoints remain authenticated");
+
+    await f.upload(otherToken, "quickCss");
+    f.advance(60_000);
+    assert.equal((await (await f.request()).json()).accountsWithBackups, 2);
+    for (const entry of [settings, css]) {
+        response = await f.request(`/v1/cloud/data/${entry.key}`, {
+            method: "DELETE", headers: { Authorization: `Bearer ${token}`, "If-Match": entry.etag }
+        });
+        assert.equal(response.status, 204);
+    }
+    f.advance(60_000);
+    assert.equal((await (await f.request()).json()).accountsWithBackups, 1, "An account without remaining current backups must no longer count");
+    response = await f.request("/v1/cloud/account", {
+        method: "DELETE", headers: { Authorization: `Bearer ${otherToken}`, "X-Midnightcord-Confirm": "delete-account" }
+    });
+    assert.equal(response.status, 204);
+    f.advance(60_000);
+    assert.deepEqual(await (await f.request()).json(), { schema: 1, accountsWithBackups: 0, updatedAt: f.timestamp() });
+});
+
+test("Cloud stats report unavailable storage or invalid manifests without leaking details or false zeros", async t => {
+    const f = await statsFixture(t);
+    const token = credential();
+    await f.upload(token, "settings");
+    const manifestPath = join(f.accountPath(token), "manifest.json");
+    const original = await readFile(manifestPath, "utf8");
+    await writeFile(manifestPath, "broken private manifest");
+    const unavailable = { error: "stats_unavailable", message: "Cloud statistics are temporarily unavailable." };
+    let response = await f.request();
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("retry-after"), "60");
+    assert.deepEqual(await response.json(), unavailable);
+    await writeFile(manifestPath, original);
+    response = await f.request();
+    assert.equal(response.status, 503, "An error must also be cached to prevent repeated failed scans");
+    assert.deepEqual(await response.json(), unavailable);
+    f.advance(60_000);
+    assert.equal((await (await f.request()).json()).accountsWithBackups, 1);
+
+    const invalid = JSON.parse(original);
+    invalid.entries.settings.checksum = "invalid";
+    await writeFile(manifestPath, JSON.stringify(invalid));
+    f.advance(60_000);
+    response = await f.request();
+    assert.equal(response.status, 503, "Invalid backup metadata must not be silently counted or discarded");
+    assert.deepEqual(await response.json(), unavailable);
+
+    await rm(join(f.dataDir, "accounts"), { recursive: true });
+    await writeFile(join(f.dataDir, "accounts"), "unavailable storage");
+    f.advance(60_000);
+    response = await f.request();
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), unavailable);
+    await rm(f.dataDir, { recursive: true });
+    f.advance(60_000);
+    response = await f.request();
+    assert.equal(response.status, 503, "A missing data root must not look like an empty Cloud");
+    assert.deepEqual(await response.json(), unavailable);
+});
 
 test("Cloud API isolates encrypted, versioned data and deletes the account", async t => {
     const dataDir = await mkdtemp(join(tmpdir(), "midnightcord-cloud-"));
