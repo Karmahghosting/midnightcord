@@ -97,6 +97,9 @@ importers:
       '@electron/asar':
         specifier: ^4.0.1
         version: 4.0.1
+      '@electron/osx-sign':
+        specifier: 1.3.3
+        version: 1.3.3
       '@fal-works/esbuild-plugin-global-externals':
         specifier: ^2.1.2
         version: 2.1.2

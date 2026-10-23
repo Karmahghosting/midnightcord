@@ -14,6 +14,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Worker } from "node:worker_threads";
 
 import { createInstaller } from "../installer/core.mjs";
+import { verifyMacInstaller } from "./macInstallerSigning.mjs";
 import { getInstalledDistDir, installDistribution, isMidnightcordLoader } from "./nativeInjection.mjs";
 
 const repo = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -24,6 +25,75 @@ const channels = [
     { id: "canary", windows: "DiscordCanary", macos: "Discord Canary", linux: "discordcanary" },
     { id: "development", windows: "DiscordDevelopment", macos: "Discord Development", linux: "discorddevelopment" }
 ];
+
+test("macOS pull request installer signing needs no certificate and still verifies the entire bundle", async () => {
+    const calls = [];
+    const appPath = "/fixture/Midnightcord Installer.app";
+    const env = { GITHUB_EVENT_NAME: "pull_request" };
+    await verifyMacInstaller({ appPath, electronVersion: "42.7.1", identity: "-" }, {
+        env,
+        sign: async options => calls.push(["sign", options]),
+        execute: async (...args) => calls.push(["execute", ...args])
+    });
+    const [, options] = calls[0];
+    assert.deepEqual({ ...options, optionsForFile: undefined }, {
+        app: appPath,
+        platform: "darwin",
+        version: "42.7.1",
+        identity: "-",
+        identityValidation: false,
+        preAutoEntitlements: false,
+        preEmbedProvisioningProfile: false,
+        strictVerify: true,
+        optionsForFile: undefined
+    });
+    assert.deepEqual(options.optionsForFile(`${appPath}/Contents/Frameworks/Electron Framework.framework`), { hardenedRuntime: false, timestamp: "none" });
+    assert.deepEqual(calls[1], ["execute", "codesign", ["--verify", "--deep", "--strict", appPath]]);
+    assert.equal(calls.length, 2);
+    assert.deepEqual(env, { GITHUB_EVENT_NAME: "pull_request" }, "Signing must not enable certificate use through the environment");
+});
+
+test("macOS release and local installer builds retain electron-builder's signature and strict verification", async () => {
+    for (const GITHUB_EVENT_NAME of [undefined, "push", "workflow_dispatch"]) {
+        for (const identity of ["-", "Developer ID Application: Fixture"]) {
+            const calls = [];
+            await verifyMacInstaller({ appPath: "/fixture/Installer.app", identity }, {
+                env: { GITHUB_EVENT_NAME },
+                sign: async () => assert.fail("Must not replace a release signature"),
+                execute: async (...args) => calls.push(args)
+            });
+            assert.deepEqual(calls, [["codesign", ["--verify", "--deep", "--strict", "/fixture/Installer.app"]]]);
+        }
+    }
+});
+
+test("macOS pull request signing cannot silently use or replace a certificate identity", async () => {
+    for (const identity of [undefined, null, "Developer ID Application: Fixture"]) {
+        await assert.rejects(verifyMacInstaller({ appPath: "/fixture/Installer.app", identity }, {
+            env: { GITHUB_EVENT_NAME: "pull_request" },
+            sign: async () => assert.fail("Must not sign"),
+            execute: async () => assert.fail("Must not run commands")
+        }), /explicit ad-hoc signing identity/);
+    }
+});
+
+test("macOS installer signing failures stop packaging before verification", async () => {
+    await assert.rejects(verifyMacInstaller({ appPath: "/fixture/Installer.app", identity: "-" }, {
+        env: { GITHUB_EVENT_NAME: "pull_request" },
+        sign: async () => { throw new Error("fixture signing failed"); },
+        execute: async () => assert.fail("Must not continue after signing fails")
+    }), /fixture signing failed/);
+});
+
+test("macOS installer verification failures remain fatal in pull requests and releases", async () => {
+    for (const GITHUB_EVENT_NAME of ["pull_request", "push"]) {
+        await assert.rejects(verifyMacInstaller({ appPath: "/fixture/Installer.app", identity: "-" }, {
+            env: { GITHUB_EVENT_NAME },
+            sign: async () => {},
+            execute: async () => { throw new Error("fixture invalid signature"); }
+        }), /fixture invalid signature/);
+    }
+});
 
 async function fixture(t, platform = "win32") {
     await mkdir(workRoot, { recursive: true });
