@@ -4,7 +4,6 @@
  */
 
 import { build } from "electron-builder";
-import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { copyFile, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
@@ -12,11 +11,11 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+
+import { verifyMacInstaller } from "./macInstallerSigning.mjs";
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const require = createRequire(import.meta.url);
-const execFileAsync = promisify(execFile);
 const args = new Set(process.argv.slice(2));
 const allowedArgs = new Set(["--dir", "--x64", "--arm64", "--help"]);
 
@@ -117,7 +116,7 @@ try {
             ...(process.platform === "darwin" ? {
                 afterSign: async context => {
                     const appPath = join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`);
-                    await execFileAsync("codesign", ["--verify", "--deep", "--strict", appPath]);
+                    await verifyMacInstaller({ appPath, electronVersion, identity: context.packager.platformSpecificBuildOptions.identity });
                 }
             } : {}),
             forceCodeSigning: false,
