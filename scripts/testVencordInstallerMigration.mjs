@@ -1,7 +1,7 @@
 /* Vencord-to-Midnightcord installer regression tests. SPDX-License-Identifier: GPL-3.0-or-later */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { test } from "node:test";
@@ -47,7 +47,9 @@ function snapshot(root) {
 }
 
 function fixture(t, layout = "asar", patcher = "C:\\Users\\Fixture\\AppData\\Roaming\\Vencord\\dist\\patcher.js") {
-    const root = mkdtempSync(join(tmpdir(), "midnightcord-vencord-migration-"));
+    // macOS exposes /var through /private/var. Production discovery already
+    // canonicalizes targets; direct transaction tests must use the same paths.
+    const root = mkdtempSync(join(realpathSync(tmpdir()), "midnightcord-vencord-migration-"));
     t.after(() => rmSync(root, { recursive: true, force: true }));
     const resources = join(root, "Discord", "resources");
     const sourceDist = join(root, "payload");
