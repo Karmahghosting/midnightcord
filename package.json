@@ -74,6 +74,7 @@
         "test:spotify": "node scripts/testSpotifySync.mjs",
         "test:midnight-type": "node scripts/testMidnightType.mjs && node scripts/testMidnightTypeNative.mjs && node scripts/testMidnightTypeLifecycle.mjs",
         "test:midnight-type-browser": "node scripts/testMidnightTypeBrowser.mjs",
+        "test:always-trust": "node scripts/testAlwaysTrust.mjs",
         "test:vencord-migration": "node scripts/testVencordMigration.mjs && node scripts/testVencordInstallerMigration.mjs",
         "test:cloud": "node scripts/testCloudCrypto.mjs && node scripts/testCloudOnboarding.mjs && node scripts/testCommunityJoin.mjs && node --test services/cloud-api/test/server.test.mjs",
         "test:quiet-hours": "node scripts/testQuietHours.mjs",

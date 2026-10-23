@@ -80,6 +80,9 @@ jobs:
       - name: Test local typing and Vencord migration
         run: pnpm test:midnight-type && pnpm test:vencord-migration
 
+      - name: Test AlwaysTrust domain-only link handling
+        run: pnpm test:always-trust
+
       - name: Test typing composer in Chrome
         if: matrix.browser
         run: pnpm test:midnight-type-browser
