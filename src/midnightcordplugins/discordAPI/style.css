@@ -1,0 +1,59 @@
+.mc-discord-api {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--text-default);
+    line-height: 1.55;
+    max-height: min(48vh, 520px);
+    overflow: auto;
+    padding-right: 8px;
+}
+
+.mc-discord-api p { margin: 0; }
+
+.mc-discord-api-status {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--background-secondary);
+}
+
+.mc-discord-api-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mc-discord-api-hint {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.mc-discord-api-error { color: var(--text-danger); }
+
+.mc-discord-api dl {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px 16px;
+    margin: 0;
+}
+
+.mc-discord-api dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.mc-discord-api pre {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 12px;
+    max-height: 240px;
+    overflow: auto;
+    background: var(--background-tertiary);
+    border-radius: 8px;
+    user-select: text;
+}

@@ -83,6 +83,9 @@ jobs:
       - name: Test AlwaysTrust domain-only link handling
         run: pnpm test:always-trust
 
+      - name: Test local Discord API and MCP
+        run: pnpm test:discord-api
+
       - name: Test typing composer in Chrome
         if: matrix.browser
         run: pnpm test:midnight-type-browser
