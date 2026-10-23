@@ -813,7 +813,10 @@ progress::-moz-progress-bar {
     width: 15px;
     height: 15px;
     margin-top: 3px;
+    flex-shrink: 0;
 }
+
+.result-row span { min-width: 0; overflow-wrap: anywhere; }
 
 .result-row.failed {
     color: #dab5ad;

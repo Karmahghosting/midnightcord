@@ -41,7 +41,7 @@ function showView(name) {
 }
 
 function announce(message) { byId("announcement").textContent = message; }
-function eligible(target) { return !!target && !target.conflict && target.writable !== false && (mode === "install" || target.installed); }
+function eligible(target) { return !!target && target.writable !== false && (mode === "migrate-vencord" ? target.vencord : !target.conflict && (mode === "install" || target.installed)); }
 function errorText(error) { return error?.message || "Une erreur est survenue. Réessayez après avoir fermé Discord."; }
 
 function updateSelection() {
@@ -49,7 +49,7 @@ function updateSelection() {
     const count = targets.length;
     byId("selection-count").textContent = count ? `${count} installation${count > 1 ? "s" : ""} sélectionnée${count > 1 ? "s" : ""}` : "Aucune installation sélectionnée";
     byId("perform").disabled = !count || working || scanning || !!state.error || !!state.running?.length;
-    byId("perform-label").textContent = mode === "uninstall" ? "Retirer Midnightcord" : count && targets.every(target => target.installed) ? "Réparer Midnightcord" : "Installer Midnightcord";
+    byId("perform-label").textContent = mode === "migrate-vencord" ? "Migrer depuis Vencord" : mode === "uninstall" ? "Retirer Midnightcord" : count && targets.every(target => target.installed) ? "Réparer Midnightcord" : "Installer Midnightcord";
     byId("perform").classList.toggle("remove", mode === "uninstall");
     for (const card of byId("targets").children) card.classList.toggle("selected", selected.has(card.dataset.id));
 }
@@ -78,7 +78,7 @@ function renderTargets() {
         check.append(icon("check"));
         top.append(badgeIcon, check);
         const name = element("div", "card-name", target.name || `Discord ${target.channel}`);
-        const status = target.conflict ? "À vérifier" : target.writable === false ? "Accès restreint" : target.installed ? "Midnightcord installé" : target.channel === "stable" ? "STABLE" : target.channel.toUpperCase();
+        const status = target.vencord ? "Vencord détecté" : target.conflict ? "À vérifier" : target.writable === false ? "Accès restreint" : target.installed ? "Midnightcord installé" : target.channel === "stable" ? "STABLE" : target.channel.toUpperCase();
         name.append(element("span", "card-badge", status));
         const detail = element("div", "card-detail");
         detail.title = target.path;
@@ -93,7 +93,10 @@ function renderTargets() {
     byId("notice").classList.toggle("warning", running.length > 0);
     byId("notice-text").textContent = running.length
         ? `${running.join(", ")} est encore ouvert. Fermez complètement Discord, puis actualisez la liste.`
-        : mode === "uninstall" ? "Discord sera restauré. Vos réglages Midnightcord sont conservés." : "Fermez complètement Discord avant de continuer, y compris dans la zone de notification.";
+        : mode === "migrate-vencord" ? "Le chargeur Vencord sera sauvegardé puis remplacé. Vos réglages et thèmes Vencord restent intacts et pourront être importés dans Midnightcord après le redémarrage. Fermez Discord complètement."
+            : mode === "uninstall" ? "Discord sera restauré. Vos réglages Midnightcord sont conservés." : state.targets.some(target => target.vencord)
+                ? "Vencord est détecté : choisissez « Depuis Vencord » pour le remplacer et conserver vos données. Fermez Discord complètement avant de continuer."
+                : "Fermez complètement Discord avant de continuer, y compris dans la zone de notification.";
     byId("version").textContent = state.version ? `v${state.version}` : "Midnightcord";
     byId("platform").textContent = ({ win32: "Windows", darwin: "macOS", linux: "Linux" })[state.platform] || "";
     byId("scan-error").textContent = state.error || "";
@@ -103,7 +106,7 @@ function renderTargets() {
 
 function lockControls(value) {
     working = value;
-    for (const id of ["install-mode", "uninstall-mode", "close", "rescan"]) byId(id).disabled = value;
+    for (const id of ["install-mode", "migrate-vencord-mode", "uninstall-mode", "close", "rescan"]) byId(id).disabled = value;
     for (const checkbox of byId("targets").querySelectorAll("input")) checkbox.disabled = value || !eligible(state.targets.find(target => target.id === checkbox.value));
     updateSelection();
 }
@@ -180,8 +183,8 @@ async function perform() {
     byId("progress-view").classList.remove("complete", "failed");
     byId("stage-symbol").replaceChildren(mode === "uninstall" ? icon("restore") : logo());
     byId("progress-eyebrow").textContent = "ON S’OCCUPE DE TOUT.";
-    byId("progress-title").textContent = mode === "uninstall" ? "Retour à votre Discord." : "Une touche de Midnightcord.";
-    byId("progress-description").textContent = mode === "uninstall" ? "Restauration des installations sélectionnées." : "Personnalisation des installations sélectionnées.";
+    byId("progress-title").textContent = mode === "migrate-vencord" ? "De Vencord à Midnightcord." : mode === "uninstall" ? "Retour à votre Discord." : "Une touche de Midnightcord.";
+    byId("progress-description").textContent = mode === "migrate-vencord" ? "Sauvegarde du chargeur Vencord et installation de Midnightcord." : mode === "uninstall" ? "Restauration des installations sélectionnées." : "Personnalisation des installations sélectionnées.";
     byId("progress-footnote").textContent = "Gardez cette fenêtre ouverte pendant l’installation.";
     byId("result-list").hidden = true;
     byId("back").hidden = true;
@@ -198,13 +201,14 @@ function changeMode(next) {
     if (working || scanning || mode === next) return;
     mode = next;
     selected.clear();
-    for (const name of ["install", "uninstall"]) {
+    for (const name of ["install", "migrate-vencord", "uninstall"]) {
         byId(`${name}-mode`).classList.toggle("active", name === mode);
         byId(`${name}-mode`).setAttribute("aria-pressed", String(name === mode));
     }
     byId("selection-title").replaceChildren();
-    byId("selection-title").append(document.createTextNode(mode === "install" ? "Votre Discord." : "Retrouvez Discord."), document.createElement("br"), element("span", "", mode === "install" ? "Votre Midnightcord." : "Tout simplement."));
-    byId("selection-description").textContent = mode === "install" ? "Choisissez où installer votre nouvel espace." : "Choisissez les installations à restaurer.";
+    byId("selection-title").append(document.createTextNode(mode === "migrate-vencord" ? "Depuis Vencord." : mode === "install" ? "Votre Discord." : "Retrouvez Discord."), document.createElement("br"), element("span", "", mode === "uninstall" ? "Tout simplement." : "Votre Midnightcord."));
+    byId("selection-description").textContent = mode === "migrate-vencord" ? "Choisissez les installations Vencord à remplacer. Si le chargeur n’est pas reconnu, retirez-le avec l’installateur Vencord, puis revenez ici."
+        : mode === "install" ? "Choisissez où installer votre nouvel espace." : "Choisissez les installations à restaurer.";
     byId("footer-hint").textContent = mode === "install" ? "Votre Discord. Vos réglages." : "Vos réglages sont conservés.";
     renderTargets();
     showView("selection");
@@ -214,6 +218,7 @@ byId("rescan").addEventListener("click", () => void scan());
 byId("perform").addEventListener("click", () => void perform());
 byId("back").addEventListener("click", () => { selected.clear(); void scan(); });
 byId("install-mode").addEventListener("click", () => changeMode("install"));
+byId("migrate-vencord-mode").addEventListener("click", () => changeMode("migrate-vencord"));
 byId("uninstall-mode").addEventListener("click", () => changeMode("uninstall"));
 byId("minimize").addEventListener("click", () => bridge?.minimize());
 byId("close").addEventListener("click", () => { if (!working) bridge?.close(); });

@@ -28,7 +28,7 @@ import plugins from "~plugins";
 
 const logger = new Logger("Settings");
 
-const FORCE_DISABLED_DEFAULT_PLUGIN_KEYS = new Set([
+export const FORCE_DISABLED_DEFAULT_PLUGIN_KEYS = new Set([
     "activityspoofer",
     "audiolimiter",
     "antigroup",

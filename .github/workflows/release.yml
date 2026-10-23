@@ -55,6 +55,9 @@ jobs:
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 
+      - name: Test local typing and Vencord migration
+        run: pnpm test:midnight-type && pnpm test:vencord-migration
+
       - name: Test Midnightcord privacy extensions
         run: pnpm test:quiet-hours && pnpm test:privacy-shield
 

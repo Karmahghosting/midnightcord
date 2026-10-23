@@ -77,6 +77,13 @@ jobs:
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 
+      - name: Test local typing and Vencord migration
+        run: pnpm test:midnight-type && pnpm test:vencord-migration
+
+      - name: Test typing composer in Chrome
+        if: matrix.browser
+        run: pnpm test:midnight-type-browser
+
       - name: Verify native Shop and Midnightcord AI entry points
         run: pnpm test:midnightcord-ai
 
