@@ -90,7 +90,7 @@
 }
 
 .vc-plugins-ecosystem-banner-text h3 {
-    margin: 0 0 4px 0;
+    margin: 0 0 4px;
 }
 
 .vc-plugins-ecosystem-banner-text p {
@@ -106,7 +106,7 @@
 
 .vc-plugins-stats-banner {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
     gap: 16px;
     margin-bottom: 24px;
 }
@@ -154,22 +154,59 @@
 
 .vc-plugins-filter-controls {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
-.vc-plugins-filter-controls > div:first-child {
-    flex: 1;
+.vc-plugins-filter-search {
+    flex: 2 1 240px;
+    min-width: 0;
 }
 
-.vc-plugins-filter-buttons {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+.vc-plugins-filter-field {
+    flex: 1 1 160px;
+    min-width: 0;
 }
 
+.vc-plugins-filter-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.vc-plugins-filter-field select {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 6px;
+    background: var(--background-tertiary);
+    color: var(--text-normal);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.vc-plugins-filter-field select:focus-visible {
+    outline: 2px solid var(--text-link);
+    outline-offset: 2px;
+}
+
+.vc-plugins-results-count,
+.vc-plugins-load-more {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.vc-plugins-load-more {
+    padding: 16px;
+    text-align: center;
+}
 
 .vc-plugins-info-button {
     height: 20px;
@@ -187,13 +224,6 @@
 
 .vc-plugins-settings-button:hover {
     color: var(--interactive-icon-hover);
-}
-
-.vc-plugins-filter-controls {
-    display: grid;
-    height: 40px;
-    gap: 10px;
-    grid-template-columns: 1fr 1fr;
 }
 
 .vc-plugins-dep-name {

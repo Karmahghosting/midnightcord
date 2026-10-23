@@ -5,6 +5,7 @@
  */
 
 import { Settings } from "@api/Settings";
+
 import { t as pluginT } from "../midnightcordplugins/autoTranslateMidnightcord";
 
 export type Language = "en" | "fr" | "es" | "ru" | "zh" | "ar";
@@ -37,6 +38,19 @@ export const LANGUAGE_FLAGS: Record<Language, string> = {
 // All Midnightcord UI strings. Key = English original, value = translations per language.
 // Falls back to English key if translation is missing.
 const translations: Record<string, Partial<Record<Language, string>>> = {
+    "All categories": { fr: "Toutes les catégories" },
+    "Category": { fr: "Catégorie" },
+    "Plugin status": { fr: "État des plugins" },
+    "All installed": { fr: "Tous les installés" },
+    "Enabled plugins": { fr: "Activés" },
+    "Disabled plugins": { fr: "Désactivés" },
+    "Recently added": { fr: "Ajoutés récemment" },
+    "Sort by": { fr: "Trier par" },
+    "Most liked": { fr: "Les plus aimés" },
+    "Name (A–Z)": { fr: "Nom (A–Z)" },
+    "Name (Z–A)": { fr: "Nom (Z–A)" },
+    "Enabled first": { fr: "Activés en premier" },
+    "Matching plugins": { fr: "Plugins correspondants" },
 
     // ── Tab titles ──────────────────────────────────────────────────────────
     "Midnightcord Settings": { fr: "Paramètres Midnightcord", es: "Ajustes de Midnightcord", ru: "Настройки Midnightcord", zh: "Midnightcord 设置", ar: "إعدادات Midnightcord" },
@@ -162,15 +176,12 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
     "Custom QuickCSS, Theme Links, Plugin Settings, DataStore Data": { fr: "QuickCSS personnalisé, liens de thèmes, paramètres de plugins, données DataStore", es: "QuickCSS personalizado, enlaces de temas, ajustes de plugins, datos de DataStore", ru: "Пользовательский QuickCSS, ссылки на темы, настройки плагинов, данные DataStore", zh: "自定义 QuickCSS、主题链接、插件设置、DataStore 数据", ar: "QuickCSS المخصص، روابط السمات، إعدادات الإضافات، بيانات DataStore" },
     "Importing a settings file will overwrite your current settings. Make sure to export a backup first if you want to keep your current configuration.": { fr: "L'importation d'un fichier écrasera vos paramètres actuels. Assurez-vous d'exporter une sauvegarde d'abord.", es: "Importar un archivo sobrescribirá tu configuración actual.", ru: "Импорт файла настроек перезапишет текущие настройки.", zh: "导入设置文件将覆盖您当前的设置。请先导出备份。", ar: "استيراد ملف إعدادات سيستبدل إعداداتك الحالية. تأكد من تصدير نسخة احتياطية أولاً." },
 
-
     // ── Sidebar ──────────────────────────────────────────────────────────────
     "Midnightcord": { fr: "Midnightcord", es: "Midnightcord", ru: "Midnightcord", zh: "Midnightcord", ar: "Midnightcord" },
     "Create Theme": { fr: "Créer un thème", es: "Crear tema", ru: "Создать тему", zh: "创建主题", ar: "إنشاء سمة" },
     "Icon Finder": { fr: "Explorateur d'icônes", es: "Buscador de iconos", ru: "Поиск иконок", zh: "图标查找器", ar: "باحث الأيقونات" },
     "Patch Helper": { fr: "Aide au patch", es: "Ayuda de parches", ru: "Помощник патчей", zh: "补丁助手", ar: "مساعد التصحيح" },
     "Theme Library": { fr: "Bibliothèque de thèmes", es: "Biblioteca de temas", ru: "Библиотека тем", zh: "主题库", ar: "مكتبة السمات" },
-    
-
 
     // ── Sync tab extra ────────────────────────────────────────────────────────
     "Cancel": { fr: "Annuler", es: "Cancelar", ru: "Отмена", zh: "取消", ar: "إلغاء" },
@@ -193,7 +204,7 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
     "Make the Discord window transparent. A theme that supports transparency is required or this will do nothing.": { fr: "Rendez la fenêtre Discord transparente. Un thème prenant en charge la transparence est requis.", es: "Hace la ventana de Discord transparente. Se requiere un tema que soporte transparencia.", ru: "Сделайте окно Discord прозрачным. Требуется тема с поддержкой прозрачности.", zh: "使 Discord 窗口透明。需要支持透明度的主题，否则此选项无效。", ar: "جعل نافذة Discord شفافة. يلزم وجود سمة تدعم الشفافية وإلا لن يفعل هذا شيئًا." },
     "Allow the Discord window to be resized smaller than its default minimum size. Useful for tiling window managers or small screens.": { fr: "Permettez de redimensionner la fenêtre Discord en dessous de sa taille minimale par défaut.", es: "Permite redimensionar la ventana de Discord por debajo de su tamaño mínimo.", ru: "Разрешите изменять размер окна Discord ниже минимального.", zh: "允许将 Discord 窗口调整为小于默认最小尺寸。", ar: "السماح بتغيير حجم نافذة Discord إلى حجم أصغر من الحد الأدنى الافتراضي. مفيد لإدارة النوافذ أو الشاشات الصغيرة." },
     "Add Ctrl+Q as a keyboard shortcut to close Discord. This provides an alternative to Alt+F4 for quickly closing the application.": { fr: "Ajoutez Ctrl+Q comme raccourci clavier pour fermer Discord.", es: "Agrega Ctrl+Q como atajo de teclado para cerrar Discord.", ru: "Добавьте Ctrl+Q как горячую клавишу для закрытия Discord.", zh: "添加 Ctrl+Q 快捷键以关闭 Discord。", ar: "إضافة Ctrl+Q كاختصار لوحة مفاتيح لإغلاق Discord. يوفر هذا بديلاً لـ Alt+F4 لإغلاق التطبيق بسرعة." },
-    
+
     // ── Themes Tab ────────────────────────────────────────────────────────
     "Theme Management": { fr: "Gestion des thèmes", es: "Gestión de temas", ru: "Управление темами", zh: "主题管理" },
     "Customize Discord's appearance with themes. Add local .css files or load themes directly from URLs. Themes with a cog wheel icon have customizable settings you can modify.": { fr: "Personnalisez l'apparence de Discord avec des thèmes. Ajoutez des fichiers .css locaux ou chargez des thèmes depuis des URL.", es: "Personaliza la apariencia de Discord con temas. Agrega archivos .css locales o carga temas desde URLs.", ru: "Настройте внешний вид Discord с помощью тем. Добавьте локальные файлы .css или загружайте темы по URL.", zh: "使用主题自定义 Discord 的外观。添加本地 .css 文件或通过 URL 加载主题。" },
@@ -215,7 +226,7 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
     "Loading themes...": { fr: "Chargement des thèmes...", es: "Cargando temas...", ru: "Загрузка тем...", zh: "正在加载主题..." },
     "No themes installed yet. Add theme files to your themes folder or add an online theme above to get started.": { fr: "Aucun thème installé...", es: "No hay temas instalados...", ru: "Темы еще не установлены...", zh: "尚未安装主题..." },
     "No themes match your search or filter criteria.": { fr: "Aucun thème ne correspond...", es: "Ningún tema coincide...", ru: "Нет тем, соответствующих вашему поиску...", zh: "没有符合您搜索的主题。" },
-    
+
     // ── Editor / Plugin Editor ─────────────────────────────────────────────────────────────
     "Editor": { fr: "Éditeur", es: "Editor", ru: "Редактор", zh: "编辑器", ar: "المحرر" },
     "Plugin Editor": { fr: "Éditeur de Plugins", es: "Editor de Plugins", ru: "Редактор плагинов", zh: "插件编辑器", ar: "محرر الإضافات" },
@@ -234,14 +245,13 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
     "Nitro themes aren't supported": { fr: "Les thèmes Nitro ne sont pas supportés", es: "Los temas Nitro no son compatibles", ru: "Темы Nitro не поддерживаются", zh: "不支持 Nitro 主题" },
     "Switch to {theme} mode": { fr: "Passer en mode {theme}", es: "Cambiar al modo {theme}", ru: "Переключиться в режим {theme}", zh: "切换到 {theme} 模式" },
     "Disable Nitro Theme": { fr: "Désactiver le thème Nitro", es: "Deshabilitar tema Nitro", ru: "Отключить тему Nitro", zh: "禁用 Nitro 主题" },
-    
+
     // ── Extra vencord index translations ──────────────────────────────
     "You can customize where this settings section appears in Discord's settings menu by configuring the": { fr: "Vous pouvez personnaliser où cette section...", es: "Puedes personalizar dónde aparece cette section...", ru: "Вы можете настроить, где этот раздел настроек появляется...", zh: "您可以自定义此设置..." },
     "Settings Plugin": { fr: "Plugin de paramètres", es: "Plugin de ajustes", ru: "Плагин настроек", zh: "设置插件" },
-    
+
     // ── Sidebar Tabs ──────────────────────────────────────────────────────────
     "Synchronization": { fr: "Synchronisation", es: "Sincronización", ru: "Синхронизация", zh: "同步", ar: "مزامنة" },
-
 
     // ── Changelog Tab ────────────────────────────────────────────────────────
     "Fetch Changes": { fr: "Rechercher les modifications", es: "Buscar cambios", ru: "Получить изменения", zh: "获取更改" },
