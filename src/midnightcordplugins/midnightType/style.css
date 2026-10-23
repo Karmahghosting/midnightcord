@@ -1,0 +1,56 @@
+.mc-type-suggestion {
+    position: fixed;
+    z-index: 10;
+    pointer-events: none;
+    user-select: none;
+    overflow: hidden;
+    white-space: pre;
+    text-overflow: ellipsis;
+    color: var(--text-muted);
+    opacity: 0.75;
+}
+
+.mc-type-suggestion[hidden] {
+    display: none;
+}
+
+.mc-type-settings {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+    color: var(--text-normal);
+    line-height: 1.5;
+}
+
+.mc-type-settings p {
+    margin: 0;
+}
+
+.mc-type-settings kbd {
+    padding: 2px 5px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 4px;
+    font: inherit;
+    font-size: 0.9em;
+}
+
+.mc-type-settings progress {
+    width: 100%;
+    height: 6px;
+    accent-color: var(--brand-500);
+}
+
+.mc-type-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mc-type-hint {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.mc-type-error {
+    color: var(--text-danger);
+}

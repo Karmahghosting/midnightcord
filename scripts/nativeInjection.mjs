@@ -5,18 +5,23 @@
 
 import { randomUUID } from "node:crypto";
 import {
+    closeSync,
     cpSync,
     existsSync,
+    lstatSync,
     mkdirSync,
+    openSync,
     readFileSync,
+    readSync,
     readdirSync,
+    realpathSync,
     renameSync,
     rmSync,
     statSync,
     writeFileSync
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, posix, resolve, win32 } from "node:path";
 
 export const INJECTOR_MARKER = "Midnightcord Injector";
 
@@ -162,6 +167,141 @@ export function isMidnightcordLoader(appDir) {
         return readFileSync(indexPath, "utf8").includes(INJECTOR_MARKER);
     } catch {
         return false;
+    }
+}
+
+// Only inspect archive metadata and bytes. Never load or execute another mod.
+function readAsarMetadata(path) {
+    const stat = lstatSync(path);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size < 16) throw new Error("Archive non régulière");
+    const fd = openSync(path, "r");
+    try {
+        const prefix = Buffer.alloc(16);
+        if (readSync(fd, prefix, 0, 16, 0) !== 16 || prefix.readUInt32LE(0) !== 4) throw new Error("Archive invalide");
+        const headerLength = prefix.readUInt32LE(12);
+        const dataOffset = 8 + prefix.readUInt32LE(4);
+        if (headerLength < 2 || headerLength > 16 * 1024 * 1024 || dataOffset < 16 + headerLength
+            || dataOffset > stat.size || dataOffset - 16 - headerLength > 3) throw new Error("En-tête invalide");
+        const header = Buffer.alloc(headerLength);
+        if (readSync(fd, header, 0, headerLength, 16) !== headerLength) throw new Error("En-tête incomplet");
+        return { files: JSON.parse(header.toString("utf8")).files, dataOffset, size: stat.size };
+    } finally { closeSync(fd); }
+}
+
+function readAsarFile(path, archive, name, maxSize = 64 * 1024) {
+    const entry = archive.files?.[name];
+    const offset = Number(entry?.offset);
+    if (!entry || entry.link || entry.unpacked || entry.files || !Number.isSafeInteger(entry.size) || entry.size < 1
+        || entry.size > maxSize || !Number.isSafeInteger(offset) || offset < 0
+        || archive.dataOffset + offset + entry.size > archive.size) throw new Error("Entrée non prise en charge");
+    const fd = openSync(path, "r");
+    try {
+        const bytes = Buffer.alloc(entry.size);
+        if (readSync(fd, bytes, 0, entry.size, archive.dataOffset + offset) !== entry.size) throw new Error("Entrée incomplète");
+        return bytes.toString("utf8");
+    } finally { closeSync(fd); }
+}
+
+function isVencordStub(index, pkg) {
+    if (pkg.name !== "discord" || pkg.main !== "index.js" || Object.keys(pkg).some(key => !["name", "main"].includes(key))) return false;
+    const match = /^\s*require\(("(?:[^"\\]|\\.)*")\);?\s*$/.exec(index);
+    if (!match) return false;
+    const patcher = JSON.parse(match[1]);
+    const normalized = patcher.replace(/\\/g, "/");
+    return (win32.isAbsolute(patcher) || posix.isAbsolute(patcher)) && !normalized.split("/").includes("..")
+        && /\/(?:Vencord|VencordData)\/dist\/patcher\.js$/i.test(normalized);
+}
+
+function isDiscordArchive(path) {
+    const archive = readAsarMetadata(path);
+    const pkg = JSON.parse(readAsarFile(path, archive, "package.json"));
+    // A known Discord bootstrap is required. OpenAsar/custom archives need their own uninstaller.
+    if (pkg.name !== "discord" || typeof pkg.main !== "string") return false;
+    const main = pkg.main.replace(/^\.\//, "");
+    const bootstrap = main === "bundle.js" ? archive.files?.[main]
+        : main === "app_bootstrap/index.js" ? archive.files?.app_bootstrap?.files?.["index.js"] : null;
+    return !!bootstrap && !bootstrap.link && !bootstrap.unpacked && !bootstrap.files
+        && Number.isSafeInteger(bootstrap.size) && bootstrap.size > 0
+        && Number.isSafeInteger(Number(bootstrap.offset)) && Number(bootstrap.offset) >= 0
+        && archive.dataOffset + Number(bootstrap.offset) + bootstrap.size <= archive.size;
+}
+
+export function detectVencordInstallation(resourcesDir) {
+    const resources = resolve(resourcesDir);
+    try {
+        if (!lstatSync(resources).isDirectory() || lstatSync(resources).isSymbolicLink()) return null;
+        const app = join(resources, "app");
+        const asar = join(resources, "app.asar");
+        const backup = join(resources, "_app.asar");
+        let layout;
+        let index;
+        let pkg;
+        if (existsSync(app)) {
+            if (!lstatSync(app).isDirectory() || lstatSync(app).isSymbolicLink() || existsSync(backup)
+                || readdirSync(app).sort().join(",") !== "index.js,package.json") return null;
+            for (const name of ["index.js", "package.json"]) {
+                const stat = lstatSync(join(app, name));
+                if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 64 * 1024) return null;
+            }
+            index = readFileSync(join(app, "index.js"), "utf8");
+            pkg = JSON.parse(readFileSync(join(app, "package.json"), "utf8"));
+            if (!isDiscordArchive(asar)) return null;
+            layout = "directory";
+        } else {
+            if (lstatSync(asar).size > 64 * 1024 || !isDiscordArchive(backup)) return null;
+            const archive = readAsarMetadata(asar);
+            if (Object.keys(archive.files).sort().join(",") !== "index.js,package.json") return null;
+            index = readAsarFile(asar, archive, "index.js");
+            pkg = JSON.parse(readAsarFile(asar, archive, "package.json"));
+            const entries = Object.values(archive.files).sort((a, b) => Number(a.offset) - Number(b.offset));
+            if (Number(entries[0].offset) !== 0 || Number(entries[1].offset) !== entries[0].size
+                || archive.dataOffset + entries[0].size + entries[1].size !== archive.size) return null;
+            layout = "asar";
+        }
+        return isVencordStub(index, pkg) ? { layout } : null;
+    } catch { return null; }
+}
+
+export function migrateVencordResource(resourcesDir, patcherPath, options = {}) {
+    const resources = resolve(resourcesDir);
+    const canonical = realpathSync(resources);
+    if ((process.platform === "win32" ? canonical.toLowerCase() !== resources.toLowerCase() : canonical !== resources)) throw new Error("Le chemin Discord doit être canonique.");
+    const detected = detectVencordInstallation(resources);
+    if (!detected) throw new Error("Installation Vencord non reconnue. Retirez Vencord avec son installateur, puis installez Midnightcord.");
+    const patcher = lstatSync(resolve(patcherPath));
+    if (!patcher.isFile() || patcher.isSymbolicLink()) throw new Error("Le build Midnightcord est absent ou invalide.");
+    const recoveryDir = join(resources, ".midnightcord-vencord-recovery-" + randomUUID());
+    const staged = join(recoveryDir, "midnightcord-loader");
+    const journal = [];
+    // Injection-only dependency for deterministic filesystem failure tests.
+    const move = options.renameSync ?? renameSync;
+    const relocate = (from, to) => { move(from, to); journal.push([from, to]); };
+    mkdirSync(recoveryDir, { mode: 0o700 });
+    try {
+        writeLoader(staged, patcherPath);
+        writeFileSync(join(recoveryDir, "recovery.json"), JSON.stringify({
+            version: 1, source: "Vencord", layout: detected.layout, resources, createdAt: new Date().toISOString(),
+            instructions: "Close Discord. Remove only the Midnightcord app loader. For asar layout, move the saved app.asar here back to resources/app.asar and keep resources/_app.asar. For directory layout, restore resources/_app.asar to resources/app.asar and move the saved app directory back to resources/app. Vencord user data was not changed."
+        }, null, 2) + "\n", { mode: 0o600 });
+        const latest = detectVencordInstallation(resources);
+        if (latest?.layout !== detected.layout) throw new Error("L’installation Discord a changé. Actualisez avant de recommencer.");
+        if (detected.layout === "asar") {
+            relocate(join(resources, "app.asar"), join(recoveryDir, "app.asar"));
+            relocate(join(resources, "_app.asar"), join(resources, "app.asar"));
+        } else {
+            relocate(join(resources, "app"), join(recoveryDir, "app"));
+        }
+        relocate(join(resources, "app.asar"), join(resources, "_app.asar"));
+        relocate(staged, join(resources, "app"));
+        return { status: "migrated", recoveryDir };
+    } catch (error) {
+        try {
+            for (const [from, to] of journal.reverse()) renameSync(to, from);
+        } catch (rollbackError) {
+            throw new Error("Migration interrompue. La sauvegarde de récupération est conservée dans " + recoveryDir + ". Restaurez-la avant de relancer Discord.", { cause: rollbackError });
+        }
+        rmSync(recoveryDir, { recursive: true, force: true });
+        throw error;
     }
 }
 

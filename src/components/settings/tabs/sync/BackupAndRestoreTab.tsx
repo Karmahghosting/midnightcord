@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { t } from "@api/i18n";
 import { downloadSettingsBackup, uploadSettingsBackup } from "@api/SettingsSync/offline";
 import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
@@ -24,13 +25,15 @@ import { Heading } from "@components/Heading";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
 import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
+import { VencordMigrationPanel } from "@midnightcordplugins/vencordMigration/Panel";
 import { Margins } from "@utils/margins";
 import { React } from "@webpack/common";
-import { t } from "@api/i18n";
 
 function BackupAndRestoreTab() {
     return (
         <SettingsTab>
+            <VencordMigrationPanel />
+            <Divider className={Margins.bottom20} />
             <Heading className={Margins.top16}>{t("Backup & Restore")}</Heading>
             <Paragraph className={Margins.bottom20}>
                 {t("Import and export your Midnightcord settings as a JSON file. This allows you to easily transfer your settings to another device, or recover them after reinstalling Midnightcord or Discord.")}

@@ -100,8 +100,10 @@ export function createInstaller(options = {}) {
             const appAsar = join(path, "app.asar");
             const backup = join(path, "_app.asar");
             const installed = helpers.isMidnightcordLoader(app);
+            const vencord = !installed && !!helpers.detectVencordInstallation(path);
             let conflict = null;
-            if (existsSync(app) && !installed) conflict = "Un autre mod utilise déjà cette installation. Retirez-le avec son propre désinstalleur.";
+            if (vencord) conflict = "Vencord détecté. Choisissez « Migrer depuis Vencord » pour le remplacer en conservant vos données.";
+            else if (existsSync(app) && !installed) conflict = "Un autre mod utilise déjà cette installation. Retirez-le avec son propre désinstalleur.";
             else if (existsSync(appAsar) && statSync(appAsar).isDirectory()) conflict = "Un dossier tiers remplace app.asar.";
             else if (!existsSync(appAsar) && !existsSync(backup)) conflict = "La sauvegarde officielle de Discord est absente.";
             else if (!installed && existsSync(appAsar) && existsSync(backup)) conflict = "app.asar et sa sauvegarde existent ensemble. Une restauration manuelle est nécessaire.";
@@ -109,7 +111,7 @@ export function createInstaller(options = {}) {
             targets.push({
                 id: "target-" + createHash("sha256").update(candidate.channel + "\0" + canonical).digest("hex").slice(0, 24),
                 channel: candidate.channel, name: channelNames[candidate.channel], version: candidate.version ?? "",
-                path, source: candidate.source ?? "", installed, writable: paths.every(item => helpers.isWritable(item)), conflict
+                path, source: candidate.source ?? "", installed, vencord, writable: paths.every(item => helpers.isWritable(item)), conflict
             });
         }
         let running = [];
@@ -133,7 +135,7 @@ export function createInstaller(options = {}) {
     async function perform(request) {
         const results = [];
         if (busy) return { ok: false, message: "Une opération est déjà en cours.", results };
-        if (!request || !["install", "uninstall"].includes(request.action) || !Array.isArray(request.targetIds)
+        if (!request || !["install", "uninstall", "migrate-vencord"].includes(request.action) || !Array.isArray(request.targetIds)
             || !request.targetIds.length || request.targetIds.length > 64 || request.targetIds.some(id => typeof id !== "string")
             || new Set(request.targetIds).size !== request.targetIds.length || request.targetIds.some(id => !registry.has(id))) {
             return { ok: false, message: "Sélection invalide. Actualisez la liste et choisissez une installation détectée.", results };
@@ -150,11 +152,14 @@ export function createInstaller(options = {}) {
             const targets = requested.map(previous => {
                 const target = registry.get(previous.id);
                 if (!target || target.path !== previous.path) throw new Error("Les installations ont changé. Actualisez la liste avant de recommencer.");
-                if (target.conflict) throw new Error(target.name + " : " + target.conflict);
+                if (request.action === "migrate-vencord") {
+                    if (!target.vencord) throw new Error(target.name + " : aucune installation Vencord reconnue. Utilisez son désinstalleur si nécessaire.");
+                } else if (target.conflict) throw new Error(target.name + " : " + target.conflict);
                 if (!target.writable) throw new Error("Écriture non autorisée dans " + target.path + ". Vérifiez les permissions de cette installation.");
                 return target;
             });
-            const installing = request.action === "install";
+            const migrating = request.action === "migrate-vencord";
+            const installing = request.action !== "uninstall";
             const steps = targets.length + (installing ? 2 : 1);
             let completed = 1;
             let patcherPath;
@@ -170,13 +175,19 @@ export function createInstaller(options = {}) {
             for (const target of targets) {
                 progress({ stage: installing ? "injecting" : "restoring", percent: Math.round(100 * completed / steps), message: (installing ? "Installation dans " : "Restauration de ") + target.name + "…", targetId: target.id });
                 try {
-                    const status = installing ? helpers.injectResource(target.path, patcherPath) : helpers.uninjectResource(target.path);
-                    results.push({ id: target.id, ok: true, status, message: status === "unchanged" ? "Déjà à jour." : installing ? "Midnightcord installé." : "Discord restauré." });
+                    const running = await listRunning(targets);
+                    if (running.length) throw new Error("Discord a été relancé. Fermez-le complètement avant de réessayer.");
+                    const migration = migrating ? helpers.migrateVencordResource(target.path, patcherPath) : null;
+                    const status = migration?.status ?? (installing ? helpers.injectResource(target.path, patcherPath) : helpers.uninjectResource(target.path));
+                    results.push({ id: target.id, ok: true, status, ...(migration ? { recoveryDir: migration.recoveryDir } : {}), message: migration
+                        ? "Vencord remplacé. Sauvegarde du chargeur : " + migration.recoveryDir
+                        : status === "unchanged" ? "Déjà à jour." : installing ? "Midnightcord installé." : "Discord restauré." });
                 } catch (error) { results.push({ id: target.id, ok: false, message: error.message }); }
                 completed++;
             }
             ok = results.every(result => result.ok);
-            message = ok ? installing ? "Installation terminée. Vous pouvez relancer Discord." : "Discord a été restauré. Vos réglages Midnightcord sont conservés."
+            message = ok ? migrating ? "Migration terminée. Relancez Discord, puis ouvrez la migration Vencord dans les réglages Midnightcord pour importer vos préférences et thèmes. Vos données Vencord sont conservées."
+                : installing ? "Installation terminée. Vous pouvez relancer Discord." : "Discord a été restauré. Vos réglages Midnightcord sont conservés."
                 : "Certaines installations n’ont pas pu être modifiées. Consultez les résultats puis réessayez.";
             await refresh();
         } catch (error) {

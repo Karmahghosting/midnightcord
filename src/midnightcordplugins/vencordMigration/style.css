@@ -1,0 +1,65 @@
+.vc-vencord-migration {
+    color: var(--text-default, var(--text-normal));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.vc-vencord-migration-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vc-vencord-migration-source {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-vencord-migration-source select {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 8px;
+    color: inherit;
+    padding: 10px;
+    max-width: 100%;
+}
+
+.vc-vencord-migration-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--background-modifier-accent);
+}
+
+.vc-vencord-migration-option > div { min-width: 0; }
+
+.vc-vencord-migration-option p {
+    color: var(--text-muted);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+.vc-vencord-migration-option > label { flex-shrink: 0; }
+
+.vc-vencord-migration-table {
+    overflow: auto;
+    max-height: 320px;
+    margin: 12px 0;
+}
+
+.vc-vencord-migration-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.vc-vencord-migration-table td,
+.vc-vencord-migration-table th {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--background-modifier-accent);
+}
+.vc-vencord-migration p { overflow-wrap: anywhere; }
