@@ -1,5 +1,5 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -8,8 +8,10 @@ import { ApplicationCommandInputType, ApplicationCommandOptionType, sendBotMessa
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
 import { definePluginSettings } from "@api/Settings";
+import { DeleteIcon as SilentDeleteIcon } from "@components/Icons";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, Constants, Menu, RestAPI, UserStore } from "@webpack/common";
+
 import { t } from "../autoTranslateMidnightcord";
 
 const settings = definePluginSettings({
@@ -39,13 +41,6 @@ const settings = definePluginSettings({
         default: 500
     }
 });
-
-const SilentDeleteIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M15 3.999V2H9V3.999H3V5.999H21V3.999H15Z" />
-        <path d="M5 6.99902V18.999C5 20.101 5.897 20.999 7 20.999H17C18.103 20.999 19 20.101 19 18.999V6.99902H5ZM11 17H9V11H11V17ZM15 17H13V11H15V17Z" />
-    </svg>
-);
 
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -89,7 +84,8 @@ const messageContextMenuPatch: NavContextMenuPatchCallback = (children, { messag
             color="danger"
             label={t("Silent Delete")}
             action={() => silentDeleteMessage(message.channel_id, message.id, !message.deleted)}
-            icon={SilentDeleteIcon}
+            iconLeft={SilentDeleteIcon}
+            leadingAccessory={{ type: "icon", icon: SilentDeleteIcon }}
         />
     );
 };
