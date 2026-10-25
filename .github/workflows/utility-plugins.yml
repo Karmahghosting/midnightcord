@@ -83,6 +83,9 @@ jobs:
       - name: Test AlwaysTrust domain-only link handling
         run: pnpm test:always-trust
 
+      - name: Test emoji cloning and favorite ordering
+        run: pnpm test:emojis
+
       - name: Test local Discord API and MCP
         run: pnpm test:discord-api
 

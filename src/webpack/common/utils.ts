@@ -238,8 +238,9 @@ export const ApplicationStreamPreviewStore = findByPropsLazy("getPreviewURL");
 export const fetchApplicationsRPC = findByCodeLazy("APPLICATION_RPC(");
 
 // React DnD hooks
-export const useDrag = findByCodeLazy("useDrag", "DragSourceMonitor");
-export const useDrop = findByCodeLazy("useDrop", "DropTargetMonitor");
+// Match implementation signatures: production builds strip hook/monitor names.
+export const useDrag = findByCodeLazy("useDrag::spec.begin was deprecated");
+export const useDrop = findByCodeLazy(".disconnectDropTarget()", ".dropTargetOptions=");
 
 // Safe ConfirmModal that won't break when Discord changes it
 import { React } from "./react";

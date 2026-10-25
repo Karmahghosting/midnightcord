@@ -18,147 +18,127 @@
 
 import "./styles.css";
 
+import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs } from "@utils/constants";
-import { classNameFactory } from "@utils/css";
-import { classes } from "@utils/misc";
+import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
-import { findByPropsLazy, findCssClassesLazy } from "@webpack";
-import { useDrag, useDrop, useLayoutEffect, useRef, UserSettingsActionCreators } from "@webpack/common";
+import { findByPropsLazy } from "@webpack";
+import { React, useCallback, useDrag, useDrop, useRef, UserSettingsActionCreators, useState } from "@webpack/common";
 
 const UserSettingsDelay = findByPropsLazy("INFREQUENT_USER_ACTION");
-const imgCls = findCssClassesLazy("image", "imageLoading");
-const dndCls = findCssClassesLazy("wrapper", "target", "autoPointerEvents", "dragOver");
-
-const cl = classNameFactory("vc-drag-favorite-emotes-");
+const logger = new Logger("DragFavoriteEmotes");
+const DRAG_TYPE = "MIDNIGHTCORD_FAVORITE_EMOJI";
 
 type EmojiData = {
-    uniqueName: string | undefined;
-    id: string;
+    uniqueName?: string;
+    id?: string;
 };
 
 type EmojiDescriptor = {
-    category: string;
-    emoji: EmojiData;
+    category?: string;
+    emoji?: EmojiData;
 };
+
+interface EmojiButtonProps {
+    Component: React.ElementType;
+    originalRef?: React.Ref<HTMLElement>;
+    descriptor?: EmojiDescriptor;
+    [key: string]: any;
+}
+
+export function favoriteId(descriptor?: EmojiDescriptor): string | undefined {
+    if (descriptor?.category !== "FAVORITES") return;
+    return [descriptor.emoji?.uniqueName, descriptor.emoji?.id].find(value => typeof value === "string" && value.length > 0);
+}
+
+/** Missing/stale IDs must never become splice(-1), which would remove another favorite. */
+export function reorderFavorites(settings: { emojis?: unknown; } | null | undefined, source: unknown, target: unknown, after = false): false | undefined {
+    const emojis = settings?.emojis;
+    if (!Array.isArray(emojis) || !emojis.every(id => typeof id === "string") || typeof source !== "string" || typeof target !== "string" || source === target) return false;
+    const sourceIndex = emojis.indexOf(source);
+    const targetIndex = emojis.indexOf(target);
+    if (sourceIndex < 0 || targetIndex < 0) return false;
+    const destination = targetIndex + Number(after) - Number(sourceIndex < targetIndex);
+    if (sourceIndex === destination) return false;
+    emojis.splice(sourceIndex, 1);
+    emojis.splice(destination, 0, source);
+}
+
+function NativeButton({ Component, originalRef, descriptor: _descriptor, ...props }: EmojiButtonProps) {
+    return <Component {...props} ref={originalRef} />;
+}
+
+function FavoriteButton({ Component, originalRef, descriptor, ...props }: EmojiButtonProps) {
+    const id = favoriteId(descriptor);
+    const node = useRef<HTMLElement | null>(null);
+    const cleanupRef = useRef<(() => void) | undefined>(undefined);
+    const [after, setAfter] = useState(false);
+    const [{ isDragging }, drag] = useDrag(() => ({
+        type: DRAG_TYPE,
+        item: { id },
+        canDrag: () => !!id,
+        collect: monitor => ({ isDragging: monitor.isDragging() })
+    }), [id]);
+    const isAfter = monitor => {
+        const pointer = monitor.getClientOffset();
+        const rect = node.current?.getBoundingClientRect();
+        return !!(pointer && rect && pointer.x >= rect.left + rect.width / 2);
+    };
+    const [{ canDrop, isOver }, drop] = useDrop(() => ({
+        accept: DRAG_TYPE,
+        canDrop: item => !!id && typeof item?.id === "string" && item.id !== id,
+        collect: monitor => ({ canDrop: monitor.canDrop(), isOver: monitor.isOver({ shallow: true }) }),
+        hover: (_item, monitor) => setAfter(isAfter(monitor)),
+        drop: (item, monitor) => {
+            if (!id || typeof item?.id !== "string" || item.id === id || monitor.didDrop()) return;
+            const insertAfter = isAfter(monitor);
+            void (async () => {
+                try {
+                    await UserSettingsActionCreators.FrecencyUserSettingsActionCreators.updateAsync("favoriteEmojis",
+                        values => reorderFavorites(values, item.id, id, insertAfter), UserSettingsDelay.INFREQUENT_USER_ACTION);
+                } catch { logger.warn("Could not update favorite emoji order."); }
+            })();
+        }
+    }), [id]);
+    const connect = useCallback((element: HTMLElement | null) => {
+        const previousCleanup = cleanupRef.current;
+        cleanupRef.current = undefined;
+        previousCleanup?.();
+        node.current = element;
+        drag(drop(element));
+        if (typeof originalRef === "function") {
+            // React 19 callback refs can return cleanup; also keep React 18 null callbacks working.
+            if (element || !previousCleanup) {
+                const cleanup = originalRef(element);
+                if (typeof cleanup === "function") cleanupRef.current = cleanup;
+            }
+        } else if (originalRef) originalRef.current = element;
+    }, [drag, drop, originalRef]);
+
+    return <Component {...props} ref={connect}
+        data-vc-favorite-emote-dragging={isDragging || undefined}
+        data-vc-favorite-emote-drop={canDrop && isOver ? after ? "after" : "before" : undefined} />;
+}
+
+const GuardedFavoriteButton = ErrorBoundary.wrap(FavoriteButton, {
+    fallback: ({ wrappedProps }) => <NativeButton {...wrappedProps} />
+});
 
 export default definePlugin({
     name: "DragFavoriteEmotes",
     authors: [EquicordDevs.PWall],
     description: "Adds the ability to change the order of your favourite emotes",
     tags: ["Customisation", "Chat", "Emotes"],
-    patches: [
-        {
-            find: "#{intl::EMOJI_FAVORITE_TOOLTIP}",
-            replacement: [
-                {
-                    match: /(ref:\i,children:)(\(0,\i.jsxs?\)\(\i)/,
-                    replace: "$1arguments[0]?.collected?.isDragging?$self.dragItem():$2",
-                },
-                {
-                    match: /\[(\i\.\i)\](?=.{0,5}\[\i\?\?)/,
-                    replace: '[arguments[0].collected.isDragging?"":$1]',
-                },
-                {
-                    match: /(\[\i,\i\]=\i\.useState\(""\))/,
-                    replace: "$1,[collected,drag]=$self.drag(arguments[0])",
-                },
-                {
-                    match: /(onFocus:.{0,50}\(\i,{ref:)(\i),/,
-                    replace: '$1arguments[0]?.descriptor?.category==="FAVORITES"?drag:$2,collected:collected,',
-                },
-                {
-                    match: /(key:\i,ref:\i)(?=\},\i)/,
-                    replace: '$1,style:{position:"relative"}',
-                },
-                {
-                    match: /(delay:200,children:)(\i)/,
-                    replace: "$1[$2,$self.wrapper(arguments[0]?.descriptor)]",
-                },
-                {
-                    match: /(delay:200,children:.{0,100}\}\):)(\i)\)/,
-                    replace: "$1[$2,$self.wrapper(arguments[0]?.descriptor)])",
-                },
-            ],
-        },
-    ],
-    drag(e: { descriptor: EmojiDescriptor; }) {
-        return useDrag(
-            () => ({
-                type: "emoji",
-                collect: monitor => ({
-                    isDragging: !!monitor.isDragging(),
-                }),
-                canDrag: () => (e?.descriptor?.category === "FAVORITES"),
-                item: { id: e?.descriptor?.emoji?.uniqueName ?? e?.descriptor?.emoji?.id }
-            }),
-            [e?.descriptor],);
-    },
-    drop({ emoji, category }: EmojiDescriptor) {
-        return useDrop(() => ({
-            accept: "emoji",
-            canDrop() {
-                return category === "FAVORITES";
-            },
-            collect: monitor => ({
-                canDrop: !!monitor.canDrop(),
-                isOver: !!monitor.isOver(),
-            }),
-            drop(item: { id: string; }) {
-                const source = item.id;
-                const target = emoji?.uniqueName ?? emoji?.id;
-                function update(this: { source: string; target: string; }, e: { emojis: string[]; }) {
-                    if (this.source === this.target) {
-                        return false;
-                    }
-                    const sourceIndex = e.emojis.findIndex(emoji => emoji === this.source);
-                    const targetIndex = e.emojis.findIndex(emoji => emoji === this.target);
-                    // Adjust final index to account for removal of source emoji
-                    const finalIndex = targetIndex < sourceIndex ? targetIndex : targetIndex - 1;
-                    if (sourceIndex === finalIndex) {
-                        return false;
-                    }
-                    e.emojis.splice(sourceIndex, 1);
-                    e.emojis.splice(finalIndex, 0, this.source);
-                }
-                UserSettingsActionCreators.FrecencyUserSettingsActionCreators.updateAsync("favoriteEmojis", update.bind({ source, target }), UserSettingsDelay.INFREQUENT_USER_ACTION);
-            }
-        }), [emoji]);
-    },
-    dragItem() {
-        return (
-            <span className={classes(cl("item"), imgCls.imageLoading)} />
-        );
-    },
-    wrapper(emoji: EmojiDescriptor) {
-        const [collected, drop] = this.drop(emoji);
-        const ref: React.RefObject<null | HTMLElement> = useRef(null);
-        useLayoutEffect(() => {
-            if (emoji?.category !== "FAVORITES") return;
-            const frame = requestAnimationFrame(() => {
-                if (!ref.current) {
-                    return;
-                }
-                if (collected.canDrop) {
-                    ref.current.classList.add(dndCls.autoPointerEvents);
-                    return;
-                }
-                ref.current.classList.remove(dndCls.autoPointerEvents);
-            }
-            );
-            return () => cancelAnimationFrame(frame);
-        }, [collected, ref]);
-
-        if (emoji?.category !== "FAVORITES") return;
-
-        return (
-            <div className={classes(cl("wrapper"), dndCls.wrapper)} aria-hidden="true">
-                <div className={classes(collected.isOver ? cl("indicator") : "", dndCls.target)}
-                    ref={e => {
-                        ref.current = e;
-                        drop(e);
-                    }}>
-                </div>
-            </div>
-        );
+    patches: [{
+        find: "#{intl::EMOJI_FAVORITE_TOOLTIP}",
+        replacement: {
+            // A single replacement keeps the native render valid if Discord changes the target.
+            // Hooks belong to our own component, never to conditional tooltip branches.
+            match: /(\(0,\i\.jsxs?\)\()(\i),\{ref:(\i),emoji:(\i),isFavorite:/,
+            replace: "$1$self.EmojiButton,{Component:$2,descriptor:arguments[0]?.descriptor,originalRef:$3,emoji:$4,isFavorite:"
+        }
+    }],
+    EmojiButton(props: EmojiButtonProps) {
+        return favoriteId(props.descriptor) ? <GuardedFavoriteButton {...props} /> : <NativeButton {...props} />;
     }
 });
