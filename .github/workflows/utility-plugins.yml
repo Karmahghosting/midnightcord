@@ -89,6 +89,9 @@ jobs:
       - name: Test silent message actions and attachment preservation
         run: pnpm test:silent-actions
 
+      - name: Test desktop server reporting
+        run: pnpm test:report-server
+
       - name: Test local Discord API and MCP
         run: pnpm test:discord-api
 
