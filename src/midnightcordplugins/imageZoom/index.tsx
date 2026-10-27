@@ -1,5 +1,5 @@
 /*
- * Midnightcord, a Discord client mod
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -86,12 +86,20 @@ export const settings = definePluginSettings({
 });
 
 const imageContextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
+    if (!Array.isArray(children) || !props) return;
     // Discord re-uses the image context menu for links to for the copy and open buttons
     if ("href" in props) return;
     // emojis in user statuses
     if (props.target?.classList?.contains("emoji")) return;
+    if (children.some(child => child?.props?.id === "image-zoom")) return;
+    if (!Menu.MenuGroup || !Menu.MenuCheckboxItem) return;
 
-    const { square, nearestNeighbour } = settings.use(["square", "nearestNeighbour"]);
+    // A context-menu patch is not a React component. Hooks here would change
+    // Discord's own hook order when the same menu opens for a link or an image.
+    const { square, nearestNeighbour } = settings.store;
+    // A Discord update or a lazy module can leave this optional control absent.
+    // Keep the native menu usable while the shared component is unavailable.
+    const hasSlider = Boolean(Menu.MenuControlItem && Menu.MenuSliderControl);
 
     children.push(
         <Menu.MenuGroup id="image-zoom">
@@ -100,7 +108,7 @@ const imageContextMenuPatch: NavContextMenuPatchCallback = (children, props) => 
                 label="Square Lens"
                 checked={square}
                 action={() => {
-                    settings.store.square = !square;
+                    settings.store.square = !settings.store.square;
                 }}
             />
             <Menu.MenuCheckboxItem
@@ -108,10 +116,10 @@ const imageContextMenuPatch: NavContextMenuPatchCallback = (children, props) => 
                 label="Nearest Neighbour"
                 checked={nearestNeighbour}
                 action={() => {
-                    settings.store.nearestNeighbour = !nearestNeighbour;
+                    settings.store.nearestNeighbour = !settings.store.nearestNeighbour;
                 }}
             />
-            <Menu.MenuControlItem
+            {hasSlider && <Menu.MenuControlItem
                 id="vc-zoom"
                 label="Zoom"
                 control={(props, ref) => (
@@ -124,8 +132,8 @@ const imageContextMenuPatch: NavContextMenuPatchCallback = (children, props) => 
                         onChange={debounce((value: number) => settings.store.zoom = value, 100)}
                     />
                 )}
-            />
-            <Menu.MenuControlItem
+            />}
+            {hasSlider && <Menu.MenuControlItem
                 id="vc-size"
                 label="Lens Size"
                 control={(props, ref) => (
@@ -138,8 +146,8 @@ const imageContextMenuPatch: NavContextMenuPatchCallback = (children, props) => 
                         onChange={debounce((value: number) => settings.store.size = value, 100)}
                     />
                 )}
-            />
-            <Menu.MenuControlItem
+            />}
+            {hasSlider && <Menu.MenuControlItem
                 id="vc-zoom-speed"
                 label="Zoom Speed"
                 control={(props, ref) => (
@@ -153,7 +161,7 @@ const imageContextMenuPatch: NavContextMenuPatchCallback = (children, props) => 
                         renderValue={(value: number) => `${value.toFixed(3)}x`}
                     />
                 )}
-            />
+            />}
         </Menu.MenuGroup>
     );
 };

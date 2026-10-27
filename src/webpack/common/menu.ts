@@ -22,7 +22,8 @@ import { filters, mapMangledModuleLazy, waitFor } from "@webpack";
 export const Menu = {} as t.Menu;
 
 waitFor(filters.componentByCode('path:["empty"]'), m => Menu.Menu = m);
-waitFor(filters.componentByCode("SLIDER)", "handleSize:16"), m => Menu.MenuSliderControl = m);
+// Discord's current slider uses a keyboard-aware input; older builds used a fixed handle size.
+waitFor(filters.componentByCode("SLIDER)", /handleSize:16|passThroughVerticalArrowKeys:!0/), m => Menu.MenuSliderControl = m);
 waitFor(filters.componentByCode(".SEARCH)", ".focus()", "query:"), m => Menu.MenuSearchControl = m);
 
 export const ContextMenuApi: t.ContextMenuApi = mapMangledModuleLazy('type:"CONTEXT_MENU_OPEN', {

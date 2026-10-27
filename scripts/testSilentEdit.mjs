@@ -31,7 +31,11 @@ function fixture(attachments = []) {
     const originalEdit = function (...args) { state.nativeEdits.push({ args, self: this }); return Promise.resolve({ native: true }); };
     const actions = {
         editMessage: originalEdit,
-        startEditMessage(channelId, messageId) { plugin.flux.MESSAGE_START_EDIT({ channelId, messageId }); },
+        startEditMessage(channelId, messageId) {
+            const dispatch = () => plugin.flux.MESSAGE_START_EDIT({ channelId, messageId });
+            if (state.deferStart) state.pendingStart = dispatch;
+            else dispatch();
+        },
         endEditMessage(channelId, response) { state.closed = response; plugin.flux.MESSAGE_END_EDIT({ channelId }); }
     };
     class CloudUploader extends EventEmitter {
@@ -135,6 +139,8 @@ test("failed downloads, truncated files, upload errors and rejected upload promi
         const f = fixture([attachment("1")]); f.state[flag] = true; f.start();
         await assert.rejects(f.save(), undefined, flag);
         assert.equal(f.state.posts.length, 0, flag); assert.equal(f.state.deletes.length, 0, flag); assert.equal(f.state.toasts.length, 1, flag);
+        assert.notEqual(f.actions.editMessage, f.originalEdit, "A failed silent save must not become a normal edit on retry");
+        f.plugin.stop();
         assert.equal(f.actions.editMessage, f.originalEdit);
     }
 });
@@ -175,6 +181,111 @@ test("cancelling, switching editors/channels or stopping restores the native edi
         const f = fixture(); f.start(); cancel(f); assert.equal(f.actions.editMessage, f.originalEdit);
         await f.save(); assert.equal(f.state.nativeEdits.length, 1); assert.equal(f.state.posts.length, 0);
     }
+});
+
+test("a queued native start event keeps the silent action armed until saving", async () => {
+    const f = fixture([attachment("1")]); f.state.deferStart = true;
+    f.start();
+    const wrapper = f.actions.editMessage;
+    assert.notEqual(wrapper, f.originalEdit);
+    // Real FluxDispatcher queues nested dispatches until the current event finishes.
+    // MessageActions.startEditMessage does not return its dispatch promise.
+    await turn();
+    f.state.pendingStart();
+    assert.equal(f.actions.editMessage, wrapper);
+    await f.save();
+    assert.equal(f.state.posts.length, 1);
+    assert.equal(f.state.deletes.length, 1);
+    assert.equal(f.state.nativeEdits.length, 0);
+});
+
+test("only the first matching start belongs to silent edit; a subsequent ordinary edit cancels it", async () => {
+    const f = fixture(); f.state.deferStart = true; f.start();
+    f.state.pendingStart();
+    f.plugin.flux.MESSAGE_START_EDIT({ channelId: "channel", messageId: "original" });
+    assert.equal(f.actions.editMessage, f.originalEdit);
+    await f.save();
+    assert.equal(f.state.nativeEdits.length, 1);
+    assert.equal(f.state.posts.length, 0);
+});
+
+test("native editor immediately closes after submit without cancelling text-only or attachment replacement", async () => {
+    for (const attachments of [[], [attachment("1")]]) {
+        const f = fixture(attachments); f.start();
+        const saving = f.save();
+        // Current native onSubmit does not await editMessage before calling endEditMessage.
+        f.actions.endEditMessage("channel");
+        await saving;
+        assert.equal(f.state.posts.length, 1);
+        assert.equal(f.state.deletes.length, 1);
+        assert.equal(f.state.nativeEdits.length, 0);
+        assert.equal(f.state.toasts.length, 0);
+    }
+});
+
+test("missing and unrelated editor-close events leave the selected session unchanged", async () => {
+    const f = fixture();
+    assert.doesNotThrow(() => f.plugin.flux.MESSAGE_END_EDIT({}));
+    f.start(); const wrapper = f.actions.editMessage;
+    f.plugin.flux.MESSAGE_END_EDIT({});
+    f.plugin.flux.MESSAGE_END_EDIT({ channelId: "other" });
+    assert.equal(f.actions.editMessage, wrapper);
+    await f.save();
+    assert.equal(f.state.posts.length, 1);
+});
+
+test("pre-send failures keep an open editor silent and allow a safe retry", async () => {
+    const f = fixture([attachment("1")]); f.state.uploadError = true; f.start();
+    await assert.rejects(f.save());
+    assert.equal(f.state.posts.length, 0);
+    f.state.uploadError = false;
+    await f.save("retry text");
+    assert.equal(f.state.posts.length, 1);
+    assert.equal(f.state.posts[0].body.content, "retry text");
+    assert.equal(f.state.deletes.length, 1);
+    assert.equal(f.state.nativeEdits.length, 0);
+});
+
+test("uncertain POST or delete failures block duplicate saves and never fall back to native editing", async () => {
+    for (const flag of ["postError", "dropAttachment", "deleteFailure"]) {
+        const f = fixture([attachment("1")]); f.state[flag] = true; f.start();
+        const saving = f.save();
+        f.actions.endEditMessage("channel");
+        await assert.rejects(saving);
+        assert.equal(f.state.posts.length, 1);
+        const retry = f.save();
+        assert.equal(retry, saving);
+        await assert.rejects(retry);
+        assert.equal(f.state.posts.length, 1, flag);
+        assert.equal(f.state.nativeEdits.length, 0, flag);
+        assert(f.state.toasts.every(toast => !toast.text.includes("original message was kept")));
+        assert(f.state.toasts.some(toast => toast.text.includes("Check the conversation")));
+        f.plugin.stop();
+        assert.equal(f.actions.editMessage, f.originalEdit);
+    }
+});
+
+test("a failed save in an already closed editor permits an explicit new silent edit without an in-progress lock", async () => {
+    const f = fixture(); f.state.postError = true; f.start();
+    const oldWrapper = f.actions.editMessage;
+    const failed = f.save(); f.actions.endEditMessage("channel");
+    await assert.rejects(failed);
+    f.state.postError = false;
+    f.start();
+    assert(!f.state.toasts.some(toast => toast.text.includes("already in progress")));
+    await assert.rejects(oldWrapper("channel", "original", { content: "stale" }));
+    assert.equal(f.state.posts.length, 1, "A stale callback cannot resend after starting a new session");
+    await f.save("explicit new edit");
+    assert.equal(f.state.posts.length, 2);
+    assert.equal(f.state.nativeEdits.length, 0);
+});
+
+test("stale callbacks after cancellation cannot silently perform an ordinary edit", async () => {
+    const f = fixture(); f.start(); const oldWrapper = f.actions.editMessage;
+    f.plugin.flux.MESSAGE_END_EDIT({ channelId: "channel" });
+    await assert.rejects(oldWrapper("channel", "original", { content: "stale" }));
+    assert.equal(f.state.nativeEdits.length, 0);
+    assert.equal(f.state.posts.length, 0);
 });
 
 test("stop during upload ignores the uploader's misleading completion event and keeps the original", async () => {

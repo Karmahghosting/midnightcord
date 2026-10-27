@@ -1,7 +1,7 @@
 {
     "name": "midnightcord",
     "private": "true",
-    "version": "1.30.0",
+    "version": "1.30.1",
     "desktopName": "midnightcord.desktop",
     "description": "A fast cross-platform Discord client mod with native voice",
     "main": "dist/js/main.js",
@@ -78,6 +78,7 @@
         "test:emojis": "node scripts/testDragFavoriteEmotes.mjs && node scripts/testExpressionCloner.mjs",
         "test:silent-actions": "node scripts/testSilentActionIcons.mjs && node scripts/testSilentEdit.mjs",
         "test:report-server": "node scripts/testReportServerMenu.mjs && node scripts/testReportServerNative.mjs",
+        "test:image-menus": "node scripts/testMenuControls.mjs && node scripts/testImageZoomContextMenu.mjs",
         "test:discord-api": "node scripts/testDiscordAPIServer.mjs && node scripts/testDiscordMCP.mjs && node scripts/testDiscordAPIRoutes.mjs && node scripts/testDiscordAPILifecycle.mjs && node scripts/testDiscordAPIIntegration.mjs",
         "test:vencord-migration": "node scripts/testVencordMigration.mjs && node scripts/testVencordInstallerMigration.mjs",
         "test:cloud": "node scripts/testCloudCrypto.mjs && node scripts/testCloudOnboarding.mjs && node scripts/testCommunityJoin.mjs && node --test services/cloud-api/test/server.test.mjs",

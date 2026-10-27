@@ -92,6 +92,9 @@ jobs:
       - name: Test desktop server reporting
         run: pnpm test:report-server
 
+      - name: Test image context menus and Discord slider compatibility
+        run: pnpm test:image-menus
+
       - name: Test local Discord API and MCP
         run: pnpm test:discord-api
 

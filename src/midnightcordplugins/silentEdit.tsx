@@ -44,7 +44,9 @@ interface EditSession {
     controller: AbortController;
     original: typeof MessageActions.editMessage;
     wrapper: typeof MessageActions.editMessage;
-    initiating: boolean;
+    awaitingStart: boolean;
+    pending: boolean;
+    postAttempted: boolean;
     operation?: Promise<any>;
 }
 
@@ -124,6 +126,7 @@ async function sendReplacement(current: EditSession, edited: { content?: string;
         };
     }
 
+    current.postAttempted = true;
     const response = await RestAPI.post({
         url: Constants.Endpoints.MESSAGES(current.channelId),
         body
@@ -157,26 +160,48 @@ async function sendReplacement(current: EditSession, edited: { content?: string;
 
 const triggerSilentEdit = (msg: any) => {
     if (!msg || msg.deleted || msg.author?.id !== UserStore.getCurrentUser()?.id) return;
-    if (session?.operation) {
+    if (session?.pending) {
         showToast(t("A silent edit is already in progress."), Toasts.Type.FAILURE);
         return;
     }
     cancelEdit();
     const current: EditSession = {
         channelId: msg.channel_id, messageId: msg.id, authorId: msg.author.id,
-        controller: new AbortController(), original: MessageActions.editMessage, wrapper: undefined, initiating: true
+        controller: new AbortController(), original: MessageActions.editMessage, wrapper: undefined,
+        awaitingStart: true, pending: false, postAttempted: false
     };
     current.wrapper = function (channelId: string, messageId: string, content: any) {
-        if (channelId !== current.channelId || messageId !== current.messageId || session !== current)
+        if (channelId !== current.channelId || messageId !== current.messageId)
             return current.original.apply(this, arguments as any);
+        if (session !== current) {
+            // A stale editor callback must not turn into an ordinary edit or send again.
+            if (current.operation) return current.operation;
+            const cancelled = Promise.reject(current.controller.signal.reason ?? new Error("Silent edit is no longer active."));
+            void cancelled.catch(() => {});
+            return cancelled;
+        }
         // Discord may submit twice while a slow upload is in progress. Reuse the same operation.
-        current.operation ??= sendReplacement(current, content).catch(error => {
+        if (current.operation) {
+            if (!current.pending && current.postAttempted)
+                showToast(t("This silent edit may already have been sent. Check the conversation before starting another silent edit."), Toasts.Type.FAILURE);
+            return current.operation;
+        }
+        current.pending = true;
+        current.operation = sendReplacement(current, content).catch(error => {
             if (!current.controller.signal.aborted) {
                 console.error("[SilentEdit] Error:", error);
-                showToast(t("Silent edit failed. The original message was kept.") + " " + (error instanceof Error ? error.message : ""), Toasts.Type.FAILURE);
+                const notice = current.postAttempted
+                    ? t("Silent edit could not be confirmed. A replacement may already exist. Check the conversation before starting another silent edit.")
+                    : t("Silent edit failed before sending. The original message was kept.") + " " + (error instanceof Error ? error.message : "");
+                showToast(notice, Toasts.Type.FAILURE);
             }
             throw error;
-        }).finally(() => restoreEdit(current));
+        }).finally(() => {
+            current.pending = false;
+            // Retain the wrapper while the session remains active: retrying must never
+            // silently fall back to a normal edit. Only a pre-send failure is safe to retry.
+            if (session === current && !current.postAttempted) current.operation = undefined;
+        });
         // Some Discord callers fire-and-forget this action. Keep the returned rejection observable
         // to awaiters, but mark it handled so a failed upload does not create an unhandled rejection.
         void current.operation.catch(() => {});
@@ -185,7 +210,6 @@ const triggerSilentEdit = (msg: any) => {
     session = current;
     MessageActions.editMessage = current.wrapper;
     try { MessageActions.startEditMessage(msg.channel_id, msg.id, msg.content); } catch (error) { cancelEdit(); throw error; }
-    current.initiating = false;
 };
 
 const messageContextMenuPatch: NavContextMenuPatchCallback = (children, { message }) => {
@@ -237,10 +261,20 @@ export default definePlugin({
 
     flux: {
         MESSAGE_END_EDIT({ channelId }) {
-            if (session?.channelId === channelId) cancelEdit();
+            if (!session || session.channelId !== channelId) return;
+            // Discord closes its editor immediately after invoking editMessage, without
+            // awaiting the save. That UI event must not abort our upload or replacement.
+            if (!session.pending) cancelEdit();
         },
         MESSAGE_START_EDIT({ channelId, messageId }) {
-            if (session && !(session.initiating && session.channelId === channelId && session.messageId === messageId)) cancelEdit();
+            if (!session) return;
+            // Flux queues nested dispatches. startEditMessage can return before this event
+            // reaches us, so consume our first matching start instead of timing its call.
+            if (session.awaitingStart && session.channelId === channelId && session.messageId === messageId) {
+                session.awaitingStart = false;
+                return;
+            }
+            cancelEdit();
         },
         CHANNEL_SELECT({ channelId }) {
             if (session && session.channelId !== channelId) cancelEdit();
