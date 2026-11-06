@@ -36,6 +36,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm rpm2cpio cpio desktop-file-utils xvfb libgtk-3-0t64 libnss3 libgbm1 libasound2t64
 
+      - name: Test Discord runtime compatibility
+        run: pnpm test:webpack-runtime
+
       - name: Verify Linux installer startup
         run: pnpm test:linux-installer
 

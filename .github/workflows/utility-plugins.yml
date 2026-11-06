@@ -65,6 +65,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test Discord runtime compatibility
+        run: pnpm test:webpack-runtime
+
       - name: Test utility plugins and offline OCR
         run: pnpm test:utilities
 

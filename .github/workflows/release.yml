@@ -52,6 +52,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test Discord runtime compatibility
+        run: pnpm test:webpack-runtime
+
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 
@@ -151,6 +154,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Test Discord runtime compatibility
+        run: pnpm test:webpack-runtime
 
       - name: Test encrypted Cloud protocol
         run: pnpm test:cloud

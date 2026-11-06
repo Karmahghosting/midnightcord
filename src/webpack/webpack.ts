@@ -103,7 +103,12 @@ export const filters = {
         return (m: any) => {
             if (typeof m !== "object") return false;
 
-            const values = Object.values(m);
+            // Circular imports can expose getters before their values are initialized.
+            try {
+                var values = Object.values(m);
+            } catch {
+                return false;
+            }
             return regexes.every(cls => values.some(v => typeof v === "string" && cls.test(v)));
         };
     }
@@ -222,6 +227,16 @@ export function handleModuleNotFound(method: string, ...filter: unknown[]) {
         throw err;
 }
 
+function matchesFilter(filter: FilterFn, exports: ModuleExports): boolean {
+    try {
+        return filter(exports);
+    } catch {
+        // A filter can itself read a circular import's uninitialized getter.
+        // Skip this candidate, preserving other exports and future searches.
+        return false;
+    }
+}
+
 /**
  * Find the first module that matches the filter
  */
@@ -233,17 +248,22 @@ export const find = traceFunction("find", function find(filter: FilterFn, { isIn
 
     for (const key in cache) {
         const mod = cache[key];
-        if (!mod?.loaded || mod.exports == null) continue;
+        if (mod == null || mod.loaded === false || mod.exports == null) continue;
 
-        if (filter(mod.exports)) {
+        if (matchesFilter(filter, mod.exports)) {
             return isWaitFor ? [mod.exports, key] : mod.exports;
         }
 
         if (typeof mod.exports !== "object" || topLevelOnly) continue;
 
         for (const nestedMod in mod.exports) {
-            const nested = mod.exports[nestedMod];
-            if (nested && filter(nested)) {
+            // Circular imports can expose getters before their values are initialized.
+            try {
+                var nested = mod.exports[nestedMod];
+            } catch {
+                continue;
+            }
+            if (nested && matchesFilter(filter, nested)) {
                 return isWaitFor ? [nested, key] : nested;
             }
         }
@@ -263,17 +283,22 @@ export function findAll(filter: FilterFn, { topLevelOnly = false }: { topLevelOn
     const ret = [] as any[];
     for (const key in cache) {
         const mod = cache[key];
-        if (!mod?.loaded || mod.exports == null) continue;
+        if (mod == null || mod.loaded === false || mod.exports == null) continue;
 
-        if (filter(mod.exports))
+        if (matchesFilter(filter, mod.exports))
             ret.push(mod.exports);
 
         if (typeof mod.exports !== "object" || topLevelOnly)
             continue;
 
         for (const nestedMod in mod.exports) {
-            const nested = mod.exports[nestedMod];
-            if (nested && filter(nested)) ret.push(nested);
+            // Circular imports can expose getters before their values are initialized.
+            try {
+                var nested = mod.exports[nestedMod];
+            } catch {
+                continue;
+            }
+            if (nested && matchesFilter(filter, nested)) ret.push(nested);
         }
     }
 
@@ -312,14 +337,14 @@ export const findBulk = traceFunction("findBulk", function findBulk(...filterFns
     outer:
     for (const key in cache) {
         const mod = cache[key];
-        if (!mod?.loaded || mod.exports == null) continue;
+        if (mod == null || mod.loaded === false || mod.exports == null) continue;
 
         for (let j = 0; j < length; j++) {
             const filter = filters[j];
             // Already done
             if (filter === undefined) continue;
 
-            if (filter(mod.exports)) {
+            if (matchesFilter(filter, mod.exports)) {
                 results[j] = mod.exports;
                 filters[j] = undefined;
                 if (++found === length) break outer;
@@ -330,8 +355,13 @@ export const findBulk = traceFunction("findBulk", function findBulk(...filterFns
                 continue;
 
             for (const nestedMod in mod.exports) {
-                const nested = mod.exports[nestedMod];
-                if (nested && filter(nested)) {
+                // Circular imports can expose getters before their values are initialized.
+                try {
+                    var nested = mod.exports[nestedMod];
+                } catch {
+                    continue;
+                }
+                if (nested && matchesFilter(filter, nested)) {
                     results[j] = nested;
                     filters[j] = undefined;
                     if (++found === length) break outer;
