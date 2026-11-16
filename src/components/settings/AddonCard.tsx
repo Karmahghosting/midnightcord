@@ -44,9 +44,10 @@ interface Props {
     author?: ReactNode;
     iconType?: "midnightcord" | "other";
     customIcon?: ComponentType<any>;
+    hideSwitch?: boolean;
 }
 
-export function AddonCard({ disabled, isNew, sourceBadge, tooltip, name, infoButton, footer, author, enabled, setEnabled, description, onMouseEnter, onMouseLeave, iconType, customIcon: CustomIcon }: Props) {
+export function AddonCard({ disabled, isNew, sourceBadge, tooltip, name, infoButton, footer, author, enabled, setEnabled, description, onMouseEnter, onMouseLeave, iconType, customIcon: CustomIcon, hideSwitch }: Props) {
     const titleRef = useRef<HTMLDivElement>(null);
     const titleContainerRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +114,7 @@ export function AddonCard({ disabled, isNew, sourceBadge, tooltip, name, infoBut
                     )}
                     {infoButton}
                 </div>
-                {setEnabled.toString() !== "() => {}" && (
+                {!hideSwitch && (
                     <Switch
                         checked={enabled}
                         onChange={setEnabled}

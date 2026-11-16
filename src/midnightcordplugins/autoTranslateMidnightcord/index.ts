@@ -4198,6 +4198,15 @@ export const translations: TranslationMap = {
     "🚨 AntiGroup - Groupe detected": { en: "🚨 AntiGroup - Groupe detected", fr: "🚨 AntiGroup - Groupe détecté", ar: "🚨 AntiGroup - تم اكتشاف المجموعة", es: "🚨 AntiGroup - Grupo detectado", ru: "🚨 AntiGroup — обнаружена группа", zh: "🚨 AntiGroup - 检测到 Groupe" },
     "🚫 No Spaces or Dashes": { en: "🚫 No Spaces or Dashes", fr: "🚫 Pas d'espaces ni de tirets", ar: "🚫 لا توجد مسافات أو شرطات", es: "🚫 Sin espacios ni guiones", ru: "🚫 Никаких пробелов и тире", zh: "🚫 没有空格或破折号" },
     "🛡️ AntiGroup - Group left": { en: "🛡️ AntiGroup - Group left", fr: "🛡️ AntiGroup - Groupe à gauche", ar: "🛡️ AntiGroup - المجموعة اليسرى", es: "🛡️ AntiGroup - Grupo restante", ru: "🛡️ AntiGroup - Группа ушла", zh: "🛡️ AntiGroup - 团体离开" },
+    "Use any server soundboard without Nitro: clicking a sound in Discord's soundboard plays it locally, sends it through your microphone and shows the native soundboard animation.": { fr: "Utilisez n'importe quel soundboard de serveur sans Nitro : cliquer sur un son dans le soundboard de Discord le joue localement, l'envoie via votre microphone et affiche l'animation native du soundboard." },
+    "Volume of the soundboard sent to the microphone": { fr: "Volume du soundboard envoyé au microphone" },
+    "Also play the sound locally so you can hear it": { fr: "Joue aussi le son localement pour que vous puissiez l'entendre" },
+    "Automatically switch the Discord input device to the virtual microphone": { fr: "Bascule automatiquement l'entrée Discord vers le microphone virtuel" },
+    "Unable to play this soundboard sound.": { fr: "Impossible de jouer ce son du soundboard." },
+    "Virtual microphone unavailable": { fr: "Microphone virtuel indisponible" },
+    "Virtual microphone not detected. Check your PipeWire/PulseAudio setup.": { fr: "Microphone virtuel introuvable. Vérifiez votre configuration PipeWire/PulseAudio." },
+    "No virtual audio device detected. Install one to send soundboard sounds through your microphone.": { fr: "Aucun périphérique audio virtuel détecté. Installez-en un pour envoyer les sons du soundboard via votre microphone." },
+    "unknown error": { fr: "erreur inconnue" },
 };
 
 export default definePlugin({
@@ -4233,16 +4242,20 @@ function normalizeLang(lang: string): SupportedLang {
     return "en";
 }
 
+function currentLanguage(): string {
+    const configured = (Settings.language as string) ?? "en";
+    if (configured && configured !== "en") return configured;
+    return document?.documentElement?.lang || "en";
+}
+
 export function t(key: string): string {
-    const rawLang = (Settings.language as string) ?? "en";
-    const lang = normalizeLang(rawLang);
+    const lang = normalizeLang(currentLanguage());
     if (lang === "en") return key;
     return translations[key]?.[lang] ?? translations[key]?.en ?? key;
 }
 
 export function useTranslation() {
-    const rawLang = (Settings.language as string) ?? "en";
-    const lang = normalizeLang(rawLang);
+    const lang = normalizeLang(currentLanguage());
     return {
         t: (key: string) => {
             if (lang === "en") return key;

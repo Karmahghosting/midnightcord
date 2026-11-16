@@ -41,6 +41,7 @@ interface SettingBaseProps<T> {
     };
     id: string;
     definedSettings?: DefinedSettings;
+    closePluginSettings?(): void;
 }
 
 export type SettingProps<T extends PluginOptionBase> = SettingBaseProps<T>;
@@ -54,13 +55,14 @@ export function resolveError(isValidResult: boolean | string) {
 
 interface SettingsSectionProps extends PropsWithChildren {
     name: string;
-    description: string;
+    description?: string;
     error?: string | null;
     inlineSetting?: boolean;
     tag?: "label" | "div";
+    id?: string;
 }
 
-export function SettingsSection({ tag: Tag = "div", name, description, error, inlineSetting, children }: SettingsSectionProps) {
+export function SettingsSection({ tag: Tag = "div", name, description, error, inlineSetting, id, children }: SettingsSectionProps) {
     const renderDescription = (text: string) => {
         // Ajoute http:// si absent pour la regex et le lien
         const urlRegex = /(https?:\/\/[^\s)]+|console\.groq\.com\/[^\s)]+)/g;
@@ -75,15 +77,15 @@ export function SettingsSection({ tag: Tag = "div", name, description, error, in
     };
 
     return (
-        <Tag className={cl("section")}>
+        <Tag className={cl("section")} id={id}>
             <div className={classes(cl("content"), inlineSetting && cl("inline"))}>
                 <div className={cl("label")}>
-                    {name && <BaseText className={cl("title")} size="md" weight="medium" style={{ color: "#fff" }}>{tPlugin(wordsToTitle(wordsFromCamel(name)))}</BaseText>}
-                    {description && <BaseText className={cl("description")} size="sm" style={{ color: "#fff" }}>{renderDescription(tPlugin(description))}</BaseText>}
+                    {name && <BaseText className={cl("title")} size="md" weight="medium">{tPlugin(wordsToTitle(wordsFromCamel(name)))}</BaseText>}
+                    {description && <BaseText className={cl("description")} size="sm">{renderDescription(tPlugin(description))}</BaseText>}
                 </div>
                 {children}
             </div>
-            {error && <BaseText className={cl("error")} size="sm" style={{ color: "#FF5C5C" }}>{error}</BaseText>}
+            {error && <BaseText className={cl("error")} size="sm">{error}</BaseText>}
         </Tag>
     );
 }

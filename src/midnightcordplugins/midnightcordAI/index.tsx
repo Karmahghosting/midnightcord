@@ -136,9 +136,10 @@ function findFriend(name: string): { id: string; username: string; } | null {
 
 async function callUser(userId: string): Promise<void> {
     // Ouvrir le DM et naviguer vers lui d'abord
-    await ChannelActions.openPrivateChannel(userId);
+    const openedChannel = await ChannelActions.openPrivateChannel(userId);
     await new Promise(r => setTimeout(r, 400));
-    const channelId = await getDMChannelId(userId);
+    const channelId = openedChannel?.id ?? ChannelStore.getDMFromUserId?.(userId);
+    if (!channelId) return;
 
     // Méthode 1 : startCall via CallActionsLazy
     try {
@@ -303,7 +304,7 @@ function renderMarkdown(text: string): React.ReactNode {
                     <div key={key++} className="nai-code-wrap">
                         <button className="nai-copy-btn" onClick={() => {
                             navigator.clipboard.writeText(codeText);
-                        }}>{tUI("Copy")}</button>
+                        }}>{t("Copy")}</button>
                         <pre className="nai-code-block"><code>{codeText}</code></pre>
                     </div>
                 );

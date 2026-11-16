@@ -73,6 +73,19 @@ export const VesktopNative = {
         chooseUserAsset: (asset: string, value?: null) =>
             invoke<"cancelled" | "invalid" | "ok" | "failed">(IpcEvents.CHOOSE_USER_ASSET, asset, value)
     },
+    userPlugins: {
+        import: () => invoke<
+            | { status: "cancelled"; }
+            | { status: "invalid"; message: string; }
+            | { status: "ok"; name: string; path: string; }
+            | { status: "error"; message: string; }
+        >(IpcEvents.IMPORT_USER_PLUGIN),
+        rebuildAndRestart: () => invoke<
+            | { status: "ok"; }
+            | { status: "unavailable" | "error"; message: string; }
+        >(IpcEvents.REBUILD_USER_PLUGINS),
+        openFolder: () => invoke<void>(IpcEvents.OPEN_USER_PLUGINS_DIR)
+    },
     settings: {
         get: () => sendSync<Settings>(IpcEvents.GET_SETTINGS),
         set: (settings: Settings, path?: string) => invoke<void>(IpcEvents.SET_SETTINGS, settings, path)
@@ -112,6 +125,16 @@ export const VesktopNative = {
         getLargeThumbnail: (id: string) => invoke<string>(IpcEvents.CAPTURER_GET_LARGE_THUMBNAIL, id)
     },
     /** only available on Linux. */
+    soundboardMic: {
+        ensure: () =>
+            invoke<
+                | { ok: true; platform: string; sinkName: string; sourceName: string; }
+                | { ok: false; platform: string; error?: string; }
+            >(IpcEvents.SOUNDBOARD_MIC_ENSURE),
+        remove: () => invoke<void>(IpcEvents.SOUNDBOARD_MIC_REMOVE),
+        route: () => invoke<number>(IpcEvents.SOUNDBOARD_MIC_ROUTE),
+        unroute: () => invoke<void>(IpcEvents.SOUNDBOARD_MIC_UNROUTE)
+    },
     virtmic: {
         list: () =>
             invoke<

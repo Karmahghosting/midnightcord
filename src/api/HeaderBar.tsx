@@ -395,13 +395,16 @@ function CompactSettingsPopout({ closePopout }: { closePopout: () => void; }) {
             <div className="nc-settings-popout-grid">
                 {Array.from(headerBarButtons)
                     .sort(([, a], [, b]) => a.priority - b.priority)
-                    .map(([id, { render: Button }]) => (
-                        <div key={id} style={{ display: "contents" }}>
-                            <ErrorBoundary noop>
-                                <Button />
-                            </ErrorBoundary>
-                        </div>
-                    ))}
+                    .map(([id, { render: Button }]) => {
+                        if (!Button) return null;
+                        return (
+                            <div key={id} style={{ display: "contents" }}>
+                                <ErrorBoundary noop>
+                                    <Button />
+                                </ErrorBoundary>
+                            </div>
+                        );
+                    })}
             </div>
         </div>
     );

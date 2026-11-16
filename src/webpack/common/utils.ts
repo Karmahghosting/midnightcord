@@ -223,7 +223,51 @@ export const ChannelActions = findByPropsLazy("selectChannel", "preload");
 // ─── Re-exports for compatibility with Equicord/Vencord plugins ────────────────
 
 // Modal API (from @utils/modal)
-export { closeAllModals, closeModal, ModalRoot as Modal, ModalCloseButton,ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal, openModalLazy } from "@utils/modal";
+export { closeAllModals, closeModal, ModalCloseButton,ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal, openModalLazy } from "@utils/modal";
+
+export function Modal(props: any) {
+    const { ModalRoot, ModalHeader, ModalContent, ModalFooter, ModalCloseButton } = require("@utils/modal");
+    const { Button } = require("@components/Button");
+
+    const { transitionState, onClose, size, title, actions, children, className, ...rest } = props;
+    const modalSize = {
+        sm: "small",
+        md: "medium",
+        lg: "large",
+        dynamic: "dynamic",
+        small: "small",
+        medium: "medium",
+        large: "large"
+    }[size as string] ?? "medium";
+
+    const hasTitle = title != null;
+    const actionList = Array.isArray(actions) ? actions : null;
+    const hasActions = !!actionList?.length;
+
+    if (!hasTitle && !hasActions) {
+        return React.createElement(ModalRoot, { transitionState, onClose, size: modalSize, className, ...rest }, children);
+    }
+
+    return React.createElement(ModalRoot, { transitionState, onClose, size: modalSize, className, ...rest },
+        hasTitle && React.createElement(ModalHeader, { separator: false },
+            React.createElement("div", {
+                style: { flexGrow: 1, fontSize: 18, fontWeight: 600, color: "var(--text-strong)" }
+            }, title),
+            onClose && React.createElement(ModalCloseButton, { onClick: onClose })
+        ),
+        React.createElement(ModalContent, null, children),
+        hasActions && React.createElement(ModalFooter, null,
+            React.createElement("div", {
+                style: { display: "flex", gap: 8, width: "100%", justifyContent: "flex-end", flexWrap: "wrap" }
+            }, actionList!.map((action: any, index: number) => React.createElement(Button, {
+                key: index,
+                variant: action.variant === "danger" ? "dangerPrimary" : action.variant ?? "primary",
+                disabled: action.disabled,
+                onClick: action.onClick
+            }, action.text)))
+        )
+    );
+}
 
 // Actions
 export const VoiceActions = findByPropsLazy("toggleSelfMute", "setChannel");

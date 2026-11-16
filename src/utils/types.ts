@@ -378,6 +378,7 @@ export interface IPluginOptionComponentProps {
      * The options object
      */
     option: PluginSettingComponentDef;
+    closePluginSettings?(): void;
 }
 
 export interface PluginSettingComponentDef {

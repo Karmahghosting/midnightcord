@@ -44,18 +44,18 @@ function QuickActionsSection() {
         <QuickActionCard>
             <QuickAction
                 Icon={GithubIcon}
-                text="Source Code"
+                text={t("Source Code")}
                 action={() => openExternal("https://github.com/Karmahghosting/midnightcord")}
             />
             <QuickAction
                 Icon={PaintbrushIcon}
-                text="Edit QuickCSS"
+                text={t("Edit QuickCSS")}
                 action={() => typeof VencordNative !== "undefined" && VencordNative?.quickCss?.openEditor?.()}
             />
             {!IS_WEB && (
                 <QuickAction
                     Icon={RestartIcon}
-                    text="Relaunch Discord"
+                    text={t("Relaunch Discord")}
                     action={relaunch}
                 />
             )}

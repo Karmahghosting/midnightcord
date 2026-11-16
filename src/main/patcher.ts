@@ -17,9 +17,9 @@
 */
 
 import { onceDefined } from "@shared/onceDefined";
-import electron, { app, BrowserWindowConstructorOptions, Menu, session } from "electron";
+import electron, { app, BrowserWindowConstructorOptions, Menu, nativeImage, session } from "electron";
 import { existsSync as fsExistsSync, statSync as fsStatSync } from "original-fs";
-import { dirname, join } from "path";
+import { basename, dirname, join } from "path";
 
 import { registerMediaPermissionsForSession } from "../midnightcord/main/mediaPermissions";
 import { startNativeUpdateRepair } from "./patchNativeUpdater";
@@ -28,7 +28,61 @@ import { patchTrayMenu } from "./trayMenu";
 import { IS_VANILLA } from "./utils/constants";
 
 console.log("[Midnightcord] Starting up...");
-if (process.platform === "linux") app.setDesktopName("midnightcord.desktop");
+
+function getLinuxWmClass(): string {
+    const executable = basename(process.execPath).toLowerCase();
+    if (executable.includes("development")) return "midnightcord-development";
+    if (executable.includes("canary")) return "midnightcord-canary";
+    if (executable.includes("ptb")) return "midnightcord-ptb";
+    return "midnightcord";
+}
+
+if (process.platform === "linux") {
+    app.setDesktopName("midnightcord.desktop");
+    if (!app.commandLine.hasSwitch("class")) {
+        app.commandLine.appendSwitch("class", getLinuxWmClass());
+    }
+}
+
+const midnightcordIcon = (() => {
+    for (const path of [
+        join(__dirname, "icon.png"),
+        join(__dirname, "..", "..", "static", "icon.png")
+    ]) {
+        try {
+            if (!fsExistsSync(path)) continue;
+            const image = nativeImage.createFromPath(path);
+            if (!image.isEmpty()) return image;
+        } catch { }
+    }
+    return null;
+})();
+
+function applyWindowBranding(win: Electron.BrowserWindow) {
+    if (midnightcordIcon && (process.platform === "linux" || process.platform === "win32")) {
+        const restoreIcon = () => {
+            if (!win.isDestroyed()) win.setIcon(midnightcordIcon);
+        };
+
+        restoreIcon();
+        win.webContents.on("dom-ready", restoreIcon);
+        win.webContents.on("page-favicon-updated", () => setTimeout(restoreIcon, 0));
+    }
+
+    if (RendererSettings.store.staticTitle) {
+        const setStaticTitle = () => {
+            if (!win.isDestroyed()) win.setTitle("Midnightcord");
+        };
+
+        setStaticTitle();
+        win.on("page-title-updated", event => {
+            event.preventDefault();
+            setStaticTitle();
+        });
+    }
+}
+
+app.on("browser-window-created", (_event, win) => applyWindowBranding(win));
 
 // Our injector file at app/index.js
 const injectorPath = require.main!.filename;
@@ -117,7 +171,7 @@ if (!IS_VANILLA) {
                 const isMainWindow = options.title === "Discord";
                 options.webPreferences.preload = join(__dirname, "preload.js");
                 options.webPreferences.sandbox = false;
-                options.webPreferences.backgroundThrottling = false;
+                options.webPreferences.backgroundThrottling = true;
                 options.webPreferences.webviewTag = true;
 
                 let ses = options.webPreferences.session;

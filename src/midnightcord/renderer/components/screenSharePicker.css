@@ -41,7 +41,8 @@
     justify-items: center;
 }
 
-.vcd-screen-picker-screen-label:hover {
+.vcd-screen-picker-screen-label:hover,
+.vcd-screen-picker-screen-label:focus-within {
     outline: 2px solid var(--brand-500);
 }
 
@@ -90,7 +91,7 @@
 .vcd-screen-picker-option-radio {
     text-align: center;
     background-color: var(--background-secondary);
-    border: 1px solid var(--primary-800);
+    border: 1px solid var(--background-modifier-accent);
     padding: 0.3em;
     cursor: pointer;
 }
@@ -110,6 +111,7 @@
 .vcd-screen-picker-option-radio[data-checked="true"] {
     background-color: var(--brand-500);
     border-color: var(--brand-500);
+    color: var(--white-500, #fff);
 }
 
 .vcd-screen-picker-quality {

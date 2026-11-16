@@ -5,12 +5,15 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { BaseText } from "@components/BaseText";
+import { Button } from "@components/Button";
 import { FormSwitch } from "@components/FormSwitch";
 import { Devs, EquicordDevs } from "@utils/constants";
 import { getCurrentChannel } from "@utils/discord";
+import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message, RenderModalProps } from "@vencord/discord-types";
-import { IconUtils, Menu, Modal, openModal, TextInput, UploadHandler, useEffect, useState } from "@webpack/common";
+import { IconUtils, Menu, openModal, TextInput, UploadHandler, useEffect, useState } from "@webpack/common";
 
 import { QuoteIcon } from "./components/QuoteIcon";
 import { QuoteFont } from "./types";
@@ -164,48 +167,64 @@ function QuoteModal({ message, ...props }: RenderModalProps & { message: Message
     };
 
     return (
-        <Modal
-            {...props}
-            size="md"
-            title="Catch Them In 4K."
-            actions={[
-                {
-                    text: "Export",
-                    variant: "primary",
-                    onClick: handleExport
-                },
-                {
-                    text: "Send",
-                    variant: "primary",
-                    onClick: handleSendInChat
-                }
-            ]}
-        >
-            <img alt="Quote preview" src="" id="quoterPreview" style={{ borderRadius: "20px", width: "100%", marginBottom: "20px" }} />
+        <ModalRoot transitionState={props.transitionState} size={ModalSize.MEDIUM}>
+            <ModalHeader separator={false}>
+                <BaseText size="lg" weight="semibold" tag="h3" style={{ flexGrow: 1 }}>
+                    Catch Them In 4K.
+                </BaseText>
+                <ModalCloseButton onClick={props.onClose} />
+            </ModalHeader>
 
-            <FormSwitch title="Grayscale" value={gray} onChange={setGray} />
-            <FormSwitch
-                title="Save as GIF"
-                value={saveAsGif}
-                onChange={setSaveAsGif}
-                description="Saves/Sends the image as a GIF instead of a PNG"
-            />
-            <FormSwitch
-                title="Show Watermark"
-                value={showWatermark}
-                onChange={setShowWatermark}
-                hideBorder={showWatermark}
-            />
-            {showWatermark && (
-                <div style={{ marginTop: "8px", marginBottom: "20px" }}>
-                    <TextInput
-                        value={watermarkText}
-                        onChange={setWatermarkText}
-                        placeholder="Watermark text (max 32 characters)"
-                        maxLength={32}
+            <ModalContent style={{ padding: "0 16px 16px" }}>
+                <div>
+                    <img
+                        alt="Quote preview"
+                        src={previewUrl ?? ""}
+                        id="quoterPreview"
+                        style={{
+                            display: "block",
+                            borderRadius: 16,
+                            width: "100%",
+                            maxHeight: "min(30vh, 260px)",
+                            objectFit: "contain",
+                            marginBottom: 16,
+                            background: "var(--background-secondary)"
+                        }}
                     />
+
+                    <FormSwitch title="Grayscale" value={gray} onChange={setGray} />
+                    <FormSwitch
+                        title="Save as GIF"
+                        value={saveAsGif}
+                        onChange={setSaveAsGif}
+                        description="Saves/Sends the image as a GIF instead of a PNG"
+                    />
+                    <FormSwitch
+                        title="Show Watermark"
+                        value={showWatermark}
+                        onChange={setShowWatermark}
+                        hideBorder={showWatermark}
+                    />
+                    {showWatermark && (
+                        <div style={{ marginTop: "8px", marginBottom: "8px" }}>
+                            <TextInput
+                                value={watermarkText}
+                                onChange={setWatermarkText}
+                                placeholder="Watermark text (max 32 characters)"
+                                maxLength={32}
+                            />
+                        </div>
+                    )}
                 </div>
-            )}
-        </Modal>
+            </ModalContent>
+
+            <ModalFooter>
+                <div style={{ display: "flex", gap: 8, width: "100%", justifyContent: "flex-end" }}>
+                    <Button variant="secondary" onClick={props.onClose}>Cancel</Button>
+                    <Button variant="primary" onClick={handleExport} disabled={!quoteImage}>Export</Button>
+                    <Button variant="primary" onClick={handleSendInChat} disabled={!quoteImage}>Send</Button>
+                </div>
+            </ModalFooter>
+        </ModalRoot>
     );
 }

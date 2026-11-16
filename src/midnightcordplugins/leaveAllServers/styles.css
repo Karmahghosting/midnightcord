@@ -12,15 +12,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.25);
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: var(--background-secondary);
+    border: 1.5px solid var(--background-modifier-accent);
     border-radius: 8px;
     padding: 8px 12px;
     transition: border-color 0.15s;
 }
 
 .las-search-bar:focus-within {
-    border-color: rgba(255, 255, 255, 0.25);
+    border-color: var(--border-strong);
 }
 
 .las-search-input {
@@ -28,19 +28,19 @@
     background: transparent;
     border: none;
     outline: none;
-    color: #fff;
+    color: var(--text-normal);
     font-size: 13px;
     font-family: inherit;
 }
 
 .las-search-input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-subtle);
 }
 
 .las-search-clear {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-subtle);
     cursor: pointer;
     font-size: 12px;
     padding: 0 2px;
@@ -49,7 +49,7 @@
 }
 
 .las-search-clear:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-normal);
 }
 
 /* ── Labels ── */
@@ -59,15 +59,15 @@
     font-weight: 700 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--text-muted) !important;
 }
 
 /* ── Boutons Tout / Aucun ── */
 .las-mini-btn {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    background: var(--background-modifier-hover);
+    border: 1.5px solid var(--background-modifier-accent);
     border-radius: 4px;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-muted);
     font-size: 11px;
     font-weight: 600;
     padding: 3px 10px;
@@ -77,9 +77,9 @@
 }
 
 .las-mini-btn:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.25);
-    color: #fff;
-    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--border-strong);
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
 }
 
 .las-mini-btn:disabled {
@@ -95,15 +95,15 @@
     max-height: 260px;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    scrollbar-color: var(--background-modifier-accent) transparent;
 }
 
 .las-guild-list::-webkit-scrollbar { width: 4px; }
-.las-guild-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+.las-guild-list::-webkit-scrollbar-thumb { background: var(--background-modifier-hover); border-radius: 2px; }
 
 .las-empty {
     text-align: center;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-subtle);
     font-size: 13px;
     padding: 16px;
 }
@@ -117,11 +117,11 @@
     cursor: pointer;
     border: 1.5px solid transparent;
     transition: all 0.1s;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--background-modifier-hover);
 }
 
 .las-guild-row:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--background-modifier-hover);
 }
 
 .las-guild-row--selected {
@@ -155,7 +155,7 @@
 .las-guild-name {
     flex: 1;
     font-size: 13px;
-    color: #fff;
+    color: var(--text-normal);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -166,8 +166,8 @@
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.4);
+    background: var(--background-modifier-hover);
+    color: var(--text-subtle);
     flex-shrink: 0;
     letter-spacing: 0.4px;
 }
@@ -196,7 +196,7 @@
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-subtle);
 }
 
 .las-safe-note {

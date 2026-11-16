@@ -7,8 +7,6 @@
 import { BaseText } from "@Midnightcord/types/components";
 import { React, useRef,useState } from "@webpack/common";
 
-import { cl } from "./Settings";
-
 function detectSource(json: any): "equicord" | "vencord" | "midnightcord" | "unknown" {
     // Heuristiques basées sur les clés présentes dans le JSON
     if (!json || typeof json !== "object") return "unknown";
@@ -54,7 +52,7 @@ export function ImportLegacySettingsButton({ settings }: { settings: any; }) {
 
     async function processFile(file: File) {
         setStatus("loading");
-        setMessage("Analyse du fichier...");
+        setMessage("Reading file…");
 
         try {
             const text = await file.text();
@@ -64,7 +62,7 @@ export function ImportLegacySettingsButton({ settings }: { settings: any; }) {
             const sourceLabel =
                 source === "equicord" ? "Equicord" :
                 source === "vencord" ? "Vencord" :
-                source === "midnightcord" ? "Midnightcord" : "inconnu";
+                source === "midnightcord" ? "Midnightcord" : "unknown";
 
             const cleaned = cleanForMidnightcord(json);
 
@@ -76,10 +74,10 @@ export function ImportLegacySettingsButton({ settings }: { settings: any; }) {
             }
 
             setStatus("success");
-            setMessage(`✅ Settings ${sourceLabel} importés avec succès ! Redémarre Midnightcord pour appliquer.`);
+            setMessage(`✅ ${sourceLabel} settings imported successfully. Restart Midnightcord to apply them.`);
         } catch (err: any) {
             setStatus("error");
-            setMessage(`❌ Erreur : ${err?.message ?? String(err)}`);
+            setMessage(`❌ Error: ${err?.message ?? String(err)}`);
         }
     }
 
@@ -96,28 +94,33 @@ export function ImportLegacySettingsButton({ settings }: { settings: any; }) {
     }
 
     return (
-        <div className={cl("category")}>
-            <BaseText size="lg" weight="semibold" tag="h3" className={cl("category-title")}>
-                Import Equicord / Vencord Settings
-            </BaseText>
-
+        <div>
             <BaseText size="sm" style={{ marginBottom: "12px", opacity: 0.7 }}>
                 Drag & drop your Equicord or Vencord backup JSON file here to import your settings into Midnightcord.
                 Plugin-specific settings that don't exist in Midnightcord will be automatically removed.
             </BaseText>
 
             <div
+                role="button"
+                tabIndex={0}
+                aria-label="Choose a settings backup file to import"
                 onDragOver={e => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
+                onKeyDown={e => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        inputRef.current?.click();
+                    }
+                }}
                 style={{
-                    border: `2px dashed ${dragging ? "#5865f2" : "#4e5058"}`,
+                    border: `2px dashed ${dragging ? "var(--brand-experiment, #5865f2)" : "var(--background-modifier-accent)"}`,
                     borderRadius: "8px",
                     padding: "28px",
                     textAlign: "center",
                     cursor: "pointer",
-                    background: dragging ? "rgba(88,101,242,0.08)" : "rgba(255,255,255,0.03)",
+                    background: dragging ? "var(--background-modifier-selected)" : "var(--background-modifier-hover)",
                     transition: "all 0.15s ease",
                     marginBottom: "12px"
                 }}
@@ -125,8 +128,8 @@ export function ImportLegacySettingsButton({ settings }: { settings: any; }) {
                 <div style={{ fontSize: "32px", marginBottom: "8px" }}>📂</div>
                 <BaseText size="sm" style={{ opacity: 0.6 }}>
                     {dragging
-                        ? "Relâche pour importer..."
-                        : "Drag & drop ton fichier JSON ici, ou clique pour parcourir"}
+                        ? "Drop the file to import…"
+                        : "Drag & drop your JSON file here, or click to browse"}
                 </BaseText>
                 <input
                     ref={inputRef}
@@ -143,11 +146,11 @@ export function ImportLegacySettingsButton({ settings }: { settings: any; }) {
                     style={{
                         padding: "10px 14px",
                         borderRadius: "6px",
-                        background: status === "success" ? "rgba(59,165,93,0.15)" :
-                            status === "error" ? "rgba(237,66,69,0.15)" :
-                                "rgba(88,101,242,0.1)",
-                        color: status === "success" ? "#3ba55d" :
-                            status === "error" ? "#ed4245" : "#5865f2",
+                        background: status === "success" ? "var(--background-feedback-positive)" :
+                            status === "error" ? "var(--background-feedback-critical)" :
+                                "var(--background-feedback-info)",
+                        color: status === "success" ? "var(--text-feedback-positive)" :
+                            status === "error" ? "var(--text-feedback-critical)" : "var(--text-feedback-info)",
                         marginTop: "4px"
                     }}
                 >

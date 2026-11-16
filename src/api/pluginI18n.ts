@@ -2143,7 +2143,6 @@ const pluginTranslations: Record<string, LangMap> = {
     "PlainFolderIcon": { fr: "PlainDossierIcône", es: "LlanuraCarpetaIcono", ru: "ОбычнаяПапкаЗначок", zh: "普通文件夹图标" },
     "Platform": { fr: "Plateforme", es: "Plataforma", ru: "Платформа", zh: "平台" },
     "PlatformIndicators": { fr: "Indicateurs de plateforme", es: "Indicadores de plataforma", ru: "Индикаторы платформы", zh: "平台指标" },
-    "PlatformSpoofer": { fr: "PlateformeSpoofer", es: "PlataformaSpoofer", ru: "ПлатформаСпуфер", zh: "平台欺骗者" },
     "Platine (12 mois)": { fr: "Platine (12 mois)", es: "Platino (12 meses)", ru: "Платина (12 месяцев)", zh: "铂 (12 莫伊)" },
     "Play": { fr: "Jouer", es: "Jugar", ru: "Играть", zh: "玩" },
     "Play a sound when a slot becomes available.": { fr: "Jouez un son lorsqu'un emplacement devient disponible.", es: "Reproduzca un sonido cuando haya una ranura disponible.", ru: "Воспроизведите звук, когда слот станет доступным.", zh: "当插槽可用时播放声音。" },
@@ -3541,7 +3540,9 @@ const pluginTranslations: Record<string, LangMap> = {
  * Falls back to the original English string if no translation is available.
  */
 export function tPlugin(key: string): string {
-    const lang = (Settings.language as string) ?? "en";
+    const configured = (Settings.language as string) ?? "en";
+    const raw = (configured !== "en" ? configured : (document?.documentElement?.lang || "en")).toLowerCase();
+    const lang = raw.split("-")[0];
     if (!lang || lang === "en") return key;
     return pluginTranslations[key]?.[lang as keyof LangMap] ?? tATC(key);
 }

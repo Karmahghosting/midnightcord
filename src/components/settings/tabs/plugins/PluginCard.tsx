@@ -184,7 +184,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         openModal(props => (
             <ModalRoot {...props} size={ModalSize.DYNAMIC} className="nc-tutorial-modal">
                 <ModalHeader separator={false}>
-                    <Text variant="heading-xl/bold" style={{ flex: 1, color: "#fff" }}>
+                    <Text variant="heading-xl/bold" style={{ flex: 1 }}>
                         {plugin.name} – Tutorial
                     </Text>
                     <ModalCloseButton onClick={props.onClose} />
@@ -288,7 +288,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         openModal(props => (
             <ModalRoot {...props} size={ModalSize.SMALL}>
                 <ModalHeader separator={false}>
-                    <Text variant="heading-xl/bold" style={{ flex: 1, color: "#fff" }}>
+                    <Text variant="heading-xl/bold" style={{ flex: 1 }}>
                         {removeEmojis(plugin.name)}
                     </Text>
                     <ModalCloseButton onClick={props.onClose} />
@@ -322,14 +322,13 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         </Tooltip>
     );
 
-    const isMidnightcord = !PluginMeta[plugin.name]?.userPlugin;
+    const isMidnightcord = PluginMeta[plugin.name]?.folderName?.startsWith("src/midnightcordplugins/") ?? false;
     const iconType = isMidnightcord ? "midnightcord" : "other";
 
     // Le système de like ne s'applique qu'aux plugins Midnightcord (pas Vencord/Equicord,
     // pas User Plugins), et jamais aux plugins required (y compris ceux affichés comme
     // required parce qu'une dépendance active en a besoin, d'où le check sur `disabled`).
-    const isMidnightcordFolderPlugin = PluginMeta[plugin.name]?.folderName?.startsWith("src/midnightcordplugins/") ?? false;
-    const canShowLikeBadge = isMidnightcordFolderPlugin && !plugin.required && !disabled;
+    const canShowLikeBadge = isMidnightcord && !plugin.required && !disabled;
 
     function openCreditsModal() {
         openModal(props => (
@@ -377,6 +376,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             isNew={isNew}
             enabled={isEnabled()}
             setEnabled={plugin.required ? () => { } : toggleEnabled}
+            hideSwitch={Boolean(plugin.required || disabled)}
             disabled={disabled}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}

@@ -25,9 +25,15 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, P
     parseDevs();
     parseEquicordDevs();
 
-    // Setup userplugins
     try {
-        const userTarget = join(homedir(), "Documents", "Midnightcord", "userplugins");
+        const configHome = process.platform === "win32"
+            ? (process.env.APPDATA || join(homedir(), "AppData", "Roaming"))
+            : process.platform === "darwin"
+                ? join(homedir(), "Library", "Application Support")
+                : (process.env.XDG_CONFIG_HOME || join(homedir(), ".config"));
+        const userTarget = join(configHome, "midnightcord", "userplugins");
+        const legacyTarget = join(homedir(), "Documents", "Midnightcord", "userplugins");
+        if (!existsSync(legacyTarget)) mkdirSync(legacyTarget, { recursive: true });
         const srcLink = join(process.cwd(), "src", "userplugins");
         if (!existsSync(userTarget)) mkdirSync(userTarget, { recursive: true });
         if (!existsSync(srcLink)) {

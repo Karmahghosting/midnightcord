@@ -11,12 +11,19 @@ import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/Co
 import { Alerts, ChannelStore, Forms, GuildStore, Menu, React, RelationshipStore, RestAPI, ScrollerThin, showToast, TextInput, Toasts, UserStore } from "@webpack/common";
 import { t } from "../autoTranslateMidnightcord";
 
+function withTimeout<T>(promise: Promise<T>, ms = 20_000): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error("REST request timed out")), ms))
+    ]);
+}
+
 // ─── Icons ───────────────────────────────────────────────────────────────────
 function CleanerIcon(props: any) {
     return (
-        <svg class="vc-ic-save-icon" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width={props.width || 24} height={props.height || 24} fill="none" viewBox="0 0 24 24" {...props}>
+        <svg className="vc-ic-save-icon" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width={props.width || 24} height={props.height || 24} fill="none" viewBox="0 0 24 24" {...props}>
             <path fill="currentColor" d="M14.25 1c.41 0 .75.34.75.75V3h5.25c.41 0 .75.34.75.75v.5c0 .41-.34.75-.75.75H3.75A.75.75 0 0 1 3 4.25v-.5c0-.41.34-.75.75-.75H9V1.75c0-.41.34-.75.75-.75h4.5Z"></path>
-            <path fill="currentColor" fill-rule="evenodd" d="M5.06 7a1 1 0 0 0-1 1.06l.76 12.13a3 3 0 0 0 3 2.81h8.36a3 3 0 0 0 3-2.81l.75-12.13a1 1 0 0 0-1-1.06H5.07ZM11 12a1 1 0 1 0-2 0v6a1 1 0 1 0 2 0v-6Zm3-1a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1Z" clip-rule="evenodd"></path>
+            <path fill="currentColor" fillRule="evenodd" d="M5.06 7a1 1 0 0 0-1 1.06l.76 12.13a3 3 0 0 0 3 2.81h8.36a3 3 0 0 0 3-2.81l.75-12.13a1 1 0 0 0-1-1.06H5.07ZM11 12a1 1 0 1 0-2 0v6a1 1 0 1 0 2 0v-6Zm3-1a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1Z" clipRule="evenodd"></path>
         </svg>
     );
 }
@@ -46,6 +53,26 @@ let logs: LogEntry[] = [];
 let queue: QueueItem[] = [];
 let isQueueRunning = false;
 let shouldStop = false;
+
+let queueTotal = 0;
+let queueDone = 0;
+let queueStartedAt = 0;
+
+let stopPromise: Promise<void> = new Promise(() => { });
+let stopResolve: (() => void) | null = null;
+
+function beginQueueRun() {
+    shouldStop = false;
+    stopPromise = new Promise(resolve => { stopResolve = resolve; });
+}
+
+function raceStop<T>(promise: Promise<T>): Promise<T | undefined> {
+    return Promise.race([promise, stopPromise.then(() => undefined)]);
+}
+
+function abortableSleep(ms: number) {
+    return raceStop(new Promise<void>(resolve => setTimeout(resolve, ms)));
+}
 let currentTask: { name: string; progress: string; percentage: number } | null = null;
 
 const listeners = new Set<() => void>();
@@ -55,9 +82,7 @@ const emit = () => listeners.forEach(l => l());
 
 function canDeleteMessage(message: any, currentUserId: string): boolean {
     try {
-        if (message.author?.id !== currentUserId) return false;
-        if (message.type !== 0 && message.type !== 19) return false;
-        return true;
+        return message.author?.id === currentUserId && !message.deleted;
     } catch {
         return false;
     }
@@ -65,7 +90,7 @@ function canDeleteMessage(message: any, currentUserId: string): boolean {
 
 async function deleteMessage(channelId: string, messageId: string, retryCount = 0): Promise<boolean> {
     try {
-        await RestAPI.del({ url: `/channels/${channelId}/messages/${messageId}` });
+        await withTimeout(RestAPI.del({ url: `/channels/${channelId}/messages/${messageId}` }));
         return true;
     } catch (error: any) {
         const statusCode = error?.status || error?.statusCode;
@@ -81,7 +106,7 @@ async function deleteMessage(channelId: string, messageId: string, retryCount = 
 async function getChannelMessages(channelId: string, before?: string): Promise<any[]> {
     try {
         const url = before ? `/channels/${channelId}/messages?limit=100&before=${before}` : `/channels/${channelId}/messages?limit=100`;
-        const response = await RestAPI.get({ url });
+        const response = await withTimeout(RestAPI.get({ url }));
         if (!response || !response.body) return [];
         return Array.isArray(response.body) ? response.body : [];
     } catch {
@@ -89,173 +114,140 @@ async function getChannelMessages(channelId: string, before?: string): Promise<a
     }
 }
 
-async function cleanChannel(channelId: string, logEntry: LogEntry, taskName: string) {
+async function searchOwnMessages(channelId: string, currentUserId: string, maxId?: string) {
+    let url = `/channels/${channelId}/messages/search?author_id=${currentUserId}`;
+    if (maxId) url += `&max_id=${maxId}`;
+
+    const response = await withTimeout(RestAPI.get({ url }), 10_000);
+    const groups = response?.body?.messages;
+    if (!Array.isArray(groups) || groups.length === 0) {
+        return { messages: [] as any[], total: 0 };
+    }
+
+    const messages: any[] = [];
+    for (const group of groups) {
+        if (!Array.isArray(group)) continue;
+        for (const message of group) {
+            if (message?.author?.id === currentUserId) messages.push(message);
+        }
+    }
+
+    return { messages, total: Number(response.body.total_results) || 0 };
+}
+
+async function cleanChannel(channelId: string, logEntry: LogEntry, taskName: string, basePercent = 0, spanPercent = 100) {
     const currentUserId = UserStore.getCurrentUser()?.id;
     if (!currentUserId) return;
 
-    let lastMessageId: string | undefined;
-    let keepRunning = true;
-    let totalProcessed = 0;
-    
-    let initialTotalResults: number = 0;
-    try {
-        const res = await RestAPI.get({ url: `/channels/${channelId}/messages/search?author_id=${currentUserId}` });
-        if (res?.body?.total_results) initialTotalResults = res.body.total_results;
-    } catch (e) {}
-    
-    currentTask = { name: taskName, progress: "Fetching...", percentage: 0 };
+    if (!ChannelStore.getChannel(channelId)) return;
+
+    let maxId: string | undefined;
+    let previousPage = "";
+    let processed = 0;
+    let total = 0;
+    let iterations = 0;
+
+    currentTask = { name: taskName, progress: "Fetching...", percentage: basePercent };
     emit();
 
-    while (keepRunning && !shouldStop) {
-        try {
-            const messages = await getChannelMessages(channelId, lastMessageId);
-            if (messages.length === 0) break;
+    while (!shouldStop && ++iterations <= 2000) {
+        const { messages, total: searchTotal } = await raceStop(searchOwnMessages(channelId, currentUserId, maxId)) ?? { messages: [], total: 0 };
+        if (shouldStop) return;
 
-            const validMessages = messages.filter(msg => canDeleteMessage(msg, currentUserId));
-            
-            if (validMessages.length === 0) {
-                lastMessageId = messages[messages.length - 1].id;
-                logEntry.skipped += messages.length;
-                if (messages.length < 100) break;
-                continue;
-            }
+        if (searchTotal > total) total = searchTotal;
+        if (messages.length === 0) break;
 
-            for (const message of validMessages) {
-                if (shouldStop) break;
+        const pageSignature = messages.map(message => message.id).join(",");
+        if (pageSignature === previousPage) break;
+        previousPage = pageSignature;
 
-                const success = await deleteMessage(channelId, message.id);
-                if (success) {
-                    logEntry.deleted++;
-                    logEntry.messages.push(`[${message.timestamp}] ${message.content || "<attachment/embed>"}`);
-                } else {
-                    logEntry.failed++;
-                }
-                totalProcessed++;
-                // Keep total as max(initial, deleted) so bar never goes backwards
-                const effectiveTotal = Math.max(initialTotalResults, logEntry.deleted);
-                currentTask = { 
-                    name: taskName, 
-                    progress: effectiveTotal > 0 ? `Deleted ${logEntry.deleted} / ${effectiveTotal}` : `Deleted ${logEntry.deleted}`, 
-                    percentage: effectiveTotal > 0 ? Math.min((logEntry.deleted / effectiveTotal) * 100, 99) : Math.min((totalProcessed / (totalProcessed + 50)) * 100, 99) 
-                };
-                emit();
-                
-                await new Promise(resolve => setTimeout(resolve, 800)); // Rate limit safety
-            }
-            
-            logEntry.skipped += messages.length - validMessages.length;
-            lastMessageId = messages[messages.length - 1].id;
-            if (messages.length < 100) break;
+        const validMessages = messages.filter(message => canDeleteMessage(message, currentUserId));
+        const oldestId = messages.reduce((oldest, message) => BigInt(message.id) < BigInt(oldest) ? message.id : oldest, messages[0].id);
+        const nextMaxId = (BigInt(oldestId) - 1n).toString();
+        if (nextMaxId === maxId) break;
 
-        } catch (e: any) {
-            if (e?.status === 429) {
-                const retryAfter = e?.body?.retry_after ?? 30;
-                await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        for (const message of validMessages) {
+            if (shouldStop) return;
+
+            const success = await raceStop(deleteMessage(channelId, message.id));
+            if (success === undefined) return;
+            if (success) {
+                logEntry.deleted++;
+                logEntry.messages.push(`[${message.timestamp}] ${message.content || "<attachment/embed>"}`);
             } else {
-                break;
+                logEntry.failed++;
             }
+
+            processed++;
+            const localPercent = total > 0
+                ? Math.min((processed / total) * 100, 99)
+                : Math.min((processed / (processed + 25)) * 100, 99);
+            currentTask = {
+                name: taskName,
+                progress: total > 0 ? `Deleted ${logEntry.deleted} / ${total}` : `Deleted ${logEntry.deleted}`,
+                percentage: Math.min(basePercent + (spanPercent * localPercent) / 100, 99)
+            };
+            emit();
+
+            await abortableSleep(800);
+            if (shouldStop) return;
         }
+
+        logEntry.skipped += messages.length - validMessages.length;
+        maxId = nextMaxId;
+
+        if (total > 0 && processed >= total) break;
     }
 }
 
 async function cleanGuild(guildId: string, logEntry: LogEntry, taskName: string) {
-    const currentUserId = UserStore.getCurrentUser()?.id;
-    if (!currentUserId) return;
+    const channels = Object.values(ChannelStore.getMutableGuildChannelsForGuild(guildId) ?? {})
+        .filter((channel: any) => channel.type === 0 || channel.type === 5)
+        .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
 
-    let maxId: string | undefined;
-    let totalProcessed = 0;
-    let initialTotalResults: number = 0;
-    
-    currentTask = { name: taskName, progress: "Searching...", percentage: 0 };
+    if (channels.length === 0) {
+        currentTask = { name: taskName, progress: "No text channels", percentage: 100 };
+        emit();
+        return;
+    }
+
+    currentTask = { name: taskName, progress: "Fetching channels...", percentage: 0 };
     emit();
 
-    while (!shouldStop) {
+    for (let index = 0; index < channels.length; index++) {
+        if (shouldStop) return;
+
+        const channel: any = channels[index];
+        const label = channel.name ? `#${channel.name}` : channel.id;
+        const basePercent = (index / channels.length) * 100;
+        const spanPercent = 100 / channels.length;
+
+        currentTask = {
+            name: `${taskName} ${label}`,
+            progress: `Channel ${index + 1}/${channels.length}`,
+            percentage: basePercent
+        };
+        emit();
+
         try {
-            let url = `/guilds/${guildId}/messages/search?author_id=${currentUserId}`;
-            if (maxId) url += `&max_id=${maxId}`;
-
-            const response = await RestAPI.get({ url });
-            if (!response?.body?.messages || response.body.messages.length === 0) break;
-            if (!initialTotalResults && response.body.total_results) {
-                initialTotalResults = response.body.total_results;
-            }
-
-            let messages: any[] = [];
-            for (const group of response.body.messages) {
-                for (const msg of group) {
-                    if (msg.author && msg.author.id === currentUserId) messages.push(msg);
-                }
-            }
-
-            if (messages.length === 0) break;
-
-            let oldestHitId: string | undefined;
-            for (const group of response.body.messages) {
-                for (const msg of group) {
-                    if (msg.hit) {
-                        if (!oldestHitId || BigInt(msg.id) < BigInt(oldestHitId)) oldestHitId = msg.id;
-                    }
-                }
-            }
-            
-            if (oldestHitId) {
-                maxId = (BigInt(oldestHitId) - 1n).toString();
-            } else {
-                let oldestId = messages[0].id;
-                for (const m of messages) if (BigInt(m.id) < BigInt(oldestId)) oldestId = m.id;
-                maxId = (BigInt(oldestId) - 1n).toString();
-            }
-
-            const validMessages = messages.filter(msg => canDeleteMessage(msg, currentUserId));
-            if (validMessages.length === 0) {
-                logEntry.skipped += messages.length;
-                continue;
-            }
-
-            for (const message of validMessages) {
-                if (shouldStop) break;
-                if (!message.channel_id) continue;
-
-                const success = await deleteMessage(message.channel_id, message.id);
-                if (success) {
-                    logEntry.deleted++;
-                    logEntry.messages.push(`[${message.timestamp}] ${message.content || "<attachment/embed>"}`);
-                } else {
-                    logEntry.failed++;
-                }
-
-                totalProcessed++;
-                // Keep total as max(initial, deleted) so bar never goes backwards
-                const effectiveTotal = Math.max(initialTotalResults, logEntry.deleted);
-                currentTask = { 
-                    name: taskName, 
-                    progress: effectiveTotal > 0 ? `Deleted ${logEntry.deleted} / ${effectiveTotal}` : `Deleted ${logEntry.deleted}`, 
-                    percentage: effectiveTotal > 0 ? Math.min((logEntry.deleted / effectiveTotal) * 100, 99) : Math.min((totalProcessed / (totalProcessed + 50)) * 100, 99) 
-                };
-                emit();
-                
-                await new Promise(resolve => setTimeout(resolve, 800));
-            }
-        } catch (e: any) {
-            if (e?.status === 429) {
-                const retryAfter = e?.body?.retry_after ?? 30;
-                await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-            } else {
-                break;
-            }
+            await cleanChannel(channel.id, logEntry, `${taskName} ${label}`, basePercent, spanPercent);
+        } catch (error) {
+            console.error(`[MessageCleaner] Failed to clean ${label}`, error);
+            logEntry.failed++;
         }
+        if (shouldStop) return;
     }
 }
 
 async function processQueue() {
     if (isQueueRunning) return;
     isQueueRunning = true;
-    shouldStop = false;
+    beginQueueRun();
     emit();
 
     while (queue.length > 0 && !shouldStop) {
-        const item = queue[0];
-        
+        const item = queue.shift()!;
+
         const logEntry: LogEntry = {
             id: Math.random().toString(36).substring(7),
             type: item.type,
@@ -268,47 +260,68 @@ async function processQueue() {
             messages: []
         };
         logs.unshift(logEntry);
-        
-        let targetChannelId = item.targetId;
-        
-        if (item.type === "dm" && targetChannelId.startsWith("friend-")) {
-            const userId = targetChannelId.replace("friend-", "");
-            try {
-                const res = await RestAPI.post({ url: '/users/@me/channels', body: { recipient_id: userId } });
-                if (res && res.body && res.body.id) {
-                    targetChannelId = res.body.id;
-                }
-            } catch (e) {
-                console.error("Failed to open DM for friend", userId, e);
-            }
-        }
 
-        if (item.type === "dm" || item.type === "channel") {
-            await cleanChannel(targetChannelId, logEntry, item.name);
-        } else if (item.type === "server") {
-            await cleanGuild(item.targetId, logEntry, item.name);
-        }
-        
-        if (!shouldStop) {
-            queue.shift();
-            showToast(`Cleaned ${item.name}`, Toasts.Type.SUCCESS);
+        try {
+            let targetChannelId = item.targetId;
+
+            if (item.type === "dm" && targetChannelId.startsWith("friend-")) {
+                const userId = targetChannelId.replace("friend-", "");
+                try {
+                    const res = await withTimeout(RestAPI.post({ url: '/users/@me/channels', body: { recipient_id: userId } }));
+                    if (res && res.body && res.body.id) {
+                        targetChannelId = res.body.id;
+                    }
+                } catch (e) {
+                    console.error("Failed to open DM for friend", userId, e);
+                }
+            }
+
+            if (item.type === "dm" || item.type === "channel") {
+                await cleanChannel(targetChannelId, logEntry, item.name);
+            } else if (item.type === "server") {
+                await cleanGuild(item.targetId, logEntry, item.name);
+            }
+
+            if (!shouldStop) showToast(`Cleaned ${item.name}`, Toasts.Type.SUCCESS);
+        } catch (error) {
+            console.error("[MessageCleaner] Cleanup failed", error);
+            showToast(`Failed to clean ${item.name}`, Toasts.Type.FAILURE);
+        } finally {
+            queueDone++;
+            emit();
         }
     }
 
     isQueueRunning = false;
     currentTask = null;
+    shouldStop = false;
     emit();
 }
 
 function addToQueue(items: QueueItem[]) {
-    queue.push(...items);
-    if (!isQueueRunning) processQueue();
-    else emit();
+    const stale = !currentTask && queue.length === 0;
+    if (!isQueueRunning || stale) {
+        isQueueRunning = false;
+        queueTotal = items.length;
+        queueDone = 0;
+        queueStartedAt = Date.now();
+        queue.push(...items);
+        processQueue();
+    } else {
+        queueTotal += items.length;
+        queue.push(...items);
+        emit();
+    }
 }
 
 function stopQueue() {
     shouldStop = true;
     queue = [];
+    stopResolve?.();
+    stopResolve = null;
+
+    isQueueRunning = false;
+    currentTask = null;
     emit();
 }
 
@@ -342,9 +355,8 @@ const MODAL_STYLES = `
 .mcv2-root {
     display: flex;
     flex-direction: column;
-    width: 600px;
-    height: 600px;
-    max-height: 80vh;
+    width: min(600px, 92vw);
+    height: min(600px, 80vh);
     border-radius: 12px;
     background: #313338;
     color: #dbdee1;
@@ -500,20 +512,46 @@ function useForceUpdate() {
     return () => setTick(t => t + 1);
 }
 
+function formatEta(ms: number) {
+    if (!Number.isFinite(ms) || ms <= 0) return "calcul…";
+    const seconds = Math.round(ms / 1000);
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ${minutes % 60}m`;
+}
+
 function ProgressBanner() {
-    if (!isQueueRunning && queue.length === 0) return null;
+    if (!currentTask && queue.length === 0) return null;
+
+    const currentPercent = Math.min(99, Math.max(0, currentTask?.percentage ?? 0));
+    const overallRaw = queueTotal > 0
+        ? ((queueDone + currentPercent / 100) / queueTotal) * 100
+        : 0;
+    const overallPercent = Math.min(99, Math.max(0, Math.round(overallRaw)));
+    const elapsed = Math.max(0, Date.now() - queueStartedAt);
+    const eta = overallPercent > 0 ? (elapsed / overallPercent) * (100 - overallPercent) : 0;
+    const itemNumber = Math.min(queueTotal, queueDone + (isQueueRunning ? 1 : 0));
+
     return (
         <div className="mcv2-progress-card">
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                <strong style={{ fontSize: "14px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "5px" }}>
+                <strong style={{ fontSize: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {currentTask ? `Cleaning: ${currentTask.name}` : `Queued: ${queue.length} items`}
                 </strong>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", flexShrink: 0 }}>
                     {currentTask ? currentTask.progress : "Waiting..."}
                 </span>
             </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", marginBottom: "6px", gap: "12px" }}>
+                <span>
+                    {t("Queue")} {overallPercent}% ({Math.round(currentPercent)}%) · {itemNumber}/{queueTotal || "?"}
+                </span>
+                <span>{t("ETA")} {formatEta(eta)}</span>
+            </div>
             <div className="mcv2-progress-bar-wrap">
-                <div className="mcv2-progress-bar-fill" style={{ width: `${currentTask ? currentTask.percentage : 0}%` }} />
+                <div className="mcv2-progress-bar-fill" style={{ width: `${overallPercent}%` }} />
             </div>
             <button className="mcv2-primary-btn" style={{ marginTop: "12px", width: "100%", background: "transparent", border: "1px solid #ed4245", color: "#ed4245" }} onClick={stopQueue}>
                 {t("Stop Cleaning")}
@@ -756,7 +794,7 @@ function CleanerModal({ rootProps }: { rootProps: any }) {
                     </div>
                     <div style={{ flex: 1 }}>
                         <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#ffffff" }}>Message Cleaner</h2>
-                        <div style={{ fontSize: "12px", color: "#b5bac1", marginTop: "2px" }}>{t("MessageCleaner Description")}</div>
+                        <div style={{ fontSize: "12px", color: "#b5bac1", marginTop: "2px" }}>{t("Delete your own messages from DMs, channels and servers.")}</div>
                     </div>
                     <ModalCloseButton onClick={rootProps.onClose} />
                 </div>
@@ -838,7 +876,7 @@ async function closeChannelReliably(channelId: string): Promise<boolean> {
 async function clearAllDMs() {
     const channels = Object.values(ChannelStore.getMutablePrivateChannels()).filter((c: any) => c.type === 1);
     if (channels.length === 0) {
-        showToast(t("No DMs to close"), Toasts.Type.INFO);
+        showToast(t("No DMs to close"), Toasts.Type.MESSAGE);
         return;
     }
 
@@ -852,7 +890,7 @@ async function clearAllDMs() {
             </div>
         ),
         onConfirm: async () => {
-            showToast(`Closing ${channels.length} DMs...`, Toasts.Type.INFO);
+            showToast(`Closing ${channels.length} DMs...`, Toasts.Type.MESSAGE);
             let closedCount = 0;
             for (const ch of channels) {
                 const success = await closeChannelReliably(ch.id);
@@ -867,7 +905,7 @@ async function clearAllDMs() {
 async function clearAllGroups() {
     const channels = Object.values(ChannelStore.getMutablePrivateChannels()).filter((c: any) => c.type === 3);
     if (channels.length === 0) {
-        showToast(t("No groups to leave"), Toasts.Type.INFO);
+        showToast(t("No groups to leave"), Toasts.Type.MESSAGE);
         return;
     }
 
@@ -881,7 +919,7 @@ async function clearAllGroups() {
             </div>
         ),
         onConfirm: async () => {
-            showToast(`Leaving ${channels.length} groups...`, Toasts.Type.INFO);
+            showToast(`Leaving ${channels.length} groups...`, Toasts.Type.MESSAGE);
             let leftCount = 0;
             for (const ch of channels) {
                 const success = await closeChannelReliably(ch.id);

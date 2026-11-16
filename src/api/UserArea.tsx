@@ -110,11 +110,14 @@ function UserAreaButtons({ props }: { props: UserAreaRenderProps; }) {
             <div className="vc-user-area-btns" style={{ display: "contents" }}>
                 {Array.from(buttons)
                     .sort(([, a], [, b]) => a.priority - b.priority)
-                    .map(([id, { render: Button }]) => (
-                        <ErrorBoundary noop key={id} onError={e => logger.error(`Failed to render ${id}`, e.error)}>
-                            <Button {...props} />
-                        </ErrorBoundary>
-                    ))}
+                    .map(([id, { render: Button }]) => {
+                        if (!Button) return null;
+                        return (
+                            <ErrorBoundary noop key={id} onError={e => logger.error(`Failed to render ${id}`, e.error)}>
+                                <Button {...props} />
+                            </ErrorBoundary>
+                        );
+                    })}
             </div>
         </>
     );

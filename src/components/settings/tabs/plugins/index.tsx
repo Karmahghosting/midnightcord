@@ -30,6 +30,9 @@ import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadingTertiary } from "@components/Heading";
+import { HeartIcon, PluginsIcon, UserIcon } from "@components/Icons";
+import { hideLoadingOverlay, showLoadingOverlay } from "@components/LoadingOverlay";
+import { MidnightcordBrandIcon, VencordEquicordIcon } from "@components/BrandIcons";
 import { Paragraph } from "@components/Paragraph";
 import { SettingsTab } from "@components/settings";
 import { debounce } from "@shared/debounce";
@@ -38,9 +41,9 @@ import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
-import { relaunch, showItemInFolder } from "@utils/native";
+import { relaunch } from "@utils/native";
 import { useAwaiter } from "@utils/react";
-import { Alerts, lodash, Parser, React, TextInput, Toasts, Tooltip, useCallback, useMemo, useState } from "@webpack/common";
+import { Alerts, lodash, Parser, React, Select, TextInput, Toasts, Tooltip, useCallback, useMemo, useState } from "@webpack/common";
 
 import Plugins, { ExcludedPlugins, PluginMeta } from "~plugins";
 
@@ -48,13 +51,23 @@ import { PluginCard } from "./PluginCard";
 import { openResetDefaultsModal, openWarningModal } from "./PluginModal";
 import { TUTORIAL_PLUGIN_NAMES } from "./tutorialList";
 
+const categoryIconProps = { width: 20, height: 20 };
 const makeCategoryOptions = () => [
-    { label: t("All categories"), value: SearchStatus.ALL },
-    { label: "Vencord & Equicord", value: SearchStatus.OTHERS },
-    { label: "Midnightcord", value: SearchStatus.MIDNIGHTCORD },
-    { label: t("User Plugins"), value: SearchStatus.USER_PLUGINS },
-    { label: t("Liked Plugins"), value: SearchStatus.LIKED_PLUGINS }
-];
+    { label: t("All categories"), value: SearchStatus.ALL, icon: <PluginsIcon {...categoryIconProps} /> },
+    { label: "Vencord & Equicord", value: SearchStatus.OTHERS, icon: <VencordEquicordIcon size={20} /> },
+    { label: "Midnightcord", value: SearchStatus.MIDNIGHTCORD, icon: <MidnightcordBrandIcon size={20} /> },
+    { label: t("User Plugins"), value: SearchStatus.USER_PLUGINS, icon: <UserIcon {...categoryIconProps} /> },
+    { label: t("Liked Plugins"), value: SearchStatus.LIKED_PLUGINS, icon: <HeartIcon {...categoryIconProps} /> }
+].map(({ label, value, icon }) => ({
+    label: (
+        <span className={cl("filter-option")}>
+            {icon}
+            <span>{label}</span>
+        </span>
+    ) as unknown as string,
+    value
+}));
+
 export const cl = classNameFactory("vc-plugins-");
 export const logger = new Logger("PluginSettings", "#a6d189");
 
@@ -297,7 +310,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
         setVisibleCount(BATCH_SIZE);
     }, [search, searchValue.status, stateFilter, sortOrder]);
 
-    const observer = React.useRef<IntersectionObserver>();
+    const observer = React.useRef<IntersectionObserver | null>(null);
     const sentinelRef = React.useCallback((node: HTMLDivElement | null) => {
         if (observer.current) observer.current.disconnect();
         if (node) {
@@ -599,7 +612,12 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
     const visibleData = filteredData.slice(0, visibleCount);
 
     const makeCard = (p: typeof sortedPlugins[number]) => (
-        <ErrorBoundary fallback={<div style={{ color: "red", padding: 8 }}>Failed to render {p.name}.</div>} key={p.name}>
+        <ErrorBoundary
+            fallback={() => (
+                <div style={{ color: "var(--text-feedback-critical)", padding: 8 }}>Failed to render {p.name}.</div>
+            )}
+            key={p.name}
+        >
             <PluginCard
                 onRestartNeeded={handleRestartNeeded}
                 disabled={false}
@@ -615,7 +633,12 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
             ? "This plugin is required for Midnightcord to function."
             : <PluginDependencyList deps={depMap[p.name]?.filter(d => isPluginEnabled(d))} />;
         return (
-            <ErrorBoundary fallback={<div style={{ color: "red", padding: 8 }}>Failed to render {p.name}.</div>} key={p.name}>
+            <ErrorBoundary
+                fallback={() => (
+                    <div style={{ color: "var(--text-feedback-critical)", padding: 8 }}>Failed to render {p.name}.</div>
+                )}
+                key={p.name}
+            >
                 <Tooltip text={tooltipText}>
                     {({ onMouseLeave, onMouseEnter }) => (
                         <PluginCard
@@ -668,6 +691,30 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
         const enabled = plugins.filter(p => isPluginEnabled(p)).length;
         return { total, enabled };
     }, [enabledSnapshot, searchValue.status, ratings, premiumOnly]);
+
+    async function importUserPlugin() {
+        const result = await VesktopNative.userPlugins.import();
+        if (result.status === "cancelled") return;
+        if (result.status !== "ok") {
+            showErrorToast(result.message || "Could not import this user plugin.");
+            return;
+        }
+
+        Alerts.show({
+            title: "User plugin imported",
+            body: `${result.name} has been added to the hidden userplugins folder. Rebuild Midnightcord to load it.`,
+            confirmText: "Rebuild & restart",
+            cancelText: "Later",
+            onConfirm: async () => {
+                showLoadingOverlay("Rebuilding Midnightcord...");
+                const rebuild = await VesktopNative.userPlugins.rebuildAndRestart();
+                if (rebuild.status !== "ok") {
+                    hideLoadingOverlay();
+                    showErrorToast(rebuild.message);
+                }
+            }
+        });
+    }
 
     const percent = categoryStats.total > 0 ? Math.round((categoryStats.enabled / categoryStats.total) * 100) : 0;
     const strokeDashoffset = 62.83 - (62.83 * percent / 100);
@@ -733,16 +780,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                             style={searchValue.status === SearchStatus.USER_PLUGINS ? { cursor: "pointer", transition: "0.2s" } : {}}
                             onClick={() => {
                                 if (searchValue.status !== SearchStatus.USER_PLUGINS) return;
-                                const native = (window as any).DiscordNative || (window as any).VesktopNative;
-                                if (native?.process?.env) {
-                                    const home = native.process.env.USERPROFILE || native.process.env.HOME;
-                                    if (home) {
-                                        const isWindows = !!native.process.env.USERPROFILE;
-                                        const folderPath = isWindows ? `${home}\\Documents\\Midnightcord\\userplugins` : `${home}/Documents/Midnightcord/userplugins`;
-                                        // Open the directory itself (will open its parent and highlight it)
-                                        showItemInFolder(folderPath);
-                                    }
-                                }
+                                void VesktopNative.userPlugins.openFolder();
                             }}
                             title={searchValue.status === SearchStatus.USER_PLUGINS ? "Click to open folder" : ""}
                         >
@@ -769,30 +807,54 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
                             <TextInput autoFocus value={searchInput} aria-label={t("Find a plugin, tag, or author...")} placeholder={t("Find a plugin, tag, or author...")} onChange={onSearch} />
                         </ErrorBoundary>
                     </div>
-                    <label className={cl("filter-field")} htmlFor="vc-plugins-category">
+                    <div className={cl("filter-field")}>
                         <span className={cl("filter-label")}>{t("Category")}</span>
-                        <select id="vc-plugins-category" value={searchValue.status} onChange={e => onStatusChange(Number(e.currentTarget.value) as SearchStatus)}>
-                            {makeCategoryOptions().map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                        </select>
-                    </label>
-                    <label className={cl("filter-field")} htmlFor="vc-plugins-state">
+                        <Select
+                            className={cl("filter-searchable")}
+                            options={makeCategoryOptions()}
+                            isSelected={value => Number(value) === searchValue.status}
+                            select={value => onStatusChange(Number(value) as SearchStatus)}
+                            serialize={value => String(value)}
+                            placeholder={t("Category")}
+                            closeOnSelect
+                            maxVisibleItems={5}
+                            popoutWidth={260}
+                        />
+                    </div>
+                    <div className={cl("filter-field")}>
                         <span className={cl("filter-label")}>{t("Plugin status")}</span>
-                        <select id="vc-plugins-state" value={stateFilter} onChange={e => setStateFilter(e.currentTarget.value as typeof stateFilter)}>
-                            <option value="all">{t("All installed")}</option>
-                            <option value="enabled">{t("Enabled plugins")}</option>
-                            <option value="disabled">{t("Disabled plugins")}</option>
-                            <option value="new">{t("Recently added")}</option>
-                        </select>
-                    </label>
-                    <label className={cl("filter-field")} htmlFor="vc-plugins-sort">
+                        <Select
+                            className={cl("filter-searchable")}
+                            options={[
+                                { label: t("All installed"), value: "all" },
+                                { label: t("Enabled plugins"), value: "enabled" },
+                                { label: t("Disabled plugins"), value: "disabled" },
+                                { label: t("Recently added"), value: "new" }
+                            ]}
+                            isSelected={value => value === stateFilter}
+                            select={value => setStateFilter(value as typeof stateFilter)}
+                            serialize={value => String(value)}
+                            closeOnSelect
+                            maxVisibleItems={4}
+                        />
+                    </div>
+                    <div className={cl("filter-field")}>
                         <span className={cl("filter-label")}>{t("Sort by")}</span>
-                        <select id="vc-plugins-sort" value={sortOrder} onChange={e => setSortOrder(e.currentTarget.value as typeof sortOrder)}>
-                            <option value="likes">{t("Most liked")}</option>
-                            <option value="name-asc">{t("Name (A–Z)")}</option>
-                            <option value="name-desc">{t("Name (Z–A)")}</option>
-                            <option value="enabled">{t("Enabled first")}</option>
-                        </select>
-                    </label>
+                        <Select
+                            className={cl("filter-searchable")}
+                            options={[
+                                { label: t("Most liked"), value: "likes" },
+                                { label: t("Name (A–Z)"), value: "name-asc" },
+                                { label: t("Name (Z–A)"), value: "name-desc" },
+                                { label: t("Enabled first"), value: "enabled" }
+                            ]}
+                            isSelected={value => value === sortOrder}
+                            select={value => setSortOrder(value as typeof sortOrder)}
+                            serialize={value => String(value)}
+                            closeOnSelect
+                            maxVisibleItems={4}
+                        />
+                    </div>
                 </div>
                 <div className={cl("results-count")} role="status" aria-live="polite">
                     {t("Matching plugins")}: {filteredData.length + (premiumOnly ? 0 : requiredData.length)}
@@ -800,13 +862,31 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
 
                 {premiumOnly && <HeadingTertiary className={Margins.top20}>Premium Plugins</HeadingTertiary>}
                 {searchValue.status === SearchStatus.USER_PLUGINS && (
-                    <Paragraph>
-                        {t("User Plugins — from your local folder")}. {t("Note: User plugins require installing the client via a local build, not from the website installer.")}
-                        {totalUserPlugins === 0 && <> {t("Add .tsx files to your")} <code>Documents/Midnightcord/userplugins/</code> {t("folder and rebuild with a local build.")}</>}
-                    </Paragraph>
+                    <Card className={cl("user-plugins-card")}>
+                        <div className={cl("user-plugins-card-icon")}>
+                            <PluginsIcon width={24} height={24} />
+                        </div>
+                        <div className={cl("user-plugins-card-body")}>
+                            <HeadingTertiary>{t("Local user plugins")}</HeadingTertiary>
+                            <Paragraph>
+                                {t("Import a .tsx, .ts, .js, .jsx or .css file. Midnightcord keeps it in its private config folder and loads it after a rebuild.")}
+                            </Paragraph>
+                            {totalUserPlugins === 0 && (
+                                <Paragraph className={cl("user-plugins-empty")}>{t("No user plugins are installed yet.")}</Paragraph>
+                            )}
+                            <div className={cl("user-plugin-actions")}>
+                                <Button size="small" onClick={importUserPlugin}>
+                                    {t("Import User Plugin")}
+                                </Button>
+                                <Button size="small" variant="secondary" onClick={() => void VesktopNative.userPlugins.openFolder()}>
+                                    {t("Open Plugin Folder")}
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
                 )}
                 {visiblePlugins.length > 0 && <div className={cl("grid")}>{visiblePlugins}</div>}
-                {filteredData.length === 0 && (premiumOnly || requiredData.length === 0) && (
+                {filteredData.length === 0 && searchValue.status !== SearchStatus.USER_PLUGINS && (premiumOnly || requiredData.length === 0) && (
                     <ExcludedPluginsList search={stateFilter === "all" && searchValue.status === SearchStatus.ALL ? search : ""} />
                 )}
                 {hasMore && (

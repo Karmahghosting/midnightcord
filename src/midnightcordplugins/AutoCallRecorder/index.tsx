@@ -243,7 +243,7 @@ async function handleVoiceStateUpdates(e: any) {
         
         if (update.channelId === lastChannelId) {
             if (isBlacklistedUserInChannel(lastChannelId)) {
-                Toasts.show(Toasts.create(t("Blacklisted user in channel."), Toasts.Type.WARNING));
+                Toasts.show(Toasts.create(t("Blacklisted user in channel."), Toasts.Type.MESSAGE));
                 await stopRecording();
                 break;
             }
@@ -260,7 +260,7 @@ async function handleVoiceChannelSelect(e: any) {
 
     if (newChannelId && lastChannelId !== newChannelId) {
         if (isBlacklistedUserInChannel(newChannelId)) {
-            Toasts.show(Toasts.create(t("Blacklisted user in channel."), Toasts.Type.WARNING));
+            Toasts.show(Toasts.create(t("Blacklisted user in channel."), Toasts.Type.MESSAGE));
         } else {
             await startRecording({
                 mode: settings.store.mode as any,
@@ -290,7 +290,7 @@ export default definePlugin({
         lastChannelId = SelectedChannelStore?.getVoiceChannelId?.();
         if (lastChannelId) {
             if (isBlacklistedUserInChannel(lastChannelId)) {
-                Toasts.show(Toasts.create(t("Blacklisted user in channel."), Toasts.Type.WARNING));
+                Toasts.show(Toasts.create(t("Blacklisted user in channel."), Toasts.Type.MESSAGE));
             } else {
                 startRecording({
                     mode: settings.store.mode as any,

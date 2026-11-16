@@ -7,7 +7,7 @@
 import { DataStore } from "@api/index";
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import definePlugin from "@utils/types";
-import { Constants, GuildStore, Menu, React, RestAPI, showToast, Toasts, PermissionsBits, PermissionStore } from "@webpack/common";
+import { Constants, GuildStore, Menu, React, RestAPI, SelectedGuildStore, showToast, Toasts, PermissionsBits, PermissionStore } from "@webpack/common";
 import { t } from "../autoTranslateMidnightcord";
 
 // Key format: `${guildId}:${userId}`
@@ -52,7 +52,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, ctx: { user
     const { user, channel } = ctx;
     if (!user || !Array.isArray(children)) return;
 
-    const guildId = ctx.guildId ?? channel?.guild_id ?? GuildStore.getGuildId();
+    const guildId = ctx.guildId ?? channel?.guild_id ?? SelectedGuildStore.getGuildId();
     if (!guildId) return;
 
     const guild = GuildStore.getGuild(guildId);
@@ -84,7 +84,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, ctx: { user
                 } else {
                     autoDecoedUsers.delete(key);
                     await saveAutoDecoed();
-                    showToast(t("Auto Deco disabled for ") + (user.username || user.tag || "user"), Toasts.Type.INFO);
+                    showToast(t("Auto Deco disabled for ") + (user.username || user.tag || "user"), Toasts.Type.MESSAGE);
                 }
             }}
         />

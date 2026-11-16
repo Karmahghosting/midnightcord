@@ -4,27 +4,25 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { BaseText } from "@Midnightcord/types/components";
+
 import { SimpleErrorBoundary } from "../SimpleErrorBoundary";
-import { SettingsComponent } from "./Settings";
+import { cl, SettingsComponent } from "./Settings";
 
 export const DiscordBranchPicker: SettingsComponent = ({ settings }) => (
     <SimpleErrorBoundary>
         <select
             aria-label="Discord branch"
+            className={cl("select")}
             value={settings.discordBranch || "stable"}
             onChange={event => (settings.discordBranch = event.currentTarget.value as typeof settings.discordBranch)}
-            style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: "4px",
-                background: "var(--background-tertiary)",
-                color: "var(--text-normal)",
-                border: "1px solid var(--background-modifier-accent)"
-            }}
         >
             <option value="stable">Stable</option>
             <option value="canary">Canary</option>
             <option value="ptb">PTB</option>
         </select>
+        <BaseText size="sm" style={{ display: "block", marginTop: "8px", opacity: 0.7 }}>
+            Select which Discord installation Midnightcord uses. A full restart is required.
+        </BaseText>
     </SimpleErrorBoundary>
 );

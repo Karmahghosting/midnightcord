@@ -230,7 +230,7 @@ function AudioSettingsModal({
 
             <Modals.ModalContent className={cl("modal", "venmic-settings")}>
                 <FormSwitch
-                    title="Micphone Workaround"
+                    title="Microphone Workaround"
                     description="Work around an issue that causes the microphone to be shared instead of the correct audio. Only enable if you're experiencing this issue."
                     hideBorder
                     onChange={v => (Settings.audio = { ...Settings.audio, workaround: v })}
@@ -386,7 +386,7 @@ function StreamSettingsUi({
 
     return (
         <div>
-            <HeadingTertiary className={Margins.bottom8}>What you're strefriendng</HeadingTertiary>
+            <HeadingTertiary className={Margins.bottom8}>What you're streaming</HeadingTertiary>
             <Card className={cl("card", "preview")}>
                 <img src={thumb} alt="" className={cl(isLinux ? "preview-img-linux" : "preview-img")} />
                 <Paragraph>{source.name}</Paragraph>

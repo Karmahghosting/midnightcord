@@ -13,7 +13,7 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import { copyToClipboard } from "@utils/clipboard";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import type { NavContextMenuPatchCallback } from "@utils/types";
+import type { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Alerts, Button, Clickable, FluxDispatcher, IconUtils, Menu, openModal, SettingsRouter, showToast, TextInput, Toasts, useEffect, useState, useStateFromStores, RelationshipStore, ChannelStore, React, ModalRoot, ModalHeader, ModalContent, ModalFooter } from "@webpack/common";
 import { NavigationRouter } from "@webpack/common/utils";
@@ -287,7 +287,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { user }: U
 export const settings = definePluginSettings({
     presetsManager: {
         type: OptionType.COMPONENT,
-        component({ closePluginSettings }) {
+        component({ closePluginSettings = () => { } }) {
             return (
                 <ErrorBoundary>
                     <SaveThemSettings closePluginSettings={closePluginSettings} />

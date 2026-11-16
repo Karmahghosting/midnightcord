@@ -32,7 +32,7 @@
 
 .compact-popout-divider {
     height: 1px;
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--background-modifier-accent);
     margin: 4px 8px;
     border-radius: 1px;
 }
@@ -56,12 +56,6 @@
 
 /* ── Midnightcord Quick Settings Popout ── */
 
-/* Force ALL child elements to use white text — defeats any theme override */
-.nc-settings-popout,
-.nc-settings-popout * {
-    color: #ffffff !important;
-}
-
 .nc-settings-popout {
     background-color: var(--background-floating, #111214);
     border-radius: 12px;
@@ -77,7 +71,7 @@
 .nc-settings-popout-title {
     font-size: 11px;
     font-weight: 700;
-    color: #ffffff !important;
+    color: var(--text-normal) !important;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 6px;
@@ -88,7 +82,7 @@
     font-size: 10px;
     font-weight: 700;
     /* Slightly muted — override the blanket rule with a more specific selector */
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: var(--text-muted) !important;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 6px 2px 2px;
@@ -96,7 +90,7 @@
 
 .nc-settings-popout-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.07);
+    background: var(--background-modifier-accent);
     margin: 6px 0;
     border-radius: 1px;
 }
@@ -112,11 +106,11 @@
     transition: background 0.12s;
     margin-bottom: 4px;
     /* Force the row itself to not inherit dark colors from the theme */
-    color: #ffffff !important;
+    color: var(--text-normal) !important;
 }
 
 .nc-settings-popout-row:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--background-modifier-hover);
 }
 
 .nc-settings-popout-row-info {
@@ -127,13 +121,13 @@
 .nc-settings-popout-row-name {
     font-size: 12px;
     font-weight: 600;
-    color: #ffffff !important;
+    color: var(--text-normal) !important;
     line-height: 1.3;
 }
 
 .nc-settings-popout-row-desc {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: var(--text-muted) !important;
     margin-top: 1px;
     white-space: nowrap;
     overflow: hidden;
@@ -148,7 +142,7 @@
     flex-shrink: 0;
     background: var(--background-modifier-accent, #4f545c);
     border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
     transition: background 0.2s;
     cursor: pointer;
 }
@@ -164,14 +158,14 @@
     height: 12px;
     top: 2px;
     left: 2px;
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--interactive-normal);
     border-radius: 50%;
     transition: transform 0.2s, background 0.2s;
 }
 
 .nc-settings-popout-toggle.nc-on .nc-settings-popout-toggle-knob {
     transform: translateX(14px);
-    background: #fff;
+    background: var(--white-500, #fff);
 }
 
 /* Plugin buttons grid inside the settings popout */
@@ -223,7 +217,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid var(--border-subtle);
 }
 
 .nc-modal-sidebar-header {
@@ -236,7 +230,7 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-muted);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
@@ -254,7 +248,7 @@
 }
 
 .nc-modal-sidebar-nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--background-modifier-accent);
     border-radius: 2px;
 }
 
@@ -273,13 +267,13 @@
 }
 
 .nc-modal-sidebar-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--background-modifier-hover);
     color: var(--text-normal);
 }
 
 .nc-modal-sidebar-item--active {
     background: var(--brand-500, #5865f2) !important;
-    color: #fff !important;
+    color: var(--white-500, #fff) !important;
 }
 
 .nc-modal-sidebar-item--active .nc-modal-sidebar-item-icon {
@@ -317,7 +311,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
@@ -340,7 +334,7 @@
 }
 
 .nc-modal-close-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--background-modifier-hover);
     color: var(--text-normal);
 }
 
@@ -355,7 +349,7 @@
 }
 
 .nc-modal-content-body::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--background-modifier-accent);
     border-radius: 3px;
 }
 
@@ -374,15 +368,15 @@
     padding: 12px 14px;
     border-radius: 8px;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: var(--background-modifier-hover);
+    border: 1px solid var(--border-subtle);
     transition: background 0.12s, border-color 0.12s, transform 0.1s;
     user-select: none;
 }
 
 .nc-modal-card:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.13);
+    background: var(--background-modifier-selected);
+    border-color: var(--border-strong);
     transform: translateX(2px);
 }
 
@@ -410,13 +404,13 @@
 .nc-modal-card-title {
     font-size: 13px;
     font-weight: 600;
-    color: #ffffff !important;
+    color: var(--text-normal) !important;
     line-height: 1.3;
 }
 
 .nc-modal-card-desc {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--text-muted) !important;
     margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
@@ -424,43 +418,55 @@
 }
 
 .nc-modal-card-arrow {
-    color: rgba(255, 255, 255, 0.3) !important;
+    color: var(--text-muted) !important;
     flex-shrink: 0;
     transition: transform 0.12s, color 0.12s;
 }
 
 .nc-modal-card:hover .nc-modal-card-arrow {
     transform: translateX(3px);
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--text-normal) !important;
 }
 
 /* Keep colors for specific elements */
 
 .nc-modal-sidebar-header {
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: var(--text-muted) !important;
 }
 
 .nc-modal-sidebar-item {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: var(--text-muted) !important;
 }
 
 .nc-modal-sidebar-item:hover {
-    color: #ffffff !important;
+    color: var(--text-normal) !important;
 }
 
 .nc-modal-sidebar-item--active {
-    color: #ffffff !important;
+    color: var(--white-500, #fff) !important;
 }
 
 .nc-modal-content-title {
-    color: #ffffff !important;
+    color: var(--text-normal) !important;
 }
 
 .nc-modal-close-btn {
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--text-muted) !important;
 }
 
 .nc-modal-close-btn:hover {
-    color: #ffffff !important;
+    color: var(--text-normal) !important;
 }
 
+
+@keyframes nc-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

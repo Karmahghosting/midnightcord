@@ -10,4 +10,4 @@ import { join } from "path";
 // this is in a separate file to avoid circular dependencies
 export const VENCORD_DIR = app.isPackaged
     ? join(process.resourcesPath, "midnightcord.asar")
-    : join(__dirname, "..", "..", "..", "dist", "midnightcord.asar");
+    : join(__dirname, "..", "midnightcord.asar");

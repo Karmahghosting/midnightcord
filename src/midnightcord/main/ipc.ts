@@ -5,12 +5,13 @@
  */
 
 if (process.platform === "linux") import("./venmic");
+import "./soundboardMic";
 
-import { execFile } from "node:child_process";
-import { type FSWatcher, mkdirSync, readFileSync, watch } from "node:fs";
-import { open, readFile, stat } from "node:fs/promises";
+import { execFile, spawn } from "node:child_process";
+import { type FSWatcher, existsSync, mkdirSync, readFileSync, watch } from "node:fs";
+import { copyFile, open, readFile, stat } from "node:fs/promises";
 import { release } from "node:os";
-import { join } from "node:path";
+import { basename, extname, join } from "node:path";
 
 import {
     app,
@@ -30,7 +31,7 @@ import { IpcEvents } from "../shared/IpcEvents";
 import { setBadgeCount } from "./appBadge";
 import { createArRPCWindow } from "./arrpcWindow";
 import { autoStart } from "./autoStart";
-import { VENCORD_QUICKCSS_FILE, VENCORD_THEMES_DIR } from "./constants";
+import { DATA_DIR, USERPLUGINS_DIR, VENCORD_QUICKCSS_FILE, VENCORD_THEMES_DIR } from "./constants";
 import { AppEvents } from "./events";
 import { getPlatformSpoofInfo } from "./gnuSpoofing";
 import { mainWin } from "./mainWindow";
@@ -203,6 +204,81 @@ handle(IpcEvents.SELECT_VENCORD_DIR, async (_e, value?: null) => {
     State.store.MidnightcordDir = dir;
 
     return "ok";
+});
+
+handle(IpcEvents.IMPORT_USER_PLUGIN, async () => {
+    const result = await dialog.showOpenDialog(mainWin!, {
+        title: "Import a Midnightcord user plugin",
+        properties: ["openFile"],
+        filters: [
+            { name: "Midnightcord plugin", extensions: ["tsx", "ts", "jsx", "js", "css"] },
+            { name: "All files", extensions: ["*"] }
+        ]
+    });
+
+    if (result.canceled || !result.filePaths[0]) return { status: "cancelled" as const };
+
+    const source = result.filePaths[0];
+    const extension = extname(source).slice(1).toLowerCase();
+    if (!["tsx", "ts", "jsx", "js", "css"].includes(extension)) {
+        return { status: "invalid" as const, message: "Choose a .tsx, .ts, .jsx, .js or .css file." };
+    }
+
+    mkdirSync(USERPLUGINS_DIR, { recursive: true });
+    const destination = join(USERPLUGINS_DIR, basename(source));
+    await copyFile(source, destination);
+
+    return { status: "ok" as const, name: basename(source), path: destination };
+});
+
+handle(IpcEvents.OPEN_USER_PLUGINS_DIR, () => {
+    mkdirSync(USERPLUGINS_DIR, { recursive: true });
+
+    const command = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
+    try {
+        spawn(command, [USERPLUGINS_DIR], { detached: true, stdio: "ignore" }).unref();
+    } catch {
+        shell.showItemInFolder(USERPLUGINS_DIR);
+    }
+});
+
+handle(IpcEvents.REBUILD_USER_PLUGINS, async () => {
+    if (app.isPackaged) {
+        return {
+            status: "unavailable" as const,
+            message: "Automatic rebuild is only available from a local source build. Rebuild Midnightcord manually in your repo."
+        };
+    }
+
+    const root = app.getAppPath();
+    const buildScript = join(root, "scripts", "build", "build.mjs");
+    if (!existsSync(buildScript)) {
+        return { status: "unavailable" as const, message: "Build script not found next to the application." };
+    }
+
+    const nodeBinary = process.env.MIDNIGHTCORD_NODE_BINARY || "node";
+
+    try {
+        await new Promise<void>((resolve, reject) => {
+            execFile(nodeBinary, [buildScript, "--standalone"], {
+                cwd: root,
+                env: process.env,
+                timeout: 5 * 60 * 1000
+            }, (error, _stdout, stderr) => {
+                if (error) reject(new Error(stderr?.trim() || error.message));
+                else resolve();
+            });
+        });
+
+        setTimeout(() => {
+            app.relaunch();
+            app.exit(0);
+        }, 400);
+
+        return { status: "ok" as const };
+    } catch (error) {
+        return { status: "error" as const, message: error instanceof Error ? error.message : String(error) };
+    }
 });
 
 handle(IpcEvents.SET_BADGE_COUNT, (e, count: number) => {

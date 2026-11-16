@@ -104,11 +104,11 @@
 }
 
 .nc-badge-btn.nc-badge-liked {
-    color: #ffffff;
+    color: var(--status-danger);
 }
 
 .nc-badge-btn.nc-badge-liked:hover {
-    color: #ffffff;
+    color: var(--status-danger-hover, var(--status-danger));
 }
 
 .vc-addon-note {

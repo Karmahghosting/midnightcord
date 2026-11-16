@@ -600,7 +600,7 @@ function LogsModal({ rootProps }: { rootProps: any; }) {
     return (
         <ModalRoot {...rootProps} size="large">
             <ModalHeader separator={false}>
-                <Forms.FormTitle tag="h4" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, color: "#ffffff" }}>
+                <Forms.FormTitle tag="h4" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, color: "var(--text-normal)" }}>
                     Logs <span className="el-count">{logs.length}</span>
                 </Forms.FormTitle>
                 <ModalCloseButton onClick={rootProps.onClose} />

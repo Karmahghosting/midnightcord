@@ -68,7 +68,7 @@ function AbbreviationManager() {
         background: "var(--background-secondary)",
         border: "1px solid var(--background-modifier-accent)",
         borderRadius: 4,
-        color: "#fff",
+        color: "var(--text-normal)",
         padding: "8px 10px",
         fontSize: 14,
         width: "100%",
@@ -80,7 +80,7 @@ function AbbreviationManager() {
             {/* Add new */}
             <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
                 <div style={{ flex: 1 }}>
-                    <label style={{ color: "#fff", fontSize: 12, fontWeight: 600, marginBottom: 4, display: "block" }}>
+                    <label style={{ color: "var(--text-normal)", fontSize: 12, fontWeight: 600, marginBottom: 4, display: "block" }}>
                         Abbreviation
                     </label>
                     <input
@@ -92,7 +92,7 @@ function AbbreviationManager() {
                     />
                 </div>
                 <div style={{ flex: 2 }}>
-                    <label style={{ color: "#fff", fontSize: 12, fontWeight: 600, marginBottom: 4, display: "block" }}>
+                    <label style={{ color: "var(--text-normal)", fontSize: 12, fontWeight: 600, marginBottom: 4, display: "block" }}>
                         Replacement phrase
                     </label>
                     <input
@@ -136,11 +136,11 @@ function AbbreviationManager() {
                                 padding: "6px 10px",
                             }}
                         >
-                            <span style={{ color: "#fff", fontWeight: 600, minWidth: 80 }}>
+                            <span style={{ color: "var(--text-normal)", fontWeight: 600, minWidth: 80 }}>
                                 {e.abbrev}
                             </span>
                             <span style={{ color: "#b5bac1" }}>→</span>
-                            <span style={{ color: "#fff", flex: 1 }}>
+                            <span style={{ color: "var(--text-normal)", flex: 1 }}>
                                 {e.phrase}
                             </span>
                             <button
@@ -174,7 +174,7 @@ const settings = definePluginSettings({
         description: "",
         options: [
             { label: "Whole message only (e.g. 'mdr' alone)", value: "exact" },
-            { label: "Every word in the message", value: "word" },
+            { label: "Every word in the message", value: "word", default: true },
         ],
     },
     caseSensitive: {

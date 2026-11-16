@@ -153,21 +153,30 @@
 }
 
 .vc-plugins-filter-controls {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: end;
     gap: 12px;
     margin-bottom: 12px;
 }
 
 .vc-plugins-filter-search {
-    flex: 2 1 240px;
+    grid-column: 1 / -1;
+}
+
+.vc-plugins-filter-search,
+.vc-plugins-filter-field {
     min-width: 0;
 }
 
-.vc-plugins-filter-field {
-    flex: 1 1 160px;
-    min-width: 0;
+@media (max-width: 900px) {
+    .vc-plugins-filter-controls {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .vc-plugins-filter-search {
+        grid-column: auto;
+    }
 }
 
 .vc-plugins-filter-label {
@@ -176,25 +185,6 @@
     font-size: 12px;
     font-weight: 600;
     margin-bottom: 6px;
-}
-
-.vc-plugins-filter-field select {
-    box-sizing: border-box;
-    width: 100%;
-    min-height: 40px;
-    padding: 8px 10px;
-    border: 1px solid var(--background-modifier-accent);
-    border-radius: 6px;
-    background: var(--background-tertiary);
-    color: var(--text-normal);
-    font: inherit;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.vc-plugins-filter-field select:focus-visible {
-    outline: 2px solid var(--text-link);
-    outline-offset: 2px;
 }
 
 .vc-plugins-results-count,
@@ -469,4 +459,66 @@
     width: 80vw !important;
     max-width: 900px !important;
     min-width: 600px !important;
+}
+
+.vc-plugins-filter-searchable {
+    width: 100%;
+}
+
+.vc-plugins-filter-searchable [class*="select"] {
+    width: 100%;
+}
+
+.vc-plugins-user-plugin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.vc-plugins-filter-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.vc-plugins-filter-option > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vc-plugins-user-plugins-card {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+}
+
+.vc-plugins-user-plugins-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--background-modifier-hover);
+    color: var(--interactive-normal);
+}
+
+.vc-plugins-user-plugins-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.vc-plugins-user-plugins-empty {
+    opacity: 0.65;
+    font-size: 12px;
 }
