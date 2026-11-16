@@ -129,7 +129,7 @@ try {
     assert.match(desktopContent, /Actions=Restart;Quit;/);
     assert.match(desktopContent, /Exec=discord --midnightcord-restart/);
     assert.match(desktopContent, /Exec=discord --midnightcord-quit/);
-    assert.match(desktopContent, /StartupWMClass=discord/);
+    assert.match(desktopContent, /StartupWMClass=midnightcord/);
     assert.match(desktopContent, /X-Midnightcord-Native=true/);
     removeLinuxDesktopEntry({ platform: "linux", home: kdeHome, env: {}, purgeIcon: true });
     assert.equal(existsSync(desktopEntry), false);
