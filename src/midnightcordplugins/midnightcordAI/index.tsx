@@ -45,7 +45,7 @@ const settings = definePluginSettings({
     model: {
         type: OptionType.STRING,
         description: "Custom model (empty = default)",
-        default: "",
+        default: "openai/gpt-oss-120b",
         restartNeeded: false,
     },
     systemPrompt: {

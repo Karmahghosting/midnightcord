@@ -12,6 +12,7 @@ const logger = new Logger("GroqManager");
 const DS_API_KEY = "groq-shared-api-key";
 
 const GROQ_MODELS = [
+    "openai/gpt-oss-120b",
     "llama-3.3-70b-versatile",
     "llama3-70b-8192",
     "llama-3.1-8b-instant",
