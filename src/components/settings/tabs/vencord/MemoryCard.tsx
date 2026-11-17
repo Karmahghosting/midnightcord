@@ -35,13 +35,15 @@ function format(kb: number) {
 export function MemoryCard() {
     const [info, setInfo] = React.useState<MemoryInfo | null>(null);
     const [busy, setBusy] = React.useState(false);
+    const bridge = typeof VesktopNative !== "undefined" ? VesktopNative.memory : undefined;
 
     const refresh = React.useCallback(async () => {
+        if (!bridge) return;
         try {
-            const next = await VesktopNative.memory.info() as MemoryInfo;
+            const next = await bridge.info() as MemoryInfo;
             if (next?.system) setInfo(next);
         } catch { }
-    }, []);
+    }, [bridge]);
 
     React.useEffect(() => {
         void refresh();
@@ -52,8 +54,12 @@ export function MemoryCard() {
     async function freeMemory() {
         setBusy(true);
         try {
-            const next = await VesktopNative.memory.free() as MemoryInfo;
-            if (next?.system) setInfo(next);
+            if (bridge) {
+                const next = await bridge.free() as MemoryInfo;
+                if (next?.system) setInfo(next);
+            } else {
+                (globalThis as any).gc?.();
+            }
         } catch { }
         setBusy(false);
     }
@@ -64,6 +70,29 @@ export function MemoryCard() {
     const top = info
         ? [...info.processes].sort((a, b) => b.workingSetSize - a.workingSetSize).slice(0, 4)
         : [];
+
+    if (!bridge) {
+        const heap = (performance as any).memory;
+        return (
+            <div className={cl("memory")}>
+                <div className={cl("memory-grid")}>
+                    <div className={cl("memory-stat")}>
+                        <span className={cl("memory-label")}>{t("JS heap")}</span>
+                        <strong>{heap ? format(heap.usedJSHeapSize / 1024) : "—"}</strong>
+                        <span className={cl("memory-sub")}>{t("Renderer only")}</span>
+                    </div>
+                </div>
+                <span className={cl("memory-sub")}>
+                    {t("Detailed system metrics are only available in the standalone Midnightcord app.")}
+                </span>
+                <div className={cl("memory-actions")}>
+                    <Button size="small" onClick={freeMemory} disabled={busy}>
+                        {busy ? t("Freeing…") : t("Free memory")}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={cl("memory")}>

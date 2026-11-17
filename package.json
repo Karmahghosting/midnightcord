@@ -85,7 +85,8 @@
         "test:quiet-hours": "node scripts/testQuietHours.mjs",
         "test:privacy-shield": "node scripts/testPrivacyShield.mjs",
         "test:ocr-asar": "node scripts/testLocalOcrAsar.mjs",
-        "test:webpack-runtime": "node scripts/testWebpackRuntime.mjs"
+        "test:webpack-runtime": "node scripts/testWebpackRuntime.mjs",
+        "package:standalone": "corepack enable --install-directory node_modules/.bin && corepack pnpm buildStandalone && electron-builder --config electron-builder.standalone.cjs --linux dir"
     },
     "dependencies": {
         "@ffmpeg/ffmpeg": "^0.12.10",

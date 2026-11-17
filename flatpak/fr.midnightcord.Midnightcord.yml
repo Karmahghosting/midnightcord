@@ -1,0 +1,41 @@
+app-id: fr.midnightcord.Midnightcord
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: "24.08"
+command: midnightcord
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=dri
+  - --filesystem=home
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --talk-name=org.freedesktop.portal.Desktop
+  - --env=ELECTRON_OZONE_PLATFORM_HINT=auto
+  - --env=MIDNIGHTCORD_FLATPAK=1
+
+modules:
+  - name: midnightcord
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/midnightcord
+      - cp -a . /app/midnightcord/
+      - install -Dm755 midnightcord.sh /app/bin/midnightcord
+      - install -Dm644 fr.midnightcord.Midnightcord.desktop /app/share/applications/fr.midnightcord.Midnightcord.desktop
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/fr.midnightcord.Midnightcord.png
+    sources:
+      - type: dir
+        path: payload
+      - type: file
+        path: midnightcord.sh
+      - type: file
+        path: fr.midnightcord.Midnightcord.desktop
+      - type: file
+        path: icon.png

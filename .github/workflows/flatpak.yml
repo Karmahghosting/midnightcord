@@ -1,0 +1,54 @@
+name: Flatpak
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  flatpak:
+    name: Midnightcord Flatpak (x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build standalone bundle
+        run: pnpm package:standalone
+
+      - name: Install Flatpak tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08 org.electronjs.Electron2.BaseApp//24.08
+
+      - name: Build Flatpak
+        run: |
+          mkdir -p flatpak/payload
+          cp -a release/standalone/linux-unpacked/. flatpak/payload/
+          flatpak-builder --force-clean --repo=flatpak/repo flatpak/build-dir flatpak/fr.midnightcord.Midnightcord.yml
+          flatpak build-bundle flatpak/repo Midnightcord.flatpak fr.midnightcord.Midnightcord
+
+      - name: Upload Flatpak
+        uses: actions/upload-artifact@v4
+        with:
+          name: Midnightcord-flatpak-x86_64
+          path: Midnightcord.flatpak
+          if-no-files-found: error
