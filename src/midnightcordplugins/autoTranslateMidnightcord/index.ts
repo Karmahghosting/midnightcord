@@ -4206,6 +4206,14 @@ export const translations: TranslationMap = {
     "Virtual microphone unavailable": { fr: "Microphone virtuel indisponible" },
     "Virtual microphone not detected. Check your PipeWire/PulseAudio setup.": { fr: "Microphone virtuel introuvable. Vérifiez votre configuration PipeWire/PulseAudio." },
     "No virtual audio device detected. Install one to send soundboard sounds through your microphone.": { fr: "Aucun périphérique audio virtuel détecté. Installez-en un pour envoyer les sons du soundboard via votre microphone." },
+    "AI provider": { fr: "Fournisseur d'IA" },
+    "Model (empty = provider default)": { fr: "Modèle (vide = modèle par défaut du fournisseur)" },
+    "OpenAI API Key": { fr: "Clé API OpenAI" },
+    "NanoGPT API Key": { fr: "Clé API NanoGPT" },
+    "Mistral API Key": { fr: "Clé API Mistral" },
+    "Custom API Key": { fr: "Clé API personnalisée" },
+    "Custom base URL (OpenAI-compatible), e.g. https://api.example.com/v1": { fr: "URL de base personnalisée (compatible OpenAI), ex. https://api.example.com/v1" },
+    "Custom (OpenAI-compatible)": { fr: "Personnalisé (compatible OpenAI)" },
     "unknown error": { fr: "erreur inconnue" },
 };
 
