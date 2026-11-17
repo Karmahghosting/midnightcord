@@ -4,7 +4,7 @@ La migration comporte deux étapes : remplacer le chargeur, puis importer les r�
 
 ## 1. Remplacer le chargeur
 
-Fermez complètement Discord, y compris son icône dans la zone de notification. Dans l'injecteur Midnightcord, choisissez **Depuis Vencord**, sélectionnez vos installations, puis **Migrer depuis Vencord**.
+Sur Windows et Linux, fermez complètement Discord, y compris son icône dans la zone de notification. Dans l'injecteur Midnightcord, choisissez **Depuis Vencord**, sélectionnez vos installations, puis **Migrer depuis Vencord**. Sur macOS, l’injecteur ferme puis relance automatiquement les installations sélectionnées.
 
 L'injecteur reconnaît les chargeurs officiels Vencord au format ASAR et ancien format dossier. Il vérifie la présence du démarrage Discord d'origine, sauvegarde le chargeur Vencord et installe Midnightcord. En cas d'échec, il tente de restaurer l'installation initiale. L'interface indique le dossier de récupération, qui contient aussi ses instructions.
 

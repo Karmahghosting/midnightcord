@@ -157,9 +157,32 @@ async function electronTest(config) {
         window.once("close", event => { idleCloseAttempted = true; event.preventDefault(); });
         assert.equal((await evaluate("window.midnightcordInstaller.close()")).ok, true);
         assert.equal(idleCloseAttempted, true, "Close reaches the native window after the job finishes");
+
+        // Exercise the macOS renderer through the real preload and IPC, with a
+        // fixture backend so this smoke test never closes the user's Discord.
+        const macState = { ...state, platform: "darwin", running: ["Discord PTB"], targets: [{ ...selected, installed: false }], error: null };
+        backend.scan = backend.getState = async () => macState;
+        const macRequests = [];
+        backend.perform = async request => {
+            macRequests.push(request);
+            return { ok: true, message: "Installation terminée. Discord a été relancé.", results: [{ id: selected.id, ok: true, restarted: true, message: "Discord a été relancé." }], state: macState };
+        };
+        await evaluate("document.getElementById('install-mode').click();document.getElementById('rescan').click()");
+        await waitFor("document.getElementById('platform').textContent === 'macOS' && !document.getElementById('rescan').disabled", "macOS fixture did not render");
+        await evaluate(`document.querySelector('#targets input[value="${selected.id}"]').click()`);
+        assert.equal(await evaluate("document.getElementById('perform').disabled"), false, "Running Discord must not disable the macOS action");
+        assert.match(await evaluate("document.getElementById('notice-text').textContent"), /fermées automatiquement, puis relancées/);
+        await evaluate("document.getElementById('perform').click()");
+        await waitFor("!document.getElementById('progress-view').hidden && !document.getElementById('back').hidden", "macOS perform guard blocked the request");
+        assert.deepEqual(macRequests, [{ action: "install", targetIds: [selected.id] }]);
+        assert.match(await evaluate("document.getElementById('progress-footnote').textContent"), /relancé automatiquement/);
+        macState.error = "Impossible de vérifier les processus.";
+        await evaluate("document.getElementById('back').click()");
+        await waitFor("!document.getElementById('scan-error').hidden", "macOS scan errors must remain visible");
+        assert.equal(await evaluate("document.getElementById('perform').disabled"), true);
         assert.deepEqual(errors, []);
         assert.deepEqual(externalRequests, []);
-        const report = { ok: true, electron: process.versions.electron, sandbox: true, contextIsolation: true, nodeBlocked: true, realUi: true, realWorker: true, offlinePayload: true, selectedOnly: true, officialRestored: true, busyGuard: true, idleClose: true, uiResponsive: true, processPreflight: true, untrustedSenderRejected: true, progressUnsubscribe: true, externalRequests: 0 };
+        const report = { ok: true, electron: process.versions.electron, sandbox: true, contextIsolation: true, nodeBlocked: true, realUi: true, realWorker: true, macAutoRestartUi: true, offlinePayload: true, selectedOnly: true, officialRestored: true, busyGuard: true, idleClose: true, uiResponsive: true, processPreflight: true, untrustedSenderRejected: true, progressUnsubscribe: true, externalRequests: 0 };
         await fs.writeFile(config.report, JSON.stringify(report));
         clearTimeout(timeout);
         application.bridge.dispose();
