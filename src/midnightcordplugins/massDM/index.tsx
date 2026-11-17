@@ -183,8 +183,8 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
         <ModalRoot {...rootProps} className="mdm-modal">
             <ModalHeader>
                 <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                    <MassDMIcon style={{ marginRight: 8, color: "#fff" }} />
-                    <HeadingPrimary style={{ flex: 1, color: "#fff" }}>{t("Mass DM")}</HeadingPrimary>
+                    <MassDMIcon style={{ marginRight: 8, color: "var(--text-normal)" }} />
+                    <HeadingPrimary style={{ flex: 1, color: "var(--text-normal)" }}>{t("Mass DM")}</HeadingPrimary>
 
                     {idle && (
                         <div style={{ marginRight: 12, minWidth: 220 }}>
@@ -232,7 +232,7 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
                 {idle && (
                     <div className="mdm-idle-container">
                         <div className="mdm-full-panel">
-                            <HeadingSecondary className={Margins.bottom8} style={{ color: "#fff" }}>{t("Message to send to friends")}</HeadingSecondary>
+                            <HeadingSecondary className={Margins.bottom8} style={{ color: "var(--text-normal)" }}>{t("Message to send to friends")}</HeadingSecondary>
                             <div style={{ position: "relative" }}>
                                 <textarea
                                     className="mdm-textarea-main"

@@ -26,12 +26,19 @@ process.env.Midnightcord_USER_DATA_DIR = DATA_DIR;
 process.env.MIDNIGHTCORD_USER_DATA_DIR = DATA_DIR;
 
 const isLinux = process.platform === "linux";
-if (isLinux) app.setDesktopName("midnightcord.desktop");
+if (isLinux) {
+    app.setDesktopName("midnightcord.desktop");
+    if (!app.commandLine.hasSwitch("class")) {
+        app.commandLine.appendSwitch("class", "midnightcord");
+    }
+}
 
 export let enableHardwareAcceleration = true;
 
 function init() {
     setAsDefaultProtocolClient("discord");
+
+    app.commandLine.appendSwitch("js-flags", "--expose-gc");
 
     const { disableSmoothScroll, hardwareAcceleration, hardwareVideoAcceleration } = Settings.store;
     const { launchArguments } = State.store;
@@ -45,13 +52,18 @@ function init() {
         enableHardwareAcceleration = false;
         app.disableHardwareAcceleration();
     } else {
-        if (hardwareVideoAcceleration) {
+        if (hardwareVideoAcceleration !== false) {
             enabledFeatures.add("AcceleratedVideoEncoder");
             enabledFeatures.add("AcceleratedVideoDecoder");
+            enabledFeatures.add("PlatformHEVCDecoderSupport");
 
             if (isLinux) {
                 enabledFeatures.add("AcceleratedVideoDecodeLinuxGL");
                 enabledFeatures.add("AcceleratedVideoDecodeLinuxZeroCopyGL");
+                enabledFeatures.add("VaapiVideoDecoder");
+                enabledFeatures.add("VaapiVideoEncoder");
+                enabledFeatures.add("VaapiIgnoreDriverChecks");
+                app.commandLine.appendSwitch("enable-zero-copy");
             }
         }
     }

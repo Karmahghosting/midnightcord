@@ -21,25 +21,25 @@
 }
 
 .el-filter-btn {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--background-modifier-hover);
     border: 1.5px solid transparent;
     border-radius: 6px;
     padding: 4px 10px;
     font-size: 12px;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
     transition: all .1s;
     font-family: inherit;
 }
 
 .el-filter-btn:hover {
     border-color: rgba(88, 101, 242, 0.5);
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-normal);
 }
 
 .el-filter-btn--active {
     background: var(--brand-500, #5865f2);
-    color: #fff;
+    color: var(--white-500, #fff);
     border-color: transparent;
 }
 
@@ -55,10 +55,10 @@
 }
 
 .el-guild-select {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: var(--background-secondary);
+    border: 1.5px solid var(--background-modifier-accent);
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-normal);
     padding: 6px 10px;
     font-size: 13px;
     font-family: inherit;
@@ -69,20 +69,20 @@
 }
 
 .el-guild-select:hover {
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--border-strong);
 }
 
 .el-guild-select option {
-    background: #2f3136;
-    color: #fff;
+    background: var(--background-floating);
+    color: var(--text-normal);
 }
 
 .el-search-input {
     flex: 1;
-    background: rgba(0, 0, 0, 0.25);
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: var(--background-secondary);
+    border: 1.5px solid var(--background-modifier-accent);
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-normal);
     padding: 6px 10px;
     font-size: 13px;
     font-family: inherit;
@@ -91,17 +91,17 @@
 }
 
 .el-search-input:focus {
-    border-color: rgba(255, 255, 255, 0.22);
+    border-color: var(--border-strong);
 }
 
 .el-search-input::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-subtle);
 }
 
 .el-clear {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-subtle);
     cursor: pointer;
     font-size: 12px;
     font-family: inherit;
@@ -132,7 +132,7 @@
     max-height: 360px;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    scrollbar-color: var(--background-modifier-accent) transparent;
 }
 
 .el-list::-webkit-scrollbar {
@@ -140,13 +140,13 @@
 }
 
 .el-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--background-modifier-hover);
     border-radius: 2px;
 }
 
 .el-empty {
     text-align: center;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-subtle);
     font-size: 13px;
     padding: 32px 0;
 }
@@ -171,7 +171,7 @@
 }
 
 .el-row:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--background-modifier-hover);
 }
 
 .el-left {
@@ -218,29 +218,29 @@
 
 .el-author {
     font-weight: 600;
-    color: #fff;
+    color: var(--text-normal);
     font-size: 11px;
 }
 
 .el-sep {
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--text-subtle);
     font-size: 10px;
 }
 
 .el-channel {
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--text-muted);
     font-size: 10px;
 }
 
 .el-guild {
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-subtle);
     font-size: 10px;
 }
 
 .el-time {
     margin-left: auto;
     flex-shrink: 0;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-subtle);
     font-size: 10px;
 }
 
@@ -256,25 +256,25 @@
 .el-msg--deleted {
     background: rgba(237, 66, 69, .08);
     border-left: 2px solid #ed4245;
-    color: rgba(255, 255, 255, .85);
+    color: var(--text-normal);
 }
 
 .el-msg--before {
     background: rgba(237, 66, 69, .06);
     border-left: 2px solid #ed4245;
-    color: rgba(255, 255, 255, .85);
+    color: var(--text-normal);
 }
 
 .el-msg--after {
     background: rgba(59, 165, 92, .06);
     border-left: 2px solid #3ba55c;
-    color: rgba(255, 255, 255, .85);
+    color: var(--text-normal);
 }
 
 .el-msg-label {
     font-weight: 700;
     font-size: 10px;
-    color: rgba(255, 255, 255, .35);
+    color: var(--text-subtle);
     flex-shrink: 0;
 }
 
@@ -286,8 +286,8 @@
 
 .el-content-text {
     font-size: 11px;
-    color: rgba(255, 255, 255, .45);
-    background: rgba(0, 0, 0, .15);
+    color: var(--text-muted);
+    background: var(--background-secondary);
     border-radius: 3px;
     padding: 2px 6px;
 }
@@ -300,16 +300,16 @@
     gap: 6px;
     padding-top: 6px;
     font-size: 12px;
-    color: rgba(255, 255, 255, .4);
+    color: var(--text-subtle);
 }
 
 .el-pagination button {
-    background: rgba(255, 255, 255, .06);
-    border: 1px solid rgba(255, 255, 255, .08);
+    background: var(--background-modifier-hover);
+    border: 1px solid var(--background-modifier-accent);
     border-radius: 5px;
     padding: 3px 9px;
     cursor: pointer;
-    color: rgba(255, 255, 255, .7);
+    color: var(--text-muted);
     font-size: 11px;
     font-family: inherit;
     transition: background .1s;
@@ -321,7 +321,7 @@
 }
 
 .el-pagination button:not(:disabled):hover {
-    background: rgba(255, 255, 255, .1);
+    background: var(--background-modifier-hover);
 }
 
 /* Attachments & Images */
@@ -341,7 +341,7 @@
     max-height: 200px;
     border-radius: 6px;
     object-fit: cover;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--background-modifier-accent);
     cursor: pointer;
     transition: transform 0.15s ease, border-color 0.15s ease;
     display: block;
@@ -349,15 +349,15 @@
 
 .el-attachment-img:hover {
     transform: scale(1.02);
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: var(--border-strong);
 }
 
 .el-attachment-link {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-accent);
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 11px;
@@ -368,5 +368,5 @@
 
 .el-attachment-link:hover {
     text-decoration: underline;
-    background: rgba(0, 0, 0, 0.45);
+    background: var(--background-secondary);
 }

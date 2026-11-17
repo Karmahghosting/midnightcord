@@ -5,6 +5,7 @@
  */
 
 import { app, type BrowserWindow, Menu, type NativeImage, nativeImage, Tray } from "electron";
+import { existsSync } from "fs";
 import { join } from "path";
 import { STATIC_DIR } from "shared/paths";
 
@@ -23,10 +24,13 @@ const isLinux = process.platform === "linux";
 
 let nativeSNI: typeof import("libvesktop") | null = null;
 if (isLinux) {
-    try {
-        nativeSNI = require(join(STATIC_DIR, `dist/libvesktop-${process.arch}.node`));
-    } catch (e) {
-        console.warn("[Tray] Failed to load native StatusNotifierItem, falling back to Electron Tray:", e);
+    const nativeTrayPath = join(STATIC_DIR, `dist/libvesktop-${process.arch}.node`);
+    if (existsSync(nativeTrayPath)) {
+        try {
+            nativeSNI = require(nativeTrayPath);
+        } catch (e) {
+            console.warn("[Tray] Failed to load native StatusNotifierItem, falling back to Electron Tray:", e);
+        }
     }
 }
 
@@ -375,15 +379,8 @@ export async function initTray(win: BrowserWindow, setIsQuitting: (val: boolean)
         tray = new Tray(initialImage);
         tray.setToolTip("Midnightcord");
 
-        if (isLinux) {
-            tray.on("click", onTrayClick);
-            tray.on("right-click", () => {
-                tray!.popUpContextMenu(trayMenu);
-            });
-        } else {
-            tray.setContextMenu(trayMenu);
-            tray.on("click", onTrayClick);
-        }
+        tray.setContextMenu(trayMenu);
+        tray.on("click", onTrayClick);
     } catch (e) {
         console.error("[Tray] Failed to initialize Electron tray:", e);
         tray = null;

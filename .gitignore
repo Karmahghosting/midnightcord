@@ -62,3 +62,10 @@ certs/
 # System files
 Thumbs.db
 Desktop.ini
+
+# Flatpak build artifacts
+flatpak/payload/
+flatpak/build-dir/
+flatpak/repo/
+.flatpak-builder/
+*.flatpak

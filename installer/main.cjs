@@ -8,6 +8,11 @@ const { join } = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { Worker } = require("node:worker_threads");
 
+if (!app.isPackaged) {
+    app.setName("Midnightcord Installer");
+    app.setPath("userData", join(app.getPath("temp"), "midnightcord-installer"));
+}
+
 function createBackend(options, onProgress) {
     const worker = new Worker(join(__dirname, "worker.mjs"), { workerData: options });
     const pending = new Map();
@@ -115,7 +120,10 @@ async function startInstaller(options = {}) {
 }
 
 module.exports = { createBackend, registerIpc, startInstaller };
-if (require.main === module) {
+const entryScript = (process.argv[1] ?? "").replaceAll("\\", "/");
+const isEntryPoint = require.main === module || entryScript.endsWith("installer/main.cjs");
+
+if (isEntryPoint) {
     startInstaller().catch(error => {
         console.error("[Midnightcord Installer]", error.message);
         app.exit(1);

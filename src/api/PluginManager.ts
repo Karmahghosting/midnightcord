@@ -283,7 +283,7 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
 
     // Custom
     if (renderNicknameIcon) addNicknameIcon(name, renderNicknameIcon);
-    if (headerBarButton) {
+    if (headerBarButton?.render) {
         if (headerBarButton.location === "channeltoolbar") {
             addChannelToolbarButton(name, headerBarButton.render, headerBarButton.priority);
         } else {
@@ -291,7 +291,7 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
         }
     }
     if (audioProcessor) addAudioProcessor(name, audioProcessor);
-    if (userAreaButton) addUserAreaButton(name, userAreaButton.render, userAreaButton.priority);
+    if (userAreaButton?.render) addUserAreaButton(name, userAreaButton.render, userAreaButton.priority);
 
     return true;
 }, p => `startPlugin ${p.name}`);

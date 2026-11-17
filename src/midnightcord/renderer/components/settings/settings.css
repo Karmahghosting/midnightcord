@@ -33,6 +33,23 @@
     margin-bottom: 0;
 }
 
+.vcd-settings-select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    border: 1px solid var(--border-strong);
+    min-height: 40px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.vcd-settings-select:focus-visible {
+    outline: 2px solid var(--text-link);
+    outline-offset: 2px;
+}
+
 .vcd-settings-updater-card {
     padding: 1em;
     margin-bottom: 1em;

@@ -120,7 +120,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
     return (
         <ModalRoot {...rootProps} size="medium">
             <ModalHeader separator={false}>
-                <Forms.FormTitle tag="h4" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, color: "#fff" }}>
+                <Forms.FormTitle tag="h4" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, color: "var(--text-normal)" }}>
                     {t("Leave All Servers")}
                 </Forms.FormTitle>
                 <ModalCloseButton onClick={rootProps.onClose} />

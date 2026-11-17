@@ -431,7 +431,7 @@ function SaveProfileSettings({ closePluginSettings }: { closePluginSettings: () 
 export const settings = definePluginSettings({
     presetsManager: {
         type: OptionType.COMPONENT,
-        component({ closePluginSettings }) {
+        component({ closePluginSettings = () => { } }) {
             return (
                 <ErrorBoundary>
                     <SaveProfileSettings closePluginSettings={closePluginSettings} />

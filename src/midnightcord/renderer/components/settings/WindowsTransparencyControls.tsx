@@ -9,7 +9,7 @@ import { Margins } from "@Midnightcord/types/utils";
 import { isWindows } from "renderer/utils";
 
 import { SimpleErrorBoundary } from "../SimpleErrorBoundary";
-import { SettingsComponent } from "./Settings";
+import { cl, SettingsComponent } from "./Settings";
 
 export const WindowsTransparencyControls: SettingsComponent = ({ settings }) => {
     if (!isWindows) return null;
@@ -30,16 +30,9 @@ export const WindowsTransparencyControls: SettingsComponent = ({ settings }) => 
             <SimpleErrorBoundary>
                 <select
                     aria-label="Transparency option"
+                    className={cl("select")}
                     value={settings.transparencyOption || "none"}
                     onChange={event => (settings.transparencyOption = event.currentTarget.value as typeof settings.transparencyOption)}
-                    style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "4px",
-                        background: "var(--background-tertiary)",
-                        color: "var(--text-normal)",
-                        border: "1px solid var(--background-modifier-accent)"
-                    }}
                 >
                     <option value="none">None</option>
                     <option value="mica">Mica</option>

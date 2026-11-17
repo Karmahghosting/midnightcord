@@ -461,7 +461,7 @@ function askCount(title: string, max: number): Promise<number | null> {
                     </Modals.ModalHeader>
                     <Modals.ModalContent style={{ padding: "16px 20px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: "#fff", textTransform: "uppercase", letterSpacing: ".04em" }}>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-normal)", textTransform: "uppercase", letterSpacing: ".04em" }}>
                                 {t("Number (max {max})").replace("{max}", max.toString())}
                             </label>
                             <input
@@ -476,7 +476,7 @@ function askCount(title: string, max: number): Promise<number | null> {
                                     background: "var(--background-secondary)",
                                     border: "1px solid var(--background-modifier-accent)",
                                     borderRadius: 4,
-                                    color: "#fff",
+                                    color: "var(--text-normal)",
                                     fontSize: 16,
                                     padding: "8px 12px",
                                     width: "100%",

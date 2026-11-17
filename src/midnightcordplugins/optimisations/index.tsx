@@ -11,6 +11,8 @@ import { isObject } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { findAll } from "@webpack";
 
+import { disableStreamPause, enableStreamPause } from "./streams";
+
 interface SpringModule {
     Globals: {
         assign(options: { skipAnimation: boolean; }): void;
@@ -99,14 +101,57 @@ const settings = definePluginSettings({
         restartNeeded: false,
         onChange(v: boolean) { limitMsgCache = v; if (!v) stopCacheCleaner(); else startCacheCleaner(); }
     },
-    reduceFpsBackground: {
+    lowMemoryMode: {
         type: OptionType.BOOLEAN,
-        description: "Limiter Discord à ~10 FPS quand la fenêtre est en arrière-plan",
+        description: "Mode faible RAM : désactive les emojis/stickers/vidéos animés et force un GC régulier",
         default: true,
         restartNeeded: false,
-        onChange(v: boolean) { applyBgFpsPatch(v); }
+        onChange(v: boolean) { applyLowMemoryMode(v); }
+    },
+    pauseInactiveStreams: {
+        type: OptionType.BOOLEAN,
+        description: "Mettre en pause le décodage des streams hors écran ou quand la fenêtre est masquée (économise beaucoup de CPU/GPU)",
+        default: true,
+        restartNeeded: false,
+        onChange(v: boolean) { v ? enableStreamPause() : disableStreamPause(); }
     },
 });
+
+let _aggressiveGcInterval: ReturnType<typeof setInterval> | null = null;
+let _memoryPressureUnsub: (() => void) | null = null;
+
+function startAggressiveGc(enabled: boolean) {
+    if (enabled && _aggressiveGcInterval === null) {
+        _aggressiveGcInterval = setInterval(() => forceGC(), 120_000);
+    } else if (!enabled && _aggressiveGcInterval !== null) {
+        clearInterval(_aggressiveGcInterval);
+        _aggressiveGcInterval = null;
+    }
+}
+
+function applyLowMemoryMode(enabled: boolean) {
+    noGifAvatars = enabled || settings.store.noGifAvatars;
+    noAnimatedEmoji = enabled || settings.store.noAnimatedEmoji;
+    noStickers = enabled || settings.store.noStickers;
+    noVideoAutoplay = enabled || settings.store.noVideoAutoplay;
+
+    if (started) buildAndInjectCss();
+    startAggressiveGc(enabled);
+}
+
+function startMemoryPressureListener() {
+    if (_memoryPressureUnsub || !VesktopNative?.memory?.onMemoryPressure) return;
+
+    _memoryPressureUnsub = VesktopNative.memory.onMemoryPressure(() => {
+        forceGC();
+        void VesktopNative.memory.free();
+    });
+}
+
+function stopMemoryPressureListener() {
+    _memoryPressureUnsub?.();
+    _memoryPressureUnsub = null;
+}
 
 const cacheSettings = () => {
     disableSpring = settings.store.disableSpringAnimations;
@@ -173,89 +218,6 @@ function stopCacheCleaner() {
         clearInterval(_cacheCleanerInterval);
         _cacheCleanerInterval = null;
     }
-}
-
-let _origRAF: typeof requestAnimationFrame | null = null;
-let _origCancel: typeof cancelAnimationFrame | null = null;
-let _bgFpsActive = false;
-const BG_FRAME_INTERVAL = 100;
-const _rafMap = new Map<number, any>();
-let _rafSeq = 0;
-
-function applyBgFpsPatch(enable: boolean) {
-    if (enable && !_bgFpsActive) {
-        _bgFpsActive = true;
-        document.addEventListener("visibilitychange", _onVisChange);
-        window.addEventListener("blur", _onBlur);
-        window.addEventListener("focus", _onFocus);
-        if (document.hidden || !document.hasFocus()) _installRafThrottle();
-    } else if (!enable && _bgFpsActive) {
-        _bgFpsActive = false;
-        document.removeEventListener("visibilitychange", _onVisChange);
-        window.removeEventListener("blur", _onBlur);
-        window.removeEventListener("focus", _onFocus);
-        _uninstallRafThrottle();
-    }
-}
-
-function _onVisChange() {
-    if (document.hidden) {
-        _installRafThrottle();
-        if (limitMsgCache) pruneMessageCaches();
-    } else if (document.hasFocus()) {
-        _uninstallRafThrottle();
-    }
-}
-
-function _onBlur() {
-    _installRafThrottle();
-    if (limitMsgCache) pruneMessageCaches();
-}
-
-function _onFocus() {
-    if (!document.hidden) {
-        _uninstallRafThrottle();
-    }
-}
-
-function _installRafThrottle() {
-    if (_origRAF || !_bgFpsActive) return;
-    _origRAF = window.requestAnimationFrame;
-    _origCancel = window.cancelAnimationFrame;
-    let _lastT = 0;
-    (window as any).requestAnimationFrame = function (cb: FrameRequestCallback) {
-        const id = ++_rafSeq;
-        const now = performance.now();
-        const delay = Math.max(0, BG_FRAME_INTERVAL - (now - _lastT));
-        const tId = setTimeout(() => {
-            _rafMap.delete(id);
-            _lastT = performance.now();
-            cb(performance.now());
-        }, delay);
-        _rafMap.set(id, tId);
-        return id;
-    };
-    window.cancelAnimationFrame = function (id: number) {
-        const tId = _rafMap.get(id);
-        if (tId !== undefined) {
-            clearTimeout(tId);
-            _rafMap.delete(id);
-        } else if (_origCancel) {
-            _origCancel(id);
-        }
-    };
-}
-
-function _uninstallRafThrottle() {
-    if (!_origRAF) return;
-    window.requestAnimationFrame = _origRAF;
-    if (_origCancel) window.cancelAnimationFrame = _origCancel;
-    _origRAF = null;
-    _origCancel = null;
-    for (const tId of _rafMap.values()) {
-        clearTimeout(tId);
-    }
-    _rafMap.clear();
 }
 
 const CSS_ID = "midnightcord-opti-css";
@@ -338,6 +300,7 @@ function removeCss() {
 export default definePlugin({
     name: "UI Optimisations",
     description: "Reduces resource consumption: animations, GIFs, message cache, background FPS.",
+    enabledByDefault: true,
     authors: [{ name: ">Snayz", id: 1361345963175968779n }],
     tags: ["Utility", "Appearance", "Performance"],
     searchTerms: ["performance", "optimization", "lag", "animation", "fps", "ram", "memory", "gif", "low-end"],
@@ -390,7 +353,9 @@ export default definePlugin({
         buildAndInjectCss();
 
         if (limitMsgCache) startCacheCleaner();
-        if (settings.store.reduceFpsBackground) applyBgFpsPatch(true);
+        if (settings.store.pauseInactiveStreams) enableStreamPause();
+        if (settings.store.lowMemoryMode) applyLowMemoryMode(true);
+        startMemoryPressureListener();
     },
 
     stop() {
@@ -402,6 +367,8 @@ export default definePlugin({
 
         removeCss();
         stopCacheCleaner();
-        applyBgFpsPatch(false);
+        disableStreamPause();
+        startAggressiveGc(false);
+        stopMemoryPressureListener();
     }
 });

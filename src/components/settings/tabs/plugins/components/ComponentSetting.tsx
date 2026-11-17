@@ -20,7 +20,7 @@ import { PluginOptionComponent } from "@utils/types";
 
 import { ComponentSettingProps } from "./Common";
 
-export function ComponentSetting({ option, onChange }: ComponentSettingProps<PluginOptionComponent>) {
+export function ComponentSetting({ option, onChange, closePluginSettings }: ComponentSettingProps<PluginOptionComponent>) {
     const Component = option.component;
-    return <Component setValue={onChange} option={option} />;
+    return <Component setValue={onChange} option={option} closePluginSettings={closePluginSettings} />;
 }

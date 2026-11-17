@@ -69,6 +69,21 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
     "Quick Actions": { fr: "Actions rapides", es: "Acciones rápidas", ru: "Быстрые действия", zh: "快捷操作", ar: "الإجراءات السريعة" },
     "Common actions you might want to perform. These shortcuts give you quick access to frequently used features without navigating through menus.": { fr: "Actions courantes à effectuer rapidement. Ces raccourcis vous donnent un accès rapide aux fonctionnalités fréquemment utilisées.", es: "Acciones comunes de acceso rápido. Estos atajos te dan acceso rápido a las funciones más usadas.", ru: "Быстрый доступ к часто используемым функциям без навигации по меню.", zh: "常用操作快捷方式，无需在菜单中导航即可快速访问常用功能。", ar: "إجراءات شائعة قد تريد تنفيذها. تتيح لك هذه الاختصارات وصولاً سريعاً للميزات المستخدمة كثيراً دون التنقل في القوائم." },
     "Notification Log": { fr: "Journal des notifications", es: "Registro de notificaciones", ru: "Журнал уведомлений", zh: "通知日志", ar: "سجل الإشعارات" },
+    "Source Code": { fr: "Code source", es: "Código fuente", ru: "Исходный код", zh: "源代码", ar: "الكود المصدري" },
+    "JS heap": { fr: "Tas JS", es: "Montículo JS", ru: "JS-куча", zh: "JS 堆", ar: "كومة JS" },
+    "Renderer only": { fr: "Renderer uniquement", es: "Solo renderer", ru: "Только renderer", zh: "仅渲染进程", ar: "العارض فقط" },
+    "Detailed system metrics are only available in the standalone Midnightcord app.": { fr: "Les métriques système détaillées ne sont disponibles que dans l'application Midnightcord autonome.", es: "Las métricas detalladas del sistema solo están disponibles en la aplicación Midnightcord independiente.", ru: "Подробные системные метрики доступны только в отдельном приложении Midnightcord.", zh: "详细的系统指标仅在独立的 Midnightcord 应用中可用。", ar: "مقاييس النظام التفصيلية متاحة فقط في تطبيق Midnightcord المستقل." },
+    "Memory": { fr: "Mémoire", es: "Memoria", ru: "Память", zh: "内存", ar: "الذاكرة" },
+    "System": { fr: "Système", es: "Sistema", ru: "Система", zh: "系统", ar: "النظام" },
+    "Midnightcord": { fr: "Midnightcord", es: "Midnightcord", ru: "Midnightcord", zh: "Midnightcord", ar: "Midnightcord" },
+    "Swap": { fr: "Swap", es: "Swap", ru: "Swap", zh: "交换空间", ar: "Swap" },
+    "Used": { fr: "Utilisée", es: "Usada", ru: "Использовано", zh: "已使用", ar: "مستخدم" },
+    "Resident memory": { fr: "Mémoire résidente", es: "Memoria residente", ru: "Резидентная память", zh: "常驻内存", ar: "الذاكرة المقيمة" },
+    "Top processes": { fr: "Processus les plus gourmands", es: "Procesos principales", ru: "Основные процессы", zh: "主要进程", ar: "أكثر العمليات استهلاكاً" },
+    "Free memory": { fr: "Libérer la mémoire", es: "Liberar memoria", ru: "Освободить память", zh: "释放内存", ar: "تحرير الذاكرة" },
+    "Freeing…": { fr: "Libération…", es: "Liberando…", ru: "Освобождение…", zh: "正在释放…", ar: "جارٍ التحرير…" },
+    "Runs garbage collection and clears the HTTP cache.": { fr: "Lance le garbage collector et vide le cache HTTP.", es: "Ejecuta el recolector de basura y limpia la caché HTTP.", ru: "Запускает сборку мусора и очищает HTTP-кэш.", zh: "运行垃圾回收并清除 HTTP 缓存。", ar: "يشغّل جامع القمامة ويمسح ذاكرة HTTP." },
+    "Live memory usage of Midnightcord. Automatic cleanup runs when the system is low on free RAM.": { fr: "Utilisation mémoire en direct de Midnightcord. Un nettoyage automatique se déclenche quand la RAM libre est basse.", es: "Uso de memoria en vivo de Midnightcord. La limpieza automática se activa cuando queda poca RAM libre.", ru: "Использование памяти Midnightcord в реальном времени. При нехватке свободной RAM запускается автоочистка.", zh: "Midnightcord 的实时内存使用情况。系统可用内存不足时会自动清理。", ar: "استخدام الذاكرة المباشر لـ Midnightcord. يتم التنظيف التلقائي عند انخفاض الذاكرة الحرة." },
     "Edit QuickCSS": { fr: "Modifier le QuickCSS", es: "Editar QuickCSS", ru: "Редактировать QuickCSS", zh: "编辑 QuickCSS", ar: "تحرير QuickCSS" },
     "Relaunch Discord": { fr: "Relancer Discord", es: "Reiniciar Discord", ru: "Перезапустить Discord", zh: "重启 Discord", ar: "إعادة تشغيل Discord" },
     "Contribute": { fr: "Contribuer", es: "Contribuir", ru: "Внести вклад", zh: "贡献", ar: "المساهمة" },
@@ -636,8 +651,18 @@ const translations: Record<string, Partial<Record<Language, string>>> = {
  * Translate a string to the currently selected language.
  * Falls back to the original English string if no translation is found.
  */
+const SUPPORTED: Language[] = ["en", "fr", "es", "ru", "zh", "ar"];
+
+export function currentLanguage(): Language {
+    const configured = (Settings.language as Language) ?? "en";
+    if (configured && configured !== "en") return configured;
+
+    const discord = (document?.documentElement?.lang || "en").toLowerCase().split("-")[0] as Language;
+    return SUPPORTED.includes(discord) ? discord : "en";
+}
+
 export function t(key: string): string {
-    const lang = (Settings.language as Language) ?? "en";
+    const lang = currentLanguage();
     if (lang === "en") return key;
     const direct = translations[key]?.[lang];
     if (direct) return direct;

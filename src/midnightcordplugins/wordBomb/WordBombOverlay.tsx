@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { t } from "../autoTranslateMidnightcord";
 import { React, useState, useEffect, useRef, ReactDOM, createRoot } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
 import { tPlugin as t } from "@api/pluginI18n";

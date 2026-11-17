@@ -219,21 +219,33 @@ export const globPlugins = kind => ({
             }
             code += `export default {${pluginsCode}};export const PluginMeta={${metaCode}};export const ExcludedPlugins={${excludedCode}};`;
 
-            // ─── External User Plugins (~/Documents/Midnightcord/userplugins/) ───────────
-            // Scan and auto-create the external userplugins directory.
-            const externalUserPluginsDir = join(homedir(), "Documents", "Midnightcord", "userplugins");
-            try {
-                await mkdir(externalUserPluginsDir, { recursive: true });
-            } catch { /* already exists or permission error — silently skip */ }
+            const configHome = process.platform === "win32"
+                ? (process.env.APPDATA || join(homedir(), "AppData", "Roaming"))
+                : process.platform === "darwin"
+                    ? join(homedir(), "Library", "Application Support")
+                    : (process.env.XDG_CONFIG_HOME || join(homedir(), ".config"));
+            const externalUserPluginsDirs = [
+                join(configHome, "midnightcord", "userplugins"),
+                join(homedir(), "Documents", "Midnightcord", "userplugins")
+            ];
 
             let externalPluginsCode = "";
             let externalPluginsMapCode = "\n";
             let externalMetaCode = "\n";
             let j = 0;
-            if (await exists(externalUserPluginsDir)) {
+            const seenExternalPlugins = new Set();
+
+            for (const externalUserPluginsDir of externalUserPluginsDirs) {
+                try {
+                    await mkdir(externalUserPluginsDir, { recursive: true });
+                } catch { /* already exists or permission error — silently skip */ }
+
+                if (!await exists(externalUserPluginsDir)) continue;
+
                 const externalFiles = await readdir(externalUserPluginsDir, { withFileTypes: true }).catch(() => []);
                 for (const file of externalFiles) {
                     const fileName = file.name;
+                    if (seenExternalPlugins.has(fileName)) continue;
                     if (fileName.startsWith("_") || fileName.startsWith(".")) continue;
                     if (fileName === "index.ts" || fileName === "index.tsx") continue;
                     if (fileName.endsWith(".ini")) continue;
@@ -248,7 +260,6 @@ export const globPlugins = kind => ({
 
                     try {
                         if (isDir) {
-                            // Try index.ts then index.tsx
                             let entryPoint = null;
                             for (const entry of ["index.ts", "index.tsx"]) {
                                 const full = join(absPath, entry);
@@ -265,6 +276,7 @@ export const globPlugins = kind => ({
                         }
                         externalPluginsMapCode += `[${mod}.name]:${mod},\n`;
                         externalMetaCode += `[${mod}.name]:${JSON.stringify({ folderName, userPlugin: true })},\n`;
+                        seenExternalPlugins.add(fileName);
                         j++;
                     } catch { /* skip broken plugin */ }
                 }

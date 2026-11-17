@@ -87,7 +87,6 @@ const TABS: TabDef[] = [
 // ── Modal inner ───────────────────────────────────────────────────────────────
 
 function MidnightcordModalInner({ onClose }: { onClose: () => void; }) {
-    const [hovered, setHovered] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<string | null>(null);
 
     function openTab(tabId: string) {
@@ -109,7 +108,7 @@ function MidnightcordModalInner({ onClose }: { onClose: () => void; }) {
     }
 
     return (
-        <div className="nc-modal-root theme-dark" data-theme="dark" style={{ color: "var(--text-normal, #dbdee1)" }}>
+        <div className="nc-modal-root" style={{ color: "var(--text-normal, #dbdee1)" }}>
             {/* Sidebar */}
             <div className="nc-modal-sidebar">
                 <div className="nc-modal-sidebar-header">
@@ -122,13 +121,11 @@ function MidnightcordModalInner({ onClose }: { onClose: () => void; }) {
                     {TABS.map(tab => (
                         <div
                             key={tab.id}
-                            className={`nc-modal-sidebar-item${hovered === tab.id ? " nc-modal-sidebar-item--active" : ""}`}
+                            className={`nc-modal-sidebar-item${activeTab === tab.id ? " nc-modal-sidebar-item--active" : ""}`}
                             onClick={() => openTab(tab.id)}
-                            onMouseEnter={() => setHovered(tab.id)}
-                            onMouseLeave={() => setHovered(null)}
                             role="button"
                             tabIndex={0}
-                            onKeyDown={e => e.key === "Enter" && openTab(tab.id)}
+                            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTab(tab.id); } }}
                         >
                             <svg
                                 className="nc-modal-sidebar-item-icon"
@@ -160,6 +157,7 @@ function MidnightcordModalInner({ onClose }: { onClose: () => void; }) {
                         role="button"
                         tabIndex={0}
                         aria-label="Close"
+                        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
                     >
                         <svg viewBox="0 0 24 24" width={18} height={18} fill="currentColor">
                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -168,7 +166,7 @@ function MidnightcordModalInner({ onClose }: { onClose: () => void; }) {
                 </div>
                 <div className="nc-modal-content-body">
                     {activeTab ? (
-                        <div style={{ animation: "fade-in 0.2s ease", paddingBottom: "32px" }}>
+                        <div style={{ animation: "nc-fade-in 0.2s ease", paddingBottom: "32px" }}>
                             {TabContent}
                         </div>
                     ) : (
@@ -180,7 +178,7 @@ function MidnightcordModalInner({ onClose }: { onClose: () => void; }) {
                                     onClick={() => openTab(tab.id)}
                                     role="button"
                                     tabIndex={0}
-                                    onKeyDown={e => e.key === "Enter" && openTab(tab.id)}
+                                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTab(tab.id); } }}
                                 >
                                     <div className="nc-modal-card-icon">
                                         <svg viewBox="0 0 24 24" width={22} height={22} fill="currentColor">

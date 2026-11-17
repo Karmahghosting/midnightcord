@@ -12,6 +12,7 @@ import {
     type BrowserWindowConstructorOptions,
     Menu,
     type MenuItemConstructorOptions,
+    nativeImage,
     nativeTheme,
     type Rectangle,
     screen,
@@ -33,6 +34,8 @@ import { spoofGnu } from "./gnuSpoofing";
 import { sendRendererCommand } from "./ipcCommands";
 import { initKeybinds } from "./keybinds";
 import { Settings, State, VencordSettings } from "./settings";
+import { installMemoryGuard } from "./memoryGuard";
+import { installPrivacyBlocker } from "./privacyBlocker";
 import { addSplashLog, createSplashWindow, updateSplashMessage } from "./splash";
 import { darwinURL } from "./startup";
 import { destroyTray, initTray } from "./tray";
@@ -270,19 +273,37 @@ function initDevtoolsListeners(win: BrowserWindow) {
     });
 }
 
+function initWindowIcon(win: BrowserWindow) {
+    if (process.platform !== "linux" && process.platform !== "win32") return;
+
+    const icon = nativeImage.createFromPath(join(STATIC_DIR, process.platform === "win32" ? "icon.ico" : "icon.png"));
+    if (icon.isEmpty()) return;
+
+    const applyIcon = () => {
+        if (!win.isDestroyed()) win.setIcon(icon);
+    };
+
+    applyIcon();
+    win.webContents.on("dom-ready", applyIcon);
+    win.webContents.on("page-favicon-updated", () => setTimeout(applyIcon, 0));
+}
+
 function initStaticTitle(win: BrowserWindow) {
-    const listener = (e: { preventDefault: Function; }) => e.preventDefault();
+    const listener = (e: { preventDefault(): void; }) => e.preventDefault();
 
-    if (Settings.store.staticTitle) win.on("page-title-updated", listener);
+    const applyStaticTitle = () => {
+        if (win.isDestroyed()) return;
 
-    addSettingsListener("staticTitle", enabled => {
-        if (enabled) {
+        if (Settings.store.staticTitle) {
             win.setTitle("Midnightcord");
             win.on("page-title-updated", listener);
         } else {
             win.off("page-title-updated", listener);
         }
-    });
+    };
+
+    applyStaticTitle();
+    addSettingsListener("staticTitle", applyStaticTitle);
 }
 
 function getWindowBoundsOptions(): BrowserWindowConstructorOptions {
@@ -350,8 +371,7 @@ function buildBrowserWindowOptions(): BrowserWindowConstructorOptions {
             ...(Settings.store.middleClickAutoscroll && {
                 enableBlinkFeatures: "MiddleClickAutoscroll"
             }),
-            // disable renderer backgrounding to prevent the app from unloading when in the background
-            backgroundThrottling: false
+            backgroundThrottling: true
         },
         ...(noFrame && process.platform !== "darwin"
             ? { frame: false, titleBarStyle: "hidden" }
@@ -453,14 +473,12 @@ function createMainWindow() {
     initSettingsListeners(win);
     initSpellCheck(win);
     initDevtoolsListeners(win);
+    initWindowIcon(win);
     initStaticTitle(win);
 
     addSplashLog();
 
     win.webContents.setUserAgent(BrowserUserAgent);
-    addSplashLog();
-
-    loadUrl(darwinURL || process.argv.find(arg => arg.startsWith("discord://")));
     addSplashLog();
 
     return win;
@@ -486,13 +504,23 @@ function retryUrl(url: string, description: string) {
 }
 
 export async function createWindows() {
+    installPrivacyBlocker();
+    installMemoryGuard();
+
     const startMinimized = CommandLine.values["start-minimized"];
 
     let splash: BrowserWindow | undefined;
-    if (Settings.store.enableSplashScreen === true) {
-        splash = await createSplashWindow(startMinimized);
+    let splashShownAt = 0;
+    if (Settings.store.enableSplashScreen !== false) {
+        try {
+            splash = await createSplashWindow(startMinimized);
+            splashShownAt = Date.now();
 
-        if (isDeckGameMode) splash.setFullScreen(true);
+            if (isDeckGameMode) splash.setFullScreen(true);
+        } catch (error) {
+            console.error("[Midnightcord] Failed to create the splash window:", error);
+            splash = undefined;
+        }
         addSplashLog();
     }
 
@@ -503,11 +531,16 @@ export async function createWindows() {
     addSplashLog();
     mainWin = createMainWindow();
 
-    AppEvents.on("appLoaded", () => {
+    AppEvents.on("appLoaded", async () => {
+        if (splash && splashShownAt) {
+            const remaining = 1200 - (Date.now() - splashShownAt);
+            if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+        }
+
         splash?.destroy();
 
         if (!startMinimized) {
-            if (splash) mainWin?.show();
+            mainWin?.show();
 
             // FIX PRINCIPAL : maximize() différé de 2.5s.
             //
@@ -567,4 +600,6 @@ export async function createWindows() {
     setupArRPC();
     initArRPC();
     if (isLinux) initKeybinds();
+
+    loadUrl(darwinURL || process.argv.find(arg => arg.startsWith("discord://")));
 }

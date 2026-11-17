@@ -9,12 +9,12 @@ import { SearchableSelect } from "@webpack/common";
 
 export interface SafeSearchableSelectOption {
     label: string;
-    value: string | number;
+    value: string | number | boolean;
     [key: string]: any;
 }
 
 export interface SafeSearchableSelectProps {
-    options: SafeSearchableSelectOption[];
+    options: readonly SafeSearchableSelectOption[];
     value?: any;
     onChange: (value: any) => void;
     placeholder?: string;
@@ -52,8 +52,10 @@ export function SafeSearchableSelect(props: SafeSearchableSelectProps) {
     // SearchableSelect is a LazyComponent (function).
     // When rendered, React calls it with props and passes renderOptionPrefix, multi, etc.
     if (typeof SearchableSelect === "function") {
+        const Select = SearchableSelect as React.ComponentType<any>;
+
         return (
-            <SearchableSelect
+            <Select
                 options={options}
                 value={value}
                 onChange={onChange}
@@ -66,7 +68,7 @@ export function SafeSearchableSelect(props: SafeSearchableSelectProps) {
     }
 
     // Native HTML fallback
-    const singleValue = Array.isArray(value) ? undefined : (value as string | number ?? "");
+    const singleValue = Array.isArray(value) ? undefined : (value ?? "");
     return (
         <select
             value={singleValue}

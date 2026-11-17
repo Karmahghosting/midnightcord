@@ -190,6 +190,23 @@ export function createInstaller(options = {}) {
                 : installing ? "Installation terminée. Vous pouvez relancer Discord." : "Discord a été restauré. Vos réglages Midnightcord sont conservés."
                 : "Certaines installations n’ont pas pu être modifiées. Consultez les résultats puis réessayez.";
             await refresh();
+
+            if (platform === "linux") {
+                try {
+                    const successful = targets.filter((_target, index) => results[index]?.ok);
+                    if (installing && successful.length) {
+                        const preferred = successful.find(target => target.channel === "stable") ?? successful[0];
+                        helpers.installLinuxDesktopEntry({
+                            channel: preferred.channel,
+                            iconSource: join(root, "static", "icon.png")
+                        });
+                    } else if (!installing && !state.targets.some(target => target.installed)) {
+                        helpers.removeLinuxDesktopEntry();
+                    }
+                } catch (error) {
+                    progress({ stage: ok ? "done" : "error", percent: ok ? 100 : 0, message: "Le lanceur Midnightcord n’a pas pu être installé : " + (error.message || String(error)) });
+                }
+            }
         } catch (error) {
             message = error.message || "L’opération a échoué.";
         } finally { busy = false; }

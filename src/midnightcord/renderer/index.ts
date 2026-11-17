@@ -25,6 +25,8 @@ import { Settings } from "./settings";
 import { localStorage } from "./utils";
 export { Settings };
 
+enableStreamPause();
+
 import type SettingsPlugin from "@plugins/_core/settings";
 import { VesktopSettingsIcon } from "shared/icons";
 

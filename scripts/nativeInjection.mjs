@@ -495,10 +495,10 @@ export function installDistribution(sourceDist, options = {}) {
 
 const LINUX_DESKTOP_MARKER = "X-Midnightcord-Native=true";
 const LINUX_EXECUTABLES = {
-    stable: { command: "discord", wmClass: "discord" },
-    ptb: { command: "discord-ptb", wmClass: "discordptb" },
-    canary: { command: "discord-canary", wmClass: "discordcanary" },
-    development: { command: "discord-development", wmClass: "discorddevelopment" }
+    stable: { command: "discord", wmClass: "midnightcord" },
+    ptb: { command: "discord-ptb", wmClass: "midnightcord-ptb" },
+    canary: { command: "discord-canary", wmClass: "midnightcord-canary" },
+    development: { command: "discord-development", wmClass: "midnightcord-development" }
 };
 
 export function installLinuxDesktopEntry(options = {}) {

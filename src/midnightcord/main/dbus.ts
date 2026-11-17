@@ -5,18 +5,20 @@
  */
 
 import { app } from "electron";
+import { existsSync } from "fs";
 import { join } from "path";
 import { STATIC_DIR } from "shared/paths";
 
 let libVesktop: typeof import("libvesktop") | null = null;
 
 function loadLibVesktop() {
-    try {
-        if (!libVesktop) {
-            libVesktop = require(join(STATIC_DIR, `dist/libvesktop-${process.arch}.node`));
+    const path = join(STATIC_DIR, `dist/libvesktop-${process.arch}.node`);
+    if (!libVesktop && existsSync(path)) {
+        try {
+            libVesktop = require(path);
+        } catch (e) {
+            console.error("Failed to load libvesktop:", e);
         }
-    } catch (e) {
-        console.error("Failed to load libvesktop:", e);
     }
 
     return libVesktop;

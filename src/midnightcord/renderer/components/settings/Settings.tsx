@@ -19,7 +19,6 @@ import { DeveloperOptionsButton } from "./DeveloperOptions";
 import { DiscordBranchPicker } from "./DiscordBranchPicker";
 import { ImportLegacySettingsButton } from "./ImportLegacySettings";
 import { NotificationBadgeToggle } from "./NotificationBadgeToggle";
-import { OutdatedVesktopWarning } from "./OutdatedVesktopWarning";
 import { Updater } from "./Updater";
 import { UserAssetsButton } from "./UserAssets";
 import { VesktopSettingsSwitch } from "./VesktopSettingsSwitch";
@@ -52,8 +51,8 @@ const SettingsOptions: Record<string, Array<BooleanSetting | SettingsComponent>>
             key: "hardwareVideoAcceleration",
             title: "Video Hardware Acceleration",
             description:
-                "Enable hardware video acceleration. This can improve performance of screenshare and video playback, but may cause graphical glitches and infinitely loading streams.",
-            defaultValue: false,
+                "Decode streams and video with the GPU video engine (NVDEC, Quick Sync, VCN, VideoToolbox). Recommended. Disable if you see graphical glitches or streams stuck loading.",
+            defaultValue: true,
             disabled: () => Settings.store.hardwareAcceleration === false
         }
     ],
@@ -209,7 +208,6 @@ export default ErrorBoundary.wrap(
         return (
             <section>
                 <SimpleErrorBoundary><Updater /></SimpleErrorBoundary>
-                <SimpleErrorBoundary><OutdatedVesktopWarning /></SimpleErrorBoundary>
                 <SettingsSections />
             </section>
         );

@@ -696,8 +696,13 @@ export async function initArRPC() {
             stopStateFileWatching();
         });
     } catch (e) {
-        console.error("[arRPC] Failed to start arRPC server:", e);
-        lastError = e instanceof Error ? e.message : String(e);
+        const message = e instanceof Error ? e.message : String(e);
+        lastError = message;
+        if (message.includes("arRPC binary not found")) {
+            debugLog("arRPC is not bundled; Rich Presence relay disabled.");
+        } else {
+            console.error("[arRPC] Failed to start arRPC server:", e);
+        }
         clearInitTimeout();
     }
 }

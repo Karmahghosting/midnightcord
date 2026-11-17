@@ -20,3 +20,14 @@ Object.defineProperty(Notification.prototype, "onclick", {
 
 // Hide "Download Discord Desktop now!!!!" banner
 localStorage.setItem("hideNag", "true");
+
+function ensureMouseMode() {
+    const root = document.documentElement;
+    if (root && !root.classList.contains("mouse-mode")) {
+        root.classList.add("mouse-mode");
+    }
+}
+
+document.addEventListener("pointermove", ensureMouseMode, { passive: true, capture: true });
+document.addEventListener("mousemove", ensureMouseMode, { passive: true, capture: true });
+document.addEventListener("pointerdown", ensureMouseMode, { passive: true, capture: true });

@@ -189,4 +189,39 @@ const screenShareSource = readFileSync(join(rootDir, "src", "midnightcord", "mai
 assert(!screenShareSource.includes("warmUpCapturer"), "Wayland screen capture must never be requested during startup");
 assert(screenShareSource.includes("setDisplayMediaRequestHandler"), "Screen capture must remain available after an explicit sharing request");
 
+const privacyBlockerSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "privacyBlocker.ts"), "utf8");
+assert(privacyBlockerSource.includes("/science"), "Network-level blocking must cover Discord analytics");
+assert(privacyBlockerSource.includes("/track"), "Network-level blocking must cover Discord tracking events");
+assert(privacyBlockerSource.includes("sentry.io"), "Network-level blocking must cover Sentry ingestion");
+assert(privacyBlockerSource.includes("cancel: true"), "Tracker requests must be cancelled, not forwarded");
+
+const mainWindowSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "mainWindow.ts"), "utf8");
+assert(mainWindowSource.includes("installPrivacyBlocker()"), "Privacy blocking must be installed before any window is created");
+
+const aiSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "midnightcordAI", "index.tsx"), "utf8");
+assert(aiSource.includes("stripAttachmentsForStorage(final)"), "AI history must strip base64 attachments before persistence");
+assert(!aiSource.includes("DataStore.set(DS_KEY, final.slice(-100))"), "AI history must never persist raw message attachments");
+assert(!/logger\.(?:info|warn|error|debug)\([^\n]*(?:apiKey|Authorization|Bearer)/i.test(aiSource), "AI providers must never log credentials");
+
+
+const startupSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "startup.ts"), "utf8");
+assert(startupSource.includes('"js-flags", "--expose-gc"'), "The renderer must expose gc() for the memory cleaner");
+
+const memoryGuardSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "memoryGuard.ts"), "utf8");
+assert(memoryGuardSource.includes("getSystemMemoryInfo"), "Memory guard must read system memory pressure");
+assert(memoryGuardSource.includes("clearCache"), "Free memory must clear the HTTP cache");
+assert(memoryGuardSource.includes("MEMORY_PRESSURE"), "Low-memory pressure must be forwarded to the renderer");
+assert(mainWindowSource.includes("installMemoryGuard()"), "Memory guard must be installed before any window is created");
+
+const optimisationsSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "optimisations", "index.tsx"), "utf8");
+assert(optimisationsSource.includes("lowMemoryMode"), "UI Optimisations must expose a low-memory mode");
+assert(optimisationsSource.includes("onMemoryPressure"), "UI Optimisations must react to memory pressure");
+assert(optimisationsSource.includes("startAggressiveGc"), "Low-memory mode must run periodic garbage collection");
+
+const memoryCardSource = readFileSync(join(rootDir, "src", "components", "settings", "tabs", "vencord", "MemoryCard.tsx"), "utf8");
+assert(memoryCardSource.includes("VesktopNative.memory"), "The settings memory card must show live process memory");
+assert(memoryCardSource.includes("bridge.info"), "The settings memory card must query the memory bridge");
+assert(memoryCardSource.includes("bridge.free"), "The settings memory card must expose a free-memory action");
+
+
 console.log("[test] Privacy regression checks passed.");

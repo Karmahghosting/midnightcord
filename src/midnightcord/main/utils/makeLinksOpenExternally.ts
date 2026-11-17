@@ -41,6 +41,15 @@ function isPopoutRateLimited(): boolean {
     return false;
 }
 
+function isDiscordUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url, "https://discord.com");
+        return DISCORD_HOSTNAMES.includes(parsed.hostname);
+    } catch {
+        return false;
+    }
+}
+
 function stablePopoutKey(frameName: string): string {
     if (frameName.startsWith("DISCORD_")) return frameName;
     if (frameName) return `DISCORD_${frameName}`;

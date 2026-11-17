@@ -128,18 +128,18 @@ function UpdaterTab() {
 
             {readyToRestart ? (
                 <Card style={{ padding: "10px 16px", marginBottom: 12, borderLeft: "3px solid var(--status-positive)" }}>
-                    <Span size="sm" style={{ color: "var(--text-positive)" }}>Update verified. Restart Midnightcord to apply it.</Span>
+                    <Span size="sm" style={{ color: "var(--text-feedback-positive)" }}>Update verified. Restart Midnightcord to apply it.</Span>
                 </Card>
             ) : checked && !error && (
                 outdated ? (
                     <Card style={{ padding: "10px 16px", marginBottom: 12, borderLeft: "3px solid var(--status-warning)" }}>
-                        <Span size="sm" style={{ color: "var(--text-warning)" }}>
+                        <Span size="sm" style={{ color: "var(--text-feedback-warning)" }}>
                             {updateList[0]?.message ?? "A new update is available!"}
                         </Span>
                     </Card>
                 ) : (
                     <Card style={{ padding: "10px 16px", marginBottom: 12, borderLeft: "3px solid var(--status-positive)" }}>
-                        <Span size="sm" style={{ color: "var(--text-positive)" }}>{t("You are running the latest version")}</Span>
+                        <Span size="sm" style={{ color: "var(--text-feedback-positive)" }}>{t("You are running the latest version")}</Span>
                     </Card>
                 )
             )}

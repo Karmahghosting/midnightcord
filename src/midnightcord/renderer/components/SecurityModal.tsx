@@ -5,7 +5,7 @@
  */
 
 import { Button, Flex, Heading, Paragraph } from "@components";
-import { ModalContent, ModalFooter, ModalHeader, ModalRoot } from "@utils/modal";
+import { ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize } from "@utils/modal";
 import { React } from "@webpack/common";
 
 type ModalProps = { transitionState: any; onClose(): void; };
@@ -15,7 +15,7 @@ function WarningIcon() {
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
             <path d="M12 2L1 21h22L12 2z" fill="#f5a623" stroke="#f5a623" strokeWidth="0" />
             <path d="M12 2L1 21h22L12 2z" fill="none" stroke="#e08c00" strokeWidth="1" />
-            <text x="12" y="17.5" textAnchor="middle" fill="#1a1a1a" fontSize="11" fontWeight="bold" fontFfriendly="sans-serif">!</text>
+            <text x="12" y="17.5" textAnchor="middle" fill="#1a1a1a" fontSize="11" fontWeight="bold" fontFamily="sans-serif">!</text>
         </svg>
     );
 }
@@ -42,14 +42,16 @@ export function SecurityModal(props: ModalProps) {
     }, [timeLeft]);
 
     return (
-        <ModalRoot {...props} size="medium">
-            <ModalHeader separator={false} style={{ paddingTop: "20px", paddingBottom: "4px" }}>
-                <Flex direction={Flex.Direction.VERTICAL} align={Flex.Align.CENTER} style={{ width: "100%", gap: "8px" }}>
-                    <WarningIcon />
-                    <Heading level={2} variant="heading-xl/semibold" style={{ textAlign: "center" }}>
-                        Important Security Reminder
-                    </Heading>
-                </Flex>
+        <ModalRoot {...props} size={ModalSize.MEDIUM}>
+            <ModalHeader separator={false}>
+                <div style={{ paddingTop: "20px", paddingBottom: "4px", width: "100%" }}>
+                    <Flex direction={Flex.Direction.VERTICAL} align={Flex.Align.CENTER} style={{ width: "100%", gap: "8px" }}>
+                        <WarningIcon />
+                        <Heading level={2} variant="heading-xl/semibold" style={{ textAlign: "center" }}>
+                            Important Security Reminder
+                        </Heading>
+                    </Flex>
+                </div>
             </ModalHeader>
             <ModalContent style={{ padding: "16px 24px" }}>
                 <div style={{
@@ -60,7 +62,7 @@ export function SecurityModal(props: ModalProps) {
                     marginBottom: "16px"
                 }}>
                     <Paragraph style={{ fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }}>
-                        NightCordFr is a 100% Free product.
+                        Midnightcord is a 100% free, open-source project.
                     </Paragraph>
                     <Paragraph style={{ color: "var(--text-muted)" }}>
                         If you paid to obtain this application, you have been the victim of a <strong style={{ color: "var(--text-danger)" }}>scam</strong>. We never request money for access to our core services.
@@ -80,15 +82,15 @@ export function SecurityModal(props: ModalProps) {
                     </Flex>
                     <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                         <li style={{ marginBottom: "6px", color: "var(--text-normal)" }}>
-                            <strong>owner:</strong> ahki__
+                            <strong>Maintained by:</strong> the Midnightcord community
                         </li>
                         <li style={{ color: "var(--text-normal)" }}>
-                            <strong>Support &amp; Community:</strong>{" "}
+                            <strong>Project &amp; support:</strong>{" "}
                             <span
                                 style={{ color: "var(--text-link)", cursor: "pointer" }}
-                                onClick={() => VencordNative.native.openExternal("https://discord.gg/nightcord")}
+                                onClick={() => VencordNative.native.openExternal("https://github.com/Karmahghosting/midnightcord")}
                             >
-                                discord.gg/nightcord
+                                github.com/Karmahghosting/midnightcord
                             </span>
                         </li>
                     </ul>
@@ -99,11 +101,11 @@ export function SecurityModal(props: ModalProps) {
                     paddingTop: "12px"
                 }}>
                     <Paragraph style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "13px" }}>
-                        <strong>Note:</strong> Only download NightCordFr via our official channels to ensure your security.
+                        <strong>Note:</strong> Only download Midnightcord via our official channels to ensure your security.
                     </Paragraph>
                 </div>
             </ModalContent>
-            <ModalFooter style={{ justifyContent: "flex-end" }}>
+            <ModalFooter justify={Flex.Justify.END}>
                 <Button
                     variant={canClose ? "primary" : "secondary"}
                     disabled={!canClose}

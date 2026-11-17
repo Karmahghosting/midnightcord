@@ -4198,6 +4198,29 @@ export const translations: TranslationMap = {
     "🚨 AntiGroup - Groupe detected": { en: "🚨 AntiGroup - Groupe detected", fr: "🚨 AntiGroup - Groupe détecté", ar: "🚨 AntiGroup - تم اكتشاف المجموعة", es: "🚨 AntiGroup - Grupo detectado", ru: "🚨 AntiGroup — обнаружена группа", zh: "🚨 AntiGroup - 检测到 Groupe" },
     "🚫 No Spaces or Dashes": { en: "🚫 No Spaces or Dashes", fr: "🚫 Pas d'espaces ni de tirets", ar: "🚫 لا توجد مسافات أو شرطات", es: "🚫 Sin espacios ni guiones", ru: "🚫 Никаких пробелов и тире", zh: "🚫 没有空格或破折号" },
     "🛡️ AntiGroup - Group left": { en: "🛡️ AntiGroup - Group left", fr: "🛡️ AntiGroup - Groupe à gauche", ar: "🛡️ AntiGroup - المجموعة اليسرى", es: "🛡️ AntiGroup - Grupo restante", ru: "🛡️ AntiGroup - Группа ушла", zh: "🛡️ AntiGroup - 团体离开" },
+    "Use any server soundboard without Nitro: clicking a sound in Discord's soundboard plays it locally, sends it through your microphone and shows the native soundboard animation.": { fr: "Utilisez n'importe quel soundboard de serveur sans Nitro : cliquer sur un son dans le soundboard de Discord le joue localement, l'envoie via votre microphone et affiche l'animation native du soundboard." },
+    "Volume of the soundboard sent to the microphone": { fr: "Volume du soundboard envoyé au microphone" },
+    "Also play the sound locally so you can hear it": { fr: "Joue aussi le son localement pour que vous puissiez l'entendre" },
+    "Automatically switch the Discord input device to the virtual microphone": { fr: "Bascule automatiquement l'entrée Discord vers le microphone virtuel" },
+    "Unable to play this soundboard sound.": { fr: "Impossible de jouer ce son du soundboard." },
+    "Virtual microphone unavailable": { fr: "Microphone virtuel indisponible" },
+    "Virtual microphone not detected. Check your PipeWire/PulseAudio setup.": { fr: "Microphone virtuel introuvable. Vérifiez votre configuration PipeWire/PulseAudio." },
+    "No virtual audio device detected. Install one to send soundboard sounds through your microphone.": { fr: "Aucun périphérique audio virtuel détecté. Installez-en un pour envoyer les sons du soundboard via votre microphone." },
+    "AI provider": { fr: "Fournisseur d'IA" },
+    "Model (empty = provider default)": { fr: "Modèle (vide = modèle par défaut du fournisseur)" },
+    "OpenAI API Key": { fr: "Clé API OpenAI" },
+    "NanoGPT API Key": { fr: "Clé API NanoGPT" },
+    "Mistral API Key": { fr: "Clé API Mistral" },
+    "Custom API Key": { fr: "Clé API personnalisée" },
+    "Custom base URL (OpenAI-compatible), e.g. https://api.example.com/v1": { fr: "URL de base personnalisée (compatible OpenAI), ex. https://api.example.com/v1" },
+    "API Key for the selected provider (Groq keys are shared with AutoCorrect and VoiceDictation)": { fr: "Clé API du fournisseur sélectionné (les clés Groq sont partagées avec AutoCorrect et VoiceDictation)" },
+    "How to get an API key": { fr: "Comment obtenir une clé API" },
+    "Create an API key with your provider (Groq, OpenAI, NanoGPT, Mistral or a custom OpenAI-compatible endpoint), then paste it in the Api Key field above. Keys are saved per provider and restored when you switch back.": { fr: "Créez une clé API chez votre fournisseur (Groq, OpenAI, NanoGPT, Mistral ou un endpoint personnalisé compatible OpenAI), puis collez-la dans le champ Api Key ci-dessus. Les clés sont enregistrées par fournisseur et restaurées quand vous revenez dessus." },
+    "For Groq: create a free account on console.groq.com, open API Keys and create a key. The Groq API is free and gives access to fast LLMs.": { fr: "Pour Groq : créez un compte gratuit sur console.groq.com, ouvrez API Keys et créez une clé. L'API Groq est gratuite et donne accès à des LLM rapides." },
+    "Create Groq API Key": { fr: "Créer une clé API Groq" },
+    "AI Chat with Groq, OpenAI, NanoGPT, Mistral or any OpenAI-compatible provider, accessible from the toolbox and message context menu.": { fr: "Chat IA avec Groq, OpenAI, NanoGPT, Mistral ou tout fournisseur compatible OpenAI, accessible depuis la boîte à outils et le menu contextuel des messages." },
+    "Custom (OpenAI-compatible)": { fr: "Personnalisé (compatible OpenAI)" },
+    "unknown error": { fr: "erreur inconnue" },
 };
 
 export default definePlugin({
@@ -4233,16 +4256,20 @@ function normalizeLang(lang: string): SupportedLang {
     return "en";
 }
 
+function currentLanguage(): string {
+    const configured = (Settings.language as string) ?? "en";
+    if (configured && configured !== "en") return configured;
+    return document?.documentElement?.lang || "en";
+}
+
 export function t(key: string): string {
-    const rawLang = (Settings.language as string) ?? "en";
-    const lang = normalizeLang(rawLang);
+    const lang = normalizeLang(currentLanguage());
     if (lang === "en") return key;
     return translations[key]?.[lang] ?? translations[key]?.en ?? key;
 }
 
 export function useTranslation() {
-    const rawLang = (Settings.language as string) ?? "en";
-    const lang = normalizeLang(rawLang);
+    const lang = normalizeLang(currentLanguage());
     return {
         t: (key: string) => {
             if (lang === "en") return key;

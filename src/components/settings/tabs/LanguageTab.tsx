@@ -4,19 +4,18 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { LANGUAGES, LANGUAGE_FLAGS, Language, t } from "@api/i18n";
+import { Language, LANGUAGE_FLAGS, LANGUAGES, t } from "@api/i18n";
 import { useSettings } from "@api/Settings";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
+import { SafeSearchableSelect } from "@components/SafeSearchableSelect";
 import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
 import { Margins } from "@utils/margins";
-import { findByProps, findByPropsLazy } from "@webpack";
-import { FluxDispatcher, ConfirmModal } from "@webpack/common";
-import { SafeSearchableSelect } from "@components/SafeSearchableSelect";
-import { openModal } from "@utils/modal";
+import { findByProps } from "@webpack";
+import { Alerts } from "@webpack/common";
 
 const FLAG_ICON_STYLE: React.CSSProperties = { width: 20, height: 15, borderRadius: 2, verticalAlign: "middle", objectFit: "cover" };
 
@@ -81,7 +80,7 @@ const languageOptions = (Object.keys(LANGUAGES) as Language[]).map(lang => ({
 
 function FlagIcon({ lang }: { lang: Language; }) {
     if (!LANGUAGE_FLAGS[lang]) {
-        return <div style={{...FLAG_ICON_STYLE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px"}}>{LANGUAGE_FLAGS[lang]}</div>;
+        return <div style={{ ...FLAG_ICON_STYLE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>{LANGUAGE_FLAGS[lang]}</div>;
     }
     return <img src={LANGUAGE_FLAGS[lang]} alt={lang} style={FLAG_ICON_STYLE} />;
 }
@@ -91,11 +90,13 @@ function LanguageTab() {
     const current = (settings.language as Language) ?? "en";
 
     function selectLang(lang: Language) {
+        if (lang === current) return;
+
         settings.language = lang;
         if (settings.syncDiscordLanguage) {
             syncDiscordLocale(lang);
         }
-        
+
         Alerts.show({
             title: t("Restart required!"),
             body: t("Midnightcord language has been changed. Discord must be restarted for all translations to take effect. Restart now?"),

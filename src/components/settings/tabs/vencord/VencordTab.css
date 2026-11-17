@@ -52,3 +52,60 @@
     color: var(--text-link);
     display: inline-block;
 }
+.vc-vencord-tab-memory {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.vc-vencord-tab-memory-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.vc-vencord-tab-memory-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 8px;
+    background: var(--background-secondary);
+}
+
+.vc-vencord-tab-memory-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.vc-vencord-tab-memory-sub {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.vc-vencord-tab-memory-processes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vc-vencord-tab-memory-process {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--background-secondary);
+    font-size: 13px;
+}
+
+.vc-vencord-tab-memory-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}

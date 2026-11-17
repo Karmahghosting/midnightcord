@@ -152,4 +152,6 @@ if (watch) {
 			}
 		}
 	}
+
+	await copyFile("static/icon.png", "dist/desktop/icon.png");
 }

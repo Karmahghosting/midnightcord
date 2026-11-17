@@ -50,8 +50,43 @@ export const userStyleRootNode = document.createElement("vencord-user-styles");
 vencordRootNode.style.display = "none";
 vencordRootNode.append(coreStyleRootNode, managedStyleRootNode, userStyleRootNode);
 
+const legacyThemeVariables = `
+:root {
+    --text-normal: var(--text-default);
+    --text-danger: var(--text-feedback-critical);
+    --text-positive: var(--text-feedback-positive);
+    --text-warning: var(--text-feedback-warning);
+    --header-primary: var(--text-strong);
+    --header-secondary: var(--text-default);
+    --interactive-normal: var(--interactive-text-default);
+    --interactive-hover: var(--interactive-text-hover);
+    --interactive-active: var(--interactive-text-active);
+    --background-primary: var(--background-base-low);
+    --background-secondary: var(--background-base-lower);
+    --background-tertiary: var(--background-base-lowest);
+    --background-floating: var(--background-surface-highest);
+    --background-modifier-hover: var(--interactive-background-hover);
+    --background-modifier-selected: var(--interactive-background-selected);
+    --background-modifier-active: var(--interactive-background-active);
+    --background-modifier-accent: var(--background-mod-subtle);
+    --background-modifier-border: var(--border-subtle);
+    --background-modifier-cover: var(--background-scrim);
+    --background-modifier-error: var(--background-feedback-critical);
+    --background-base-lower-alt: var(--background-secondary-alt);
+    --bg-mod-subtle: var(--background-mod-subtle);
+    --bg-mod-faint: var(--background-mod-muted);
+    --bg-secondary: var(--background-base-lower);
+    --input-background: var(--input-background-default);
+    --input-border: var(--input-border-default);
+    --brand-experiment: var(--brand-500);
+    --brand: var(--brand-500);
+    --info-warning-foreground: var(--text-feedback-warning);
+}
+`;
+
 export function initStyles() {
     const osValuesNode = createAndAppendStyle("vencord-os-theme-values", coreStyleRootNode);
+    createAndAppendStyle("vencord-legacy-theme-variables", coreStyleRootNode).textContent = legacyThemeVariables;
     createAndAppendStyle("vencord-text", coreStyleRootNode).textContent = generateTextCss();
     const rendererCssNode = createAndAppendStyle("vencord-css-core", coreStyleRootNode);
     const vesktopCssNode = (IS_VESKTOP || IS_EQUIBOP) ? createAndAppendStyle("vesktop-css-core", coreStyleRootNode) : null;

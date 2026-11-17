@@ -19,10 +19,10 @@
 import "./PluginModal.css";
 
 import { generateId } from "@api/Commands";
-import { hasAnyVisibleSettings } from "@api/PluginManager";
-import { definePluginSettings, useSettings } from "@api/Settings";
-import { removeEmojis } from "./PluginCard";
+import { t } from "@api/i18n";
 import { tPlugin } from "@api/pluginI18n";
+import { hasAnyVisibleSettings } from "@api/PluginManager";
+import { useSettings } from "@api/Settings";
 import { BaseText } from "@components/BaseText";
 import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
@@ -35,14 +35,14 @@ import { Margins } from "@utils/margins";
 import { classes, isObjectEmpty } from "@utils/misc";
 import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { OptionType, Plugin } from "@utils/types";
+import type { User } from "@vencord/discord-types";
 import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
 import { FluxDispatcher, React, Toasts, Tooltip, UserStore } from "@webpack/common";
 import { Constructor } from "type-fest";
 
-import { PluginMeta } from "~plugins";
-
 import { OptionComponentMap } from "./components";
-import { t } from "@api/i18n";
+import { removeEmojis } from "./PluginCard";
+
 const cl = classNameFactory("vc-plugin-modal-");
 
 const AvatarStyles = findCssClassesLazy("moreUsers", "avatar", "clickableAvatar");
@@ -108,6 +108,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
                         onChange={debounce(onChange)}
                         pluginSettings={pluginSettings}
                         definedSettings={settings}
+                        closePluginSettings={onClose}
                     />
                 </ErrorBoundary>
             );
@@ -119,9 +120,6 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
             </div>
         );
     }
-
-    const pluginMeta = PluginMeta[plugin.name];
-    const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
 
     return (
         <ModalRoot transitionState={transitionState} size={ModalSize.MEDIUM}>
