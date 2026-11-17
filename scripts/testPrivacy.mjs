@@ -204,4 +204,23 @@ assert(!aiSource.includes("DataStore.set(DS_KEY, final.slice(-100))"), "AI histo
 assert(!/logger\.(?:info|warn|error|debug)\([^\n]*(?:apiKey|Authorization|Bearer)/i.test(aiSource), "AI providers must never log credentials");
 
 
+const startupSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "startup.ts"), "utf8");
+assert(startupSource.includes('"js-flags", "--expose-gc"'), "The renderer must expose gc() for the memory cleaner");
+
+const memoryGuardSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "memoryGuard.ts"), "utf8");
+assert(memoryGuardSource.includes("getSystemMemoryInfo"), "Memory guard must read system memory pressure");
+assert(memoryGuardSource.includes("clearCache"), "Free memory must clear the HTTP cache");
+assert(memoryGuardSource.includes("MEMORY_PRESSURE"), "Low-memory pressure must be forwarded to the renderer");
+assert(mainWindowSource.includes("installMemoryGuard()"), "Memory guard must be installed before any window is created");
+
+const optimisationsSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "optimisations", "index.tsx"), "utf8");
+assert(optimisationsSource.includes("lowMemoryMode"), "UI Optimisations must expose a low-memory mode");
+assert(optimisationsSource.includes("onMemoryPressure"), "UI Optimisations must react to memory pressure");
+assert(optimisationsSource.includes("startAggressiveGc"), "Low-memory mode must run periodic garbage collection");
+
+const memoryCardSource = readFileSync(join(rootDir, "src", "components", "settings", "tabs", "vencord", "MemoryCard.tsx"), "utf8");
+assert(memoryCardSource.includes("VesktopNative.memory.info"), "The settings memory card must show live process memory");
+assert(memoryCardSource.includes("VesktopNative.memory.free"), "The settings memory card must expose a free-memory action");
+
+
 console.log("[test] Privacy regression checks passed.");

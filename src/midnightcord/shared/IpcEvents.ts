@@ -85,6 +85,10 @@ export const enum IpcEvents {
     SOUNDBOARD_MIC_ROUTE = "VCD_SOUNDBOARD_MIC_ROUTE",
     SOUNDBOARD_MIC_UNROUTE = "VCD_SOUNDBOARD_MIC_UNROUTE",
 
+    GET_MEMORY_INFO = "VCD_GET_MEMORY_INFO",
+    FREE_MEMORY = "VCD_FREE_MEMORY",
+    MEMORY_PRESSURE = "VCD_MEMORY_PRESSURE",
+
     // Relaunch depuis VencordNative.midnightcord.relaunch() (boutons Restart plugins)
     RELAUNCH_APP = "MidnightcordRelaunchApp"
 }

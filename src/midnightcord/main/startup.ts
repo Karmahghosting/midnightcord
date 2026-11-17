@@ -38,6 +38,8 @@ export let enableHardwareAcceleration = true;
 function init() {
     setAsDefaultProtocolClient("discord");
 
+    app.commandLine.appendSwitch("js-flags", "--expose-gc");
+
     const { disableSmoothScroll, hardwareAcceleration, hardwareVideoAcceleration } = Settings.store;
     const { launchArguments } = State.store;
 

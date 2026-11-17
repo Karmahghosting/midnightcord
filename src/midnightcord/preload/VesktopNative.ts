@@ -125,6 +125,15 @@ export const VesktopNative = {
         getLargeThumbnail: (id: string) => invoke<string>(IpcEvents.CAPTURER_GET_LARGE_THUMBNAIL, id)
     },
     /** only available on Linux. */
+    memory: {
+        info: () => invoke<unknown>(IpcEvents.GET_MEMORY_INFO),
+        free: () => invoke<unknown>(IpcEvents.FREE_MEMORY),
+        onMemoryPressure: (cb: (info: unknown) => void) => {
+            const listener = (_event: unknown, info: unknown) => cb(info);
+            ipcRenderer.on(IpcEvents.MEMORY_PRESSURE, listener);
+            return () => ipcRenderer.off(IpcEvents.MEMORY_PRESSURE, listener);
+        }
+    },
     soundboardMic: {
         ensure: () =>
             invoke<

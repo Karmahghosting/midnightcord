@@ -34,6 +34,7 @@ import { spoofGnu } from "./gnuSpoofing";
 import { sendRendererCommand } from "./ipcCommands";
 import { initKeybinds } from "./keybinds";
 import { Settings, State, VencordSettings } from "./settings";
+import { installMemoryGuard } from "./memoryGuard";
 import { installPrivacyBlocker } from "./privacyBlocker";
 import { addSplashLog, createSplashWindow, updateSplashMessage } from "./splash";
 import { darwinURL } from "./startup";
@@ -504,6 +505,7 @@ function retryUrl(url: string, description: string) {
 
 export async function createWindows() {
     installPrivacyBlocker();
+    installMemoryGuard();
 
     const startMinimized = CommandLine.values["start-minimized"];
 

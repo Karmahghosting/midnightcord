@@ -27,6 +27,7 @@ import { Margins } from "@utils/margins";
 import { relaunch } from "@utils/native";
 import { React } from "@webpack/common";
 
+import { MemoryCard } from "./MemoryCard";
 import { openNotificationSettingsModal } from "./NotificationSettings";
 
 const cl = classNameFactory("vc-vencord-tab-");
@@ -254,6 +255,13 @@ function EquicordSettings() {
                         {t("Settings Plugin")}
                     </a>.
                 </Notice.Info>
+
+                <Divider className={Margins.top20} />
+                <Heading className={Margins.top20}>{t("Memory")}</Heading>
+                <Paragraph className={Margins.bottom16}>
+                    {t("Live memory usage of Midnightcord. Automatic cleanup runs when the system is low on free RAM.")}
+                </Paragraph>
+                <MemoryCard />
 
                 {Switches.filter((s): s is Exclude<typeof s, false> => !!s).map(
                     s => (

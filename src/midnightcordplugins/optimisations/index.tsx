@@ -101,6 +101,13 @@ const settings = definePluginSettings({
         restartNeeded: false,
         onChange(v: boolean) { limitMsgCache = v; if (!v) stopCacheCleaner(); else startCacheCleaner(); }
     },
+    lowMemoryMode: {
+        type: OptionType.BOOLEAN,
+        description: "Mode faible RAM : désactive les emojis/stickers/vidéos animés et force un GC régulier",
+        default: true,
+        restartNeeded: false,
+        onChange(v: boolean) { applyLowMemoryMode(v); }
+    },
     pauseInactiveStreams: {
         type: OptionType.BOOLEAN,
         description: "Mettre en pause le décodage des streams hors écran ou quand la fenêtre est masquée (économise beaucoup de CPU/GPU)",
@@ -109,6 +116,42 @@ const settings = definePluginSettings({
         onChange(v: boolean) { v ? enableStreamPause() : disableStreamPause(); }
     },
 });
+
+let _aggressiveGcInterval: ReturnType<typeof setInterval> | null = null;
+let _memoryPressureUnsub: (() => void) | null = null;
+
+function startAggressiveGc(enabled: boolean) {
+    if (enabled && _aggressiveGcInterval === null) {
+        _aggressiveGcInterval = setInterval(() => forceGC(), 120_000);
+    } else if (!enabled && _aggressiveGcInterval !== null) {
+        clearInterval(_aggressiveGcInterval);
+        _aggressiveGcInterval = null;
+    }
+}
+
+function applyLowMemoryMode(enabled: boolean) {
+    noGifAvatars = enabled || settings.store.noGifAvatars;
+    noAnimatedEmoji = enabled || settings.store.noAnimatedEmoji;
+    noStickers = enabled || settings.store.noStickers;
+    noVideoAutoplay = enabled || settings.store.noVideoAutoplay;
+
+    if (started) buildAndInjectCss();
+    startAggressiveGc(enabled);
+}
+
+function startMemoryPressureListener() {
+    if (_memoryPressureUnsub || !VesktopNative?.memory?.onMemoryPressure) return;
+
+    _memoryPressureUnsub = VesktopNative.memory.onMemoryPressure(() => {
+        forceGC();
+        void VesktopNative.memory.free();
+    });
+}
+
+function stopMemoryPressureListener() {
+    _memoryPressureUnsub?.();
+    _memoryPressureUnsub = null;
+}
 
 const cacheSettings = () => {
     disableSpring = settings.store.disableSpringAnimations;
@@ -311,6 +354,8 @@ export default definePlugin({
 
         if (limitMsgCache) startCacheCleaner();
         if (settings.store.pauseInactiveStreams) enableStreamPause();
+        if (settings.store.lowMemoryMode) applyLowMemoryMode(true);
+        startMemoryPressureListener();
     },
 
     stop() {
@@ -323,5 +368,7 @@ export default definePlugin({
         removeCss();
         stopCacheCleaner();
         disableStreamPause();
+        startAggressiveGc(false);
+        stopMemoryPressureListener();
     }
 });
