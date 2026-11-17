@@ -8,12 +8,12 @@ Les releases proposent **Midnightcord-Installer** : un `.exe` portable pour Wind
 
 Sous Linux, les paquets DEB/RPM ajoutent **Install Vencord** au menu des applications ; ce lanceur ouvre l’injecteur graphite Midnightcord. Les formats AppImage et tar.gz contiennent aussi uniquement l’injecteur. Le client autonome Linux a été retiré ; voir le [guide Linux](./LINUX.md).
 
-1. Fermez Discord complètement, y compris son icône dans la zone de notification.
+1. Sur Windows et Linux, fermez Discord complètement, y compris son icône dans la zone de notification.
 2. Ouvrez l’injecteur (après extraction sur macOS et Linux).
 3. Cochez les installations Discord souhaitées et cliquez sur **Installer Midnightcord**.
-4. Relancez votre Discord habituel.
+4. Sur macOS, les installations sélectionnées sont fermées puis relancées automatiquement. Sur Windows et Linux, relancez votre Discord habituel.
 
-L’écran de chargement recherche Stable, PTB, Canary et Development. Chaque installation affiche son emplacement ; aucune n’est présélectionnée. Un Discord encore ouvert bloque l’opération : fermez-le puis cliquez sur **Actualiser**. L’injecteur ne termine pas vos processus.
+L’écran de chargement recherche Stable, PTB, Canary et Development. Chaque installation affiche son emplacement ; aucune n’est présélectionnée. Sur macOS, l’injecteur ferme uniquement les copies sélectionnées, y compris leurs processus auxiliaires, avant de modifier les fichiers. Sur Windows et Linux, un Discord encore ouvert bloque l’opération : fermez-le puis cliquez sur **Actualiser**.
 
 Pour réparer une installation déjà équipée, sélectionnez-la et utilisez **Réparer Midnightcord**. L’onglet **Désinstallation** restaure uniquement les Discord cochés. Vos réglages et le build partagé restent dans le profil, afin de conserver les autres installations Midnightcord.
 

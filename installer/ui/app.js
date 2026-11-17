@@ -43,12 +43,13 @@ function showView(name) {
 function announce(message) { byId("announcement").textContent = message; }
 function eligible(target) { return !!target && target.writable !== false && (mode === "migrate-vencord" ? target.vencord : !target.conflict && (mode === "install" || target.installed)); }
 function errorText(error) { return error?.message || "Une erreur est survenue. Réessayez après avoir fermé Discord."; }
+function runningBlocksOperation() { return state.platform !== "darwin" && !!state.running?.length; }
 
 function updateSelection() {
     const targets = state.targets.filter(target => selected.has(target.id));
     const count = targets.length;
     byId("selection-count").textContent = count ? `${count} installation${count > 1 ? "s" : ""} sélectionnée${count > 1 ? "s" : ""}` : "Aucune installation sélectionnée";
-    byId("perform").disabled = !count || working || scanning || !!state.error || !!state.running?.length;
+    byId("perform").disabled = !count || working || scanning || !!state.error || runningBlocksOperation();
     byId("perform-label").textContent = mode === "migrate-vencord" ? "Migrer depuis Vencord" : mode === "uninstall" ? "Retirer Midnightcord" : count && targets.every(target => target.installed) ? "Réparer Midnightcord" : "Installer Midnightcord";
     byId("perform").classList.toggle("remove", mode === "uninstall");
     for (const card of byId("targets").children) card.classList.toggle("selected", selected.has(card.dataset.id));
@@ -90,8 +91,13 @@ function renderTargets() {
     byId("target-count").textContent = `${count} installation${count > 1 ? "s" : ""} détectée${count > 1 ? "s" : ""}`;
     byId("empty").hidden = count > 0;
     const running = state.running ?? [];
-    byId("notice").classList.toggle("warning", running.length > 0);
-    byId("notice-text").textContent = running.length
+    byId("notice").classList.toggle("warning", runningBlocksOperation());
+    const macNotice = "Les installations Discord sélectionnées seront fermées automatiquement, puis relancées après l’opération.";
+    byId("notice-text").textContent = state.platform === "darwin"
+        ? (mode === "migrate-vencord" ? "Le chargeur Vencord sera sauvegardé puis remplacé. Vos réglages et thèmes Vencord restent intacts. "
+            : mode === "uninstall" ? "Discord sera restauré. Vos réglages Midnightcord sont conservés. "
+                : state.targets.some(target => target.vencord) ? "Vencord est détecté : choisissez « Depuis Vencord » pour le remplacer et conserver vos données. " : "") + macNotice
+        : running.length
         ? `${running.join(", ")} est encore ouvert. Fermez complètement Discord, puis actualisez la liste.`
         : mode === "migrate-vencord" ? "Le chargeur Vencord sera sauvegardé puis remplacé. Vos réglages et thèmes Vencord restent intacts et pourront être importés dans Midnightcord après le redémarrage. Fermez Discord complètement."
             : mode === "uninstall" ? "Discord sera restauré. Vos réglages Midnightcord sont conservés." : state.targets.some(target => target.vencord)
@@ -144,7 +150,7 @@ function onProgress(event) {
     byId("progress-number").textContent = `${Math.round(percent)} %`;
     byId("progress-label").textContent = event.message || "Opération en cours";
     const stages = mode === "uninstall" ? ["checking", "restoring"] : ["checking", "copying", "injecting"];
-    const current = event.stage === "done" ? stages.length : stages.indexOf(event.stage);
+    const current = ["done", "restarting"].includes(event.stage) ? stages.length : stages.indexOf(event.stage);
     [...document.querySelectorAll(".progress-steps span:not([hidden])")].forEach((node, index) => {
         node.classList.toggle("current", index === current);
         node.classList.toggle("complete", current > index);
@@ -164,21 +170,23 @@ function showResult(result) {
     const results = result.results || [];
     byId("result-list").replaceChildren();
     for (const item of results) {
-        const row = element("div", `result-row${item.ok ? "" : " failed"}`);
+        const successful = item.ok && item.restarted !== false;
+        const row = element("div", `result-row${successful ? "" : " failed"}`);
         const target = state.targets.find(target => target.id === item.id);
-        row.append(icon(item.ok ? "check" : "info"), element("span", "", `${target?.name || "Discord"} — ${item.message || (item.ok ? "Terminé" : "Échec")}`));
+        row.append(icon(successful ? "check" : "info"), element("span", "", `${target?.name || "Discord"} — ${item.message || (item.ok ? "Terminé" : "Échec")}`));
         byId("result-list").append(row);
     }
     byId("result-list").hidden = results.length === 0;
     if (Array.isArray(result.state?.targets)) state = result.state;
-    byId("progress-footnote").textContent = ok ? "Relancez votre Discord habituel pour retrouver votre espace." : "Aucune autre installation n’a été sélectionnée automatiquement.";
+    byId("progress-footnote").textContent = ok ? state.platform === "darwin" ? "Retrouvez votre espace dans Discord, relancé automatiquement."
+        : "Relancez votre Discord habituel pour retrouver votre espace." : "Aucune autre installation n’a été sélectionnée automatiquement.";
     byId("back").hidden = false;
     announce(byId("progress-title").textContent);
     byId("back").focus();
 }
 
 async function perform() {
-    if (working || scanning || !selected.size || state.error || state.running?.length) return;
+    if (working || scanning || !selected.size || state.error || runningBlocksOperation()) return;
     lockControls(true);
     byId("progress-view").classList.remove("complete", "failed");
     byId("stage-symbol").replaceChildren(mode === "uninstall" ? icon("restore") : logo());

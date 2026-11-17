@@ -5,12 +5,11 @@ Des archives séparées sont produites pour les Mac Intel x64 et Apple Silicon A
 ## Installation
 
 1. Installez Discord dans le dossier Applications ou dans votre dossier Applications utilisateur.
-2. Quittez complètement Discord avec Cmd Q.
-3. Téléchargez et extrayez **Midnightcord-Installer** pour votre processeur.
-4. Ouvrez **Midnightcord Installer.app**, cochez vos Discord puis cliquez sur **Installer Midnightcord**.
-5. Relancez Discord normalement.
+2. Téléchargez et extrayez **Midnightcord-Installer** pour votre processeur.
+3. Ouvrez **Midnightcord Installer.app**, cochez vos Discord puis cliquez sur **Installer Midnightcord**.
+4. L’injecteur ferme automatiquement les installations sélectionnées et leurs processus auxiliaires, puis les relance après l’installation. Les autres copies de Discord restent ouvertes.
 
-Les archives **Midnightcord-Native** et leurs scripts `.command` restent disponibles pour une installation en ligne de commande.
+Les archives **Midnightcord-Native** et leurs scripts `.command` restent disponibles pour une installation en ligne de commande. Pour ces scripts, quittez Discord avec Cmd Q avant l’opération et relancez-le ensuite.
 
 L’injecteur cherche Discord Stable, PTB, Canary et Development dans /Applications et dans ~/Applications.
 
@@ -22,11 +21,11 @@ Après avoir vérifié la provenance de l’archive et son fichier SHA256, essay
 
 ## Mise à jour
 
-Après une mise à jour de Discord, quittez Discord et sélectionnez l’installation à réparer dans l’injecteur.
+Après une mise à jour de Discord, sélectionnez l’installation à réparer dans l’injecteur. La fermeture et la relance sont automatiques.
 
 ## Désinstallation
 
-Quittez Discord puis utilisez l’onglet **Désinstallation** de l’injecteur. Seules les installations cochées sont restaurées ; les réglages et le build partagé sont conservés.
+Utilisez l’onglet **Désinstallation** de l’injecteur. Seules les installations cochées sont fermées, restaurées puis relancées ; les réglages et le build partagé sont conservés.
 
 Le script `Uninstall Midnightcord.command` de l’archive en ligne de commande restaure également la sauvegarde officielle, puis supprime le build utilisateur partagé.
 

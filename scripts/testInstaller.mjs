@@ -14,6 +14,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Worker } from "node:worker_threads";
 
 import { createInstaller } from "../installer/core.mjs";
+import { createMacDiscordController } from "../installer/macDiscord.mjs";
 import { verifyMacInstaller } from "./macInstallerSigning.mjs";
 import { getInstalledDistDir, installDistribution, isMidnightcordLoader } from "./nativeInjection.mjs";
 
@@ -132,7 +133,7 @@ async function fixture(t, platform = "win32") {
         await writeFile(join(resources, "app.asar"), `official:${channel}:${version}:${applicationDir}`);
         return resources;
     };
-    return { directory, home, env, sourceDist, payload, options, discord, installedDist: getInstalledDistDir(options), app: extra => createInstaller({ ...options, ...extra }) };
+    return { directory, home, env, sourceDist, payload, options, discord, installedDist: getInstalledDistDir(options), app: extra => createInstaller({ ...options, stopDiscord: async () => {}, startDiscord: async () => {}, ...extra }) };
 }
 
 async function snapshot(directory) {
@@ -281,6 +282,188 @@ test("a running Discord process blocks install and uninstall without filesystem 
         const result = await app.perform({ action, targetIds: [targets[0].id] });
         assert.equal(result.ok, false);
         assert.deepEqual(await snapshot(f.home), before);
+    }
+});
+
+test("macOS closes only selected apps before copying, completes the batch, then reopens them", async t => {
+    const f = await fixture(t, "darwin");
+    const stable = await f.discord("stable");
+    const ptb = await f.discord("ptb");
+    const otherStable = await f.discord("stable", { applicationDir: f.options.macApplicationDirs[1] });
+    const otherBefore = await snapshot(otherStable);
+    const running = new Set([stable, ptb, otherStable]);
+    const events = [];
+    const app = f.app({
+        listRunning: async targets => targets.filter(target => running.has(target.path)).map(target => target.name),
+        stopDiscord: async targets => {
+            assert.equal(existsSync(f.installedDist), false, "Stop precedes any distribution changes");
+            assert.deepEqual(targets.map(target => target.path), [stable, ptb]);
+            for (const target of targets) running.delete(target.path);
+            events.push("stop");
+        },
+        startDiscord: async target => {
+            assert(isMidnightcordLoader(join(stable, "app")) && isMidnightcordLoader(join(ptb, "app")), "Both apps are patched before either is reopened");
+            running.add(target.path);
+            events.push(target.path);
+        }
+    });
+    const { targets } = await app.scan();
+    const targetIds = [stable, ptb].map(path => targets.find(target => target.path === path).id);
+    const result = await app.perform({ action: "install", targetIds });
+    assert.equal(result.ok, true, result.message);
+    assert(result.results.every(result => result.restarted));
+    assert.deepEqual(events, ["stop", stable, ptb]);
+    assert(running.has(otherStable));
+    assert.deepEqual(await snapshot(otherStable), otherBefore);
+});
+
+test("macOS installs, repairs and restores an initially closed app and opens it each time", async t => {
+    const f = await fixture(t, "darwin");
+    const resources = await f.discord("stable");
+    const original = await snapshot(resources);
+    const events = [];
+    const app = f.app({
+        stopDiscord: async () => events.push("stop"),
+        startDiscord: async target => events.push(target.path)
+    });
+    const { targets } = await app.scan();
+    for (const action of ["install", "install", "uninstall"]) {
+        const result = await app.perform({ action, targetIds: [targets[0].id] });
+        assert.equal(result.ok, true, result.message);
+        assert.equal(result.results[0].restarted, true);
+    }
+    assert.deepEqual(events, ["stop", resources, "stop", resources, "stop", resources]);
+    assert.deepEqual(await snapshot(resources), original);
+});
+
+test("macOS failed shutdown or process checks leave the distribution and Discord untouched", async t => {
+    for (const failure of ["stop", "still-running", "scan"]) {
+        const f = await fixture(t, "darwin");
+        const resources = await f.discord("stable");
+        const before = await snapshot(resources);
+        const app = f.app({
+            listRunning: async () => {
+                if (failure === "scan") throw new Error("process lookup denied");
+                return ["Discord Stable"];
+            },
+            stopDiscord: async () => { if (failure === "stop") throw new Error("shutdown denied"); },
+            startDiscord: async () => assert.fail("Must not launch on failure")
+        });
+        const { targets } = await app.scan();
+        const result = await app.perform({ action: "install", targetIds: [targets[0].id] });
+        assert.equal(result.ok, false, failure);
+        assert.equal(existsSync(f.installedDist), false, failure);
+        assert.deepEqual(await snapshot(resources), before, failure);
+    }
+});
+
+test("macOS validates selection, permissions and payload before closing apps", async t => {
+    for (const failure of ["selection", "permissions", "payload"]) {
+        const f = await fixture(t, "darwin");
+        await f.discord("stable");
+        if (failure === "payload") await rm(join(f.sourceDist, "patcher.js"));
+        const app = f.app({
+            stopDiscord: async () => assert.fail("Preflight must run first"),
+            startDiscord: async () => assert.fail("Must not launch on failure"),
+            ...(failure === "permissions" ? { helpers: { isWritable: () => false } } : {})
+        });
+        const { targets } = await app.scan();
+        const result = await app.perform({ action: "install", targetIds: [failure === "selection" ? "unknown" : targets[0].id] });
+        assert.equal(result.ok, false, failure);
+        assert.equal(existsSync(f.installedDist), false, failure);
+    }
+});
+
+test("macOS never reopens a target whose patch failed and reports launch failures separately", async t => {
+    const f = await fixture(t, "darwin");
+    const stable = await f.discord("stable");
+    const ptb = await f.discord("ptb");
+    const ptbBefore = await snapshot(ptb);
+    const opened = [];
+    const app = f.app({
+        helpers: { injectResource: path => {
+            if (path === ptb) throw new Error("fixture patch failure");
+            return "unchanged";
+        } },
+        startDiscord: async target => { opened.push(target.path); throw new Error("fixture launch failure"); }
+    });
+    const { targets } = await app.scan();
+    const result = await app.perform({ action: "install", targetIds: targets.map(target => target.id) });
+    assert.equal(result.ok, false);
+    assert.deepEqual(opened, [stable]);
+    assert.deepEqual(await snapshot(ptb), ptbBefore);
+    const launched = result.results.find(result => result.id === targets.find(target => target.path === stable).id);
+    assert.equal(launched.ok, true, "The filesystem operation itself succeeded");
+    assert.equal(launched.restarted, false);
+    assert.match(launched.message, /fixture launch failure/);
+});
+
+test("macOS detects reopened apps immediately before patching", async t => {
+    const f = await fixture(t, "darwin");
+    const resources = await f.discord("stable");
+    const before = await snapshot(resources);
+    let checks = 0;
+    const app = f.app({
+        listRunning: async () => ++checks >= 4 ? ["Discord Stable"] : [],
+        startDiscord: async () => assert.fail("Must not launch a failed target")
+    });
+    const { targets } = await app.scan();
+    assert.equal((await app.perform({ action: "install", targetIds: [targets[0].id] })).ok, false);
+    assert.deepEqual(await snapshot(resources), before);
+});
+
+test("macOS process control matches bundle paths, stops helpers and escalates only surviving PIDs", async () => {
+    const target = { name: "Discord Stable", path: "/fixture/Applications/Discord.app/Contents/Resources" };
+    let processes = [
+        [100, "/fixture/Applications/Discord.app/Contents/MacOS/Discord"],
+        [101, "/fixture/Applications/Discord.app/Contents/Frameworks/Discord Helper (Renderer).app/Contents/MacOS/Discord Helper (Renderer)"],
+        [102, "/fixture/Applications/Discord.app/Contents/Frameworks/Electron Framework.framework/Helpers/chrome_crashpad_handler"],
+        [200, "/fixture/Users/Someone/Applications/Discord.app/Contents/MacOS/Discord"],
+        [201, "/fixture/Applications/Discord PTB.app/Contents/MacOS/Discord PTB"],
+        [202, "/fixture/Applications/Discord.app.backup/Contents/MacOS/Discord"],
+        [203, "/fixture/Discord"]
+    ];
+    const signals = [];
+    const calls = [];
+    const controller = createMacDiscordController({
+        execute: async (command, args) => {
+            calls.push([command, args]);
+            return { stdout: processes.map(([pid, path]) => `  ${pid} ${path}`).join("\n") };
+        },
+        signal: (pid, type) => {
+            signals.push([pid, type]);
+            if (pid !== 101 || type === "SIGKILL") processes = processes.filter(([value]) => value !== pid);
+        },
+        wait: async () => {}
+    });
+    assert.deepEqual(await controller.listRunning([target]), [target.name]);
+    await controller.stop([target]);
+    assert.deepEqual(signals, [[100, "SIGTERM"], [101, "SIGTERM"], [102, "SIGTERM"], [101, "SIGKILL"]]);
+    assert.deepEqual(await controller.listRunning([target]), []);
+    assert.equal(processes.length, 4, "Other apps and copies stay running");
+    await controller.start(target);
+    assert.deepEqual(calls.at(-1), ["open", ["-a", "/fixture/Applications/Discord.app"]]);
+    assert.deepEqual(calls[0], ["ps", ["-x", "-o", "pid=,comm="]]);
+});
+
+test("macOS process control tolerates exit races and fails closed on permission, scan and timeout errors", async () => {
+    const target = { name: "Discord PTB", path: "/fixture/Discord PTB.app/Contents/Resources" };
+    for (const failure of ["ESRCH", "EPERM", "scan", "timeout"]) {
+        let exited = false;
+        const controller = createMacDiscordController({
+            execute: async () => {
+                if (failure === "scan") throw new Error("lookup failed");
+                return { stdout: exited ? "" : "123 /fixture/Discord PTB.app/Contents/MacOS/Discord PTB\n" };
+            },
+            signal: () => {
+                if (failure === "timeout") return;
+                exited = failure === "ESRCH";
+                throw Object.assign(new Error(failure), { code: failure });
+            },
+            wait: async () => {}
+        });
+        if (failure === "ESRCH") await controller.stop([target]);
+        else await assert.rejects(controller.stop([target]), failure === "EPERM" ? /EPERM/ : failure === "scan" ? /lookup failed/ : /Impossible d’arrêter/);
     }
 });
 

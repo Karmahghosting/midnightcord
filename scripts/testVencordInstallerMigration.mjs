@@ -71,7 +71,8 @@ function fixture(t, layout = "asar", patcher = "C:\\Users\\Fixture\\AppData\\Roa
     writeFileSync(join(profile, "settings.json"), '{"plugins":{"Example":{"enabled":true}}}');
     const options = {
         sourceDist, home: root, env: { APPDATA: join(root, "appdata"), XDG_DATA_HOME: join(root, "data") },
-        findTargets: () => [{ channel: "stable", resourcesDir: resources }], listRunning: async () => []
+        findTargets: () => [{ channel: "stable", resourcesDir: resources }], listRunning: async () => [],
+        stopDiscord: async () => {}, startDiscord: async () => {}
     };
     return { root, resources, profile, sourceDist, original, options, patcher: join(sourceDist, "patcher.js") };
 }
@@ -169,6 +170,7 @@ test("running Discord, unknown process state and missing write access block migr
         let checks = 0;
         const app = createInstaller({
             ...f.options,
+            platform: "win32",
             listRunning: async () => {
                 checks++;
                 if (kind === "scan-error") throw new Error("process lookup failed");

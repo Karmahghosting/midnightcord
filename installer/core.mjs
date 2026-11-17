@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import * as native from "../scripts/nativeInjection.mjs";
+import { createMacDiscordController } from "./macDiscord.mjs";
 
 const exec = promisify(execFile);
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -36,6 +37,7 @@ function processChannel(name) {
 }
 
 export async function detectRunningDiscord({ platform = process.platform, targets = [] } = {}) {
+    if (platform === "darwin") return createMacDiscordController().listRunning(targets);
     const labels = new Set();
     if (platform === "win32") {
         const { stdout } = await exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command",
@@ -51,16 +53,14 @@ export async function detectRunningDiscord({ platform = process.platform, target
                 if (executable === join(dirname(dirname(target.path)), "Update.exe").toLowerCase()) labels.add(channelNames[target.channel] + " (mise à jour)");
             }
         }
-    } else if (platform === "darwin" || platform === "linux") {
-        const { stdout } = await exec("ps", ["-ax", "-o", platform === "linux" ? "pid=,comm=" : "comm="], { timeout: 10_000, maxBuffer: 4 * 1024 * 1024 });
+    } else if (platform === "linux") {
+        const { stdout } = await exec("ps", ["-ax", "-o", "pid=,comm="], { timeout: 10_000, maxBuffer: 4 * 1024 * 1024 });
         for (let command of stdout.split("\n")) {
-            if (platform === "linux") {
-                const process = /^\s*(\d+)\s+(.+)$/.exec(command);
-                if (!process) continue;
-                command = process[2];
-                try { command = readlinkSync("/proc/" + process[1] + "/exe"); } catch {}
-                if (command.toLowerCase() === "discorddevelopm") command = "DiscordDevelopment";
-            }
+            const process = /^\s*(\d+)\s+(.+)$/.exec(command);
+            if (!process) continue;
+            command = process[2];
+            try { command = readlinkSync("/proc/" + process[1] + "/exe"); } catch {}
+            if (command.toLowerCase() === "discorddevelopm") command = "DiscordDevelopment";
             const channel = processChannel(command);
             if (channel) labels.add(channelNames[channel]);
         }
@@ -80,6 +80,9 @@ export function createInstaller(options = {}) {
     const distributionOptions = { platform, env, home };
     const findTargets = options.findTargets ?? (() => helpers.findDiscordResources(discovery));
     const listRunning = options.listRunning ?? (targets => detectRunningDiscord({ platform, targets }));
+    const macDiscord = createMacDiscordController();
+    const stopDiscord = options.stopDiscord ?? macDiscord.stop;
+    const startDiscord = options.startDiscord ?? macDiscord.start;
     let busy = false;
     let initialized = false;
     let registry = new Map();
@@ -148,7 +151,7 @@ export function createInstaller(options = {}) {
         try {
             await refresh();
             if (state.error) throw new Error(state.error);
-            if (state.running.length) throw new Error("Fermez complètement Discord, y compris son icône de notification, puis réessayez. En cours : " + state.running.join(", ") + ".");
+            if (platform !== "darwin" && state.running.length) throw new Error("Fermez complètement Discord, y compris son icône de notification, puis réessayez. En cours : " + state.running.join(", ") + ".");
             const targets = requested.map(previous => {
                 const target = registry.get(previous.id);
                 if (!target || target.path !== previous.path) throw new Error("Les installations ont changé. Actualisez la liste avant de recommencer.");
@@ -160,7 +163,7 @@ export function createInstaller(options = {}) {
             });
             const migrating = request.action === "migrate-vencord";
             const installing = request.action !== "uninstall";
-            const steps = targets.length + (installing ? 2 : 1);
+            const steps = targets.length + (installing ? 2 : 1) + (platform === "darwin" ? 1 : 0);
             let completed = 1;
             let patcherPath;
             if (installing) {
@@ -168,6 +171,13 @@ export function createInstaller(options = {}) {
                 const destination = resolve(helpers.getInstalledDistDir(distributionOptions));
                 if (destination === sourceDist || destination.startsWith(sourceDist + sep) || sourceDist.startsWith(destination + sep)) throw new Error("Le dossier du paquet doit être distinct du dossier Midnightcord installé.");
                 if (!helpers.isWritable(dirname(destination))) throw new Error("Écriture non autorisée dans le profil Midnightcord : " + dirname(destination));
+            }
+            if (platform === "darwin") {
+                progress({ stage: "checking", percent: 0, message: "Fermeture des installations Discord sélectionnées…" });
+                await stopDiscord(targets);
+                if ((await listRunning(targets)).length) throw new Error("Impossible d’arrêter les installations Discord sélectionnées. Réessayez après avoir quitté Discord complètement.");
+            }
+            if (installing) {
                 progress({ stage: "copying", percent: Math.round(100 * completed / steps), message: "Copie du build Midnightcord dans votre profil…" });
                 patcherPath = join(helpers.installDistribution(sourceDist, distributionOptions), "patcher.js");
                 completed++;
@@ -185,10 +195,29 @@ export function createInstaller(options = {}) {
                 } catch (error) { results.push({ id: target.id, ok: false, message: error.message }); }
                 completed++;
             }
-            ok = results.every(result => result.ok);
-            message = ok ? migrating ? "Migration terminée. Relancez Discord, puis ouvrez la migration Vencord dans les réglages Midnightcord pour importer vos préférences et thèmes. Vos données Vencord sont conservées."
-                : installing ? "Installation terminée. Vous pouvez relancer Discord." : "Discord a été restauré. Vos réglages Midnightcord sont conservés."
-                : "Certaines installations n’ont pas pu être modifiées. Consultez les résultats puis réessayez.";
+            if (platform === "darwin") {
+                // Finish the whole batch before reopening any app: later targets
+                // must still pass the process check immediately before injection.
+                for (const target of targets) {
+                    const result = results.find(result => result.id === target.id);
+                    if (!result?.ok) continue;
+                    progress({ stage: "restarting", percent: Math.round(100 * completed / steps), message: "Redémarrage de " + target.name + "…", targetId: target.id });
+                    try {
+                        await startDiscord(target);
+                        result.restarted = true;
+                        result.message += " Discord a été relancé.";
+                    } catch (error) {
+                        result.restarted = false;
+                        result.message += " Le redémarrage a échoué : " + error.message + ". Relancez Discord manuellement.";
+                    }
+                }
+            }
+            ok = results.every(result => result.ok && result.restarted !== false);
+            const restartMessage = platform === "darwin" ? "Discord a été relancé." : "Vous pouvez relancer Discord.";
+            message = ok ? migrating ? "Migration terminée. " + restartMessage + " Ouvrez la migration Vencord dans les réglages Midnightcord pour importer vos préférences et thèmes. Vos données Vencord sont conservées."
+                : installing ? "Installation terminée. " + restartMessage : "Discord a été restauré. " + restartMessage + " Vos réglages Midnightcord sont conservés."
+                : results.every(result => result.ok) ? "Les modifications sont terminées, mais Discord n’a pas pu être relancé. Consultez les résultats et relancez-le manuellement."
+                    : "Certaines installations n’ont pas pu être modifiées. Consultez les résultats puis réessayez.";
             await refresh();
 
             if (platform === "linux") {

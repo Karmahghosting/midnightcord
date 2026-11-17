@@ -26,7 +26,7 @@ Téléchargez **Midnightcord-Installer** pour votre système depuis les [release
 
 L’injecteur graphique embarque Midnightcord et son runtime. Node.js, pnpm et une connexion Internet ne sont pas requis pour l’installation.
 
-Fermez complètement Discord, cochez les installations souhaitées parmi **Stable, PTB, Canary et Development**, puis cliquez sur **Installer Midnightcord**. La même fenêtre permet de réparer ou de désinstaller Midnightcord. Aucune installation n’est cochée automatiquement.
+Cochez les installations souhaitées parmi **Stable, PTB, Canary et Development**, puis cliquez sur **Installer Midnightcord**. Sur macOS, les Discord sélectionnés sont fermés puis relancés automatiquement. Sur Windows et Linux, fermez complètement Discord avant l’opération et relancez-le ensuite. La même fenêtre permet de réparer ou de désinstaller Midnightcord. Aucune installation n’est cochée automatiquement.
 
 Les archives **Midnightcord-Native** avec leurs scripts en ligne de commande restent disponibles.
 
