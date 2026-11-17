@@ -100,7 +100,7 @@ let providerKeysLoaded = false;
 
 async function persistProviderKeys() {
     try {
-        await DataStore.set(DS_PROVIDER_KEYS, { ...providerKeys });
+        await DataStore?.set?.(DS_PROVIDER_KEYS, { ...providerKeys });
     } catch { }
 }
 
@@ -112,6 +112,8 @@ function saveKey(value: string) {
 }
 
 async function loadProviderKeys() {
+    if (!DataStore?.get) return;
+
     const legacyKey = settings.store.apiKey?.trim();
     if (legacyKey && normalizeProvider(settings.store.provider) === "groq") {
         providerKeys.groq = legacyKey;
@@ -126,10 +128,10 @@ async function loadProviderKeys() {
         }
     }
 
-    const sharedGroqKey = await getGroqKey();
+    const sharedGroqKey = typeof getGroqKey === "function" ? await getGroqKey().catch(() => "") : "";
     if (sharedGroqKey) providerKeys.groq = sharedGroqKey;
 
-    activeProvider = normalizeProvider(settings.store.provider);
+    activeProvider = normalizeProvider?.(settings.store.provider) ?? "groq";
     settings.store.apiKey = providerKeys[activeProvider] ?? "";
     providerKeysLoaded = true;
 }
@@ -140,10 +142,10 @@ async function changeProvider(value: string) {
         await persistProviderKeys();
     }
 
-    activeProvider = normalizeProvider(value);
+    activeProvider = normalizeProvider?.(value) ?? "groq";
 
     if (activeProvider === "groq") {
-        const sharedGroqKey = await getGroqKey();
+        const sharedGroqKey = typeof getGroqKey === "function" ? await getGroqKey().catch(() => "") : "";
         if (!providerKeys.groq && sharedGroqKey) providerKeys.groq = sharedGroqKey;
     }
 
@@ -825,7 +827,9 @@ export default definePlugin({
     },
 
     async start() {
-        await loadProviderKeys();
+        try {
+            await loadProviderKeys();
+        } catch { }
     },
 
     contextMenus: {

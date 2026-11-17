@@ -28,8 +28,20 @@ function loadPlugin() {
         "@utils/modal": { openModal: render => modals.push(render) },
         "@webpack": { findByPropsLazy: () => ({}) },
         "@webpack/common": { React, Menu: { MenuItem: "MenuItem" } },
+        "@api/index": { DataStore: { get: async () => null, set: async () => { } } },
         "../autoTranslateMidnightcord": { t: value => value },
-        "./groqManager": { registerSettingsFallback: () => {} }
+        "./groqManager": { registerSettingsFallback: () => { }, getGroqKey: async () => "", setGroqKey: async () => { } },
+        "./providers": {
+            normalizeProvider: value => value || "groq",
+            PROVIDERS: {
+                groq: { defaultModel: "openai/gpt-oss-120b" },
+                openai: { defaultModel: "gpt-4.1-mini" },
+                nanogpt: { defaultModel: "openai/gpt-oss-120b" },
+                mistral: { defaultModel: "mistral-large-latest" },
+                custom: { defaultModel: "" }
+            },
+            providerChat: async () => ""
+        }
     };
     const module = { exports: {} };
     runInNewContext(code, {
