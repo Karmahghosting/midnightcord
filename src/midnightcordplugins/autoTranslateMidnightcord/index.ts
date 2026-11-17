@@ -4213,6 +4213,12 @@ export const translations: TranslationMap = {
     "Mistral API Key": { fr: "Clé API Mistral" },
     "Custom API Key": { fr: "Clé API personnalisée" },
     "Custom base URL (OpenAI-compatible), e.g. https://api.example.com/v1": { fr: "URL de base personnalisée (compatible OpenAI), ex. https://api.example.com/v1" },
+    "API Key for the selected provider (Groq keys are shared with AutoCorrect and VoiceDictation)": { fr: "Clé API du fournisseur sélectionné (les clés Groq sont partagées avec AutoCorrect et VoiceDictation)" },
+    "How to get an API key": { fr: "Comment obtenir une clé API" },
+    "Create an API key with your provider (Groq, OpenAI, NanoGPT, Mistral or a custom OpenAI-compatible endpoint), then paste it in the Api Key field above. Keys are saved per provider and restored when you switch back.": { fr: "Créez une clé API chez votre fournisseur (Groq, OpenAI, NanoGPT, Mistral ou un endpoint personnalisé compatible OpenAI), puis collez-la dans le champ Api Key ci-dessus. Les clés sont enregistrées par fournisseur et restaurées quand vous revenez dessus." },
+    "For Groq: create a free account on console.groq.com, open API Keys and create a key. The Groq API is free and gives access to fast LLMs.": { fr: "Pour Groq : créez un compte gratuit sur console.groq.com, ouvrez API Keys et créez une clé. L'API Groq est gratuite et donne accès à des LLM rapides." },
+    "Create Groq API Key": { fr: "Créer une clé API Groq" },
+    "AI Chat with Groq, OpenAI, NanoGPT, Mistral or any OpenAI-compatible provider, accessible from the toolbox and message context menu.": { fr: "Chat IA avec Groq, OpenAI, NanoGPT, Mistral ou tout fournisseur compatible OpenAI, accessible depuis la boîte à outils et le menu contextuel des messages." },
     "Custom (OpenAI-compatible)": { fr: "Personnalisé (compatible OpenAI)" },
     "unknown error": { fr: "erreur inconnue" },
 };
