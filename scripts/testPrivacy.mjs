@@ -219,8 +219,9 @@ assert(optimisationsSource.includes("onMemoryPressure"), "UI Optimisations must 
 assert(optimisationsSource.includes("startAggressiveGc"), "Low-memory mode must run periodic garbage collection");
 
 const memoryCardSource = readFileSync(join(rootDir, "src", "components", "settings", "tabs", "vencord", "MemoryCard.tsx"), "utf8");
-assert(memoryCardSource.includes("VesktopNative.memory.info"), "The settings memory card must show live process memory");
-assert(memoryCardSource.includes("VesktopNative.memory.free"), "The settings memory card must expose a free-memory action");
+assert(memoryCardSource.includes("VesktopNative.memory"), "The settings memory card must show live process memory");
+assert(memoryCardSource.includes("bridge.info"), "The settings memory card must query the memory bridge");
+assert(memoryCardSource.includes("bridge.free"), "The settings memory card must expose a free-memory action");
 
 
 console.log("[test] Privacy regression checks passed.");

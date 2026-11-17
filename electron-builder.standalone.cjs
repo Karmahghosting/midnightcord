@@ -17,9 +17,8 @@ module.exports = {
     },
     files: [
         "package.json",
-        "dist/**/*",
-        "static/**/*",
-        "!**/*.map"
+        { from: "dist", to: "dist", filter: ["**/*", "!**/*.map"] },
+        { from: "static", to: "static", filter: ["**/*"] }
     ],
     extraResources: [
         { from: "dist/midnightcord.asar", to: "midnightcord.asar" },
