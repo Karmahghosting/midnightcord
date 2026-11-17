@@ -189,4 +189,19 @@ const screenShareSource = readFileSync(join(rootDir, "src", "midnightcord", "mai
 assert(!screenShareSource.includes("warmUpCapturer"), "Wayland screen capture must never be requested during startup");
 assert(screenShareSource.includes("setDisplayMediaRequestHandler"), "Screen capture must remain available after an explicit sharing request");
 
+const privacyBlockerSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "privacyBlocker.ts"), "utf8");
+assert(privacyBlockerSource.includes("/science"), "Network-level blocking must cover Discord analytics");
+assert(privacyBlockerSource.includes("/track"), "Network-level blocking must cover Discord tracking events");
+assert(privacyBlockerSource.includes("sentry.io"), "Network-level blocking must cover Sentry ingestion");
+assert(privacyBlockerSource.includes("cancel: true"), "Tracker requests must be cancelled, not forwarded");
+
+const mainWindowSource = readFileSync(join(rootDir, "src", "midnightcord", "main", "mainWindow.ts"), "utf8");
+assert(mainWindowSource.includes("installPrivacyBlocker()"), "Privacy blocking must be installed before any window is created");
+
+const aiSource = readFileSync(join(rootDir, "src", "midnightcordplugins", "midnightcordAI", "index.tsx"), "utf8");
+assert(aiSource.includes("stripAttachmentsForStorage(final)"), "AI history must strip base64 attachments before persistence");
+assert(!aiSource.includes("DataStore.set(DS_KEY, final.slice(-100))"), "AI history must never persist raw message attachments");
+assert(!/logger\.(?:info|warn|error|debug)\([^\n]*(?:apiKey|Authorization|Bearer)/i.test(aiSource), "AI providers must never log credentials");
+
+
 console.log("[test] Privacy regression checks passed.");

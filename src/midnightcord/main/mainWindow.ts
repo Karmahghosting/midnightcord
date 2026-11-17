@@ -34,6 +34,7 @@ import { spoofGnu } from "./gnuSpoofing";
 import { sendRendererCommand } from "./ipcCommands";
 import { initKeybinds } from "./keybinds";
 import { Settings, State, VencordSettings } from "./settings";
+import { installPrivacyBlocker } from "./privacyBlocker";
 import { addSplashLog, createSplashWindow, updateSplashMessage } from "./splash";
 import { darwinURL } from "./startup";
 import { destroyTray, initTray } from "./tray";
@@ -502,6 +503,8 @@ function retryUrl(url: string, description: string) {
 }
 
 export async function createWindows() {
+    installPrivacyBlocker();
+
     const startMinimized = CommandLine.values["start-minimized"];
 
     let splash: BrowserWindow | undefined;

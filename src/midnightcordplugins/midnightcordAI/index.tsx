@@ -179,6 +179,10 @@ interface Message {
 
 const DS_KEY = "midnightcord-ai-history";
 
+function stripAttachmentsForStorage(messages: Message[]): Message[] {
+    return messages.map(({ attachments, ...message }) => message);
+}
+
 // ── Robot SVG Avatar Icon ──────────────────────────────────────────────────────
 function RobotAvatarIcon({ width = 32, height = 32 }: { width?: number; height?: number; }) {
     return (
@@ -587,7 +591,7 @@ Rules:
 
             const final = withPending.slice(0, -1).concat({ id: pendingId, role: "assistant", content: reply, timestamp: Date.now() });
             setMessages(final);
-            await DataStore.set(DS_KEY, final.slice(-100));
+            await DataStore.set(DS_KEY, stripAttachmentsForStorage(final).slice(-100));
         } catch (e: any) {
             setMessages(withPending.slice(0, -1).concat({ id: pendingId, role: "assistant", content: `❌ ${e.message}`, timestamp: Date.now(), error: true }));
         } finally {
