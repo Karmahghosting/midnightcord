@@ -413,15 +413,19 @@ test("macOS detects reopened apps immediately before patching", async t => {
 });
 
 test("macOS process control matches bundle paths, stops helpers and escalates only surviving PIDs", async () => {
-    const target = { name: "Discord Stable", path: "/fixture/Applications/Discord.app/Contents/Resources" };
+    // The controller and its simulated ps output must use the same path dialect
+    // when this macOS regression suite also runs on Windows and Linux runners.
+    const applications = resolve("/fixture/Applications");
+    const app = join(applications, "Discord.app");
+    const target = { name: "Discord Stable", path: join(app, "Contents", "Resources") };
     let processes = [
-        [100, "/fixture/Applications/Discord.app/Contents/MacOS/Discord"],
-        [101, "/fixture/Applications/Discord.app/Contents/Frameworks/Discord Helper (Renderer).app/Contents/MacOS/Discord Helper (Renderer)"],
-        [102, "/fixture/Applications/Discord.app/Contents/Frameworks/Electron Framework.framework/Helpers/chrome_crashpad_handler"],
-        [200, "/fixture/Users/Someone/Applications/Discord.app/Contents/MacOS/Discord"],
-        [201, "/fixture/Applications/Discord PTB.app/Contents/MacOS/Discord PTB"],
-        [202, "/fixture/Applications/Discord.app.backup/Contents/MacOS/Discord"],
-        [203, "/fixture/Discord"]
+        [100, join(app, "Contents", "MacOS", "Discord")],
+        [101, join(app, "Contents", "Frameworks", "Discord Helper (Renderer).app", "Contents", "MacOS", "Discord Helper (Renderer)")],
+        [102, join(app, "Contents", "Frameworks", "Electron Framework.framework", "Helpers", "chrome_crashpad_handler")],
+        [200, resolve("/fixture/Users/Someone/Applications/Discord.app/Contents/MacOS/Discord")],
+        [201, join(applications, "Discord PTB.app", "Contents", "MacOS", "Discord PTB")],
+        [202, join(applications, "Discord.app.backup", "Contents", "MacOS", "Discord")],
+        [203, resolve("/fixture/Discord")]
     ];
     const signals = [];
     const calls = [];
@@ -442,18 +446,20 @@ test("macOS process control matches bundle paths, stops helpers and escalates on
     assert.deepEqual(await controller.listRunning([target]), []);
     assert.equal(processes.length, 4, "Other apps and copies stay running");
     await controller.start(target);
-    assert.deepEqual(calls.at(-1), ["open", ["-a", "/fixture/Applications/Discord.app"]]);
+    assert.deepEqual(calls.at(-1), ["open", ["-a", app]]);
     assert.deepEqual(calls[0], ["ps", ["-x", "-o", "pid=,comm="]]);
 });
 
 test("macOS process control tolerates exit races and fails closed on permission, scan and timeout errors", async () => {
-    const target = { name: "Discord PTB", path: "/fixture/Discord PTB.app/Contents/Resources" };
+    const app = resolve("/fixture/Discord PTB.app");
+    const target = { name: "Discord PTB", path: join(app, "Contents", "Resources") };
+    const executable = join(app, "Contents", "MacOS", "Discord PTB");
     for (const failure of ["ESRCH", "EPERM", "scan", "timeout"]) {
         let exited = false;
         const controller = createMacDiscordController({
             execute: async () => {
                 if (failure === "scan") throw new Error("lookup failed");
-                return { stdout: exited ? "" : "123 /fixture/Discord PTB.app/Contents/MacOS/Discord PTB\n" };
+                return { stdout: exited ? "" : `123 ${executable}\n` };
             },
             signal: () => {
                 if (failure === "timeout") return;
