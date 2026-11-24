@@ -68,6 +68,9 @@ jobs:
       - name: Test Discord runtime compatibility
         run: pnpm test:webpack-runtime
 
+      - name: Test private GIF teams and sharing
+        run: pnpm test:gif-teams
+
       - name: Test utility plugins and offline OCR
         run: pnpm test:utilities
 

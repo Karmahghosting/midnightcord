@@ -1,6 +1,6 @@
 # Midnightcord Cloud API
 
-This service stores client-encrypted Midnightcord settings and QuickCSS, plus minimal community invitation status. A Cloud key remains on the user's devices and derives independent authentication and AES-256-GCM encryption keys. The server receives an opaque credential and encrypted binary payloads. Community status is associated with that pseudonymous Cloud account and the configured guild, without storing a Discord user ID.
+This service stores client-encrypted Midnightcord settings and QuickCSS, minimal community invitation status, and the separate private GIF teams feature. A Cloud key remains on the user's devices and derives independent authentication and AES-256-GCM encryption keys. Cloud backup endpoints receive an opaque credential and encrypted binary payloads. Community status is associated with that pseudonymous Cloud account and the configured guild, without storing a Discord user ID. GIF teams store readable shared GIF links and display names so invited members can retrieve them; they are not end-to-end encrypted Cloud backups.
 
 ## API
 
@@ -29,6 +29,34 @@ The service shares one in-flight statistics scan, reads at most eight manifests 
 Run `npm test` before deploying. Production files belong under `/opt/midnightcord-cloud/releases`, while encrypted runtime data stays in `/var/lib/midnightcord-cloud` across releases.
 
 The included systemd timer creates a daily encrypted-data archive in `/var/backups/midnightcord-cloud` and removes archives after 14 days. Payload generations are written before their manifest is switched, reducing the risk of an incomplete live snapshot.
+
+## Private GIF teams
+
+`/v1/cloud/health` advertises `capabilities: ["gif-teams-v1"]`. All GIF team endpoints require a Bearer credential, use the existing request rate limit and no-store response policy, and reject requests from unapproved browser origins. The plugin derives a separate credential from the user's Cloud key and current Discord account, so changing Discord accounts does not share another account's favorites. The server receives no Discord account token or Discord ID. Display names are user-selected labels, not verified Discord identities.
+
+| Method | Path (under `/v1/cloud/gif-teams`) | Result |
+| --- | --- | --- |
+| GET | `/` (without the trailing slash) | Own teams, opaque `viewerId`, and limits. Summaries include own `mode` and `sharingRevision`. |
+| POST | `/` | Create a team with `{name, displayName}`. The creator is the owner; sharing starts **off**. |
+| POST | `/join` | Join with `{code, displayName}`. Sharing starts **off**. |
+| GET | `/:id` | Team and member metadata, visible only to members. |
+| GET | `/:id/sharing` | Own `{mode, gifs, revision}`. |
+| PUT | `/:id/sharing` | Replace own snapshot with `{mode, gifs, displayName, revision}`. A stale revision returns `409 version_conflict`. |
+| GET | `/:id/gifs?member=<public-id>&offset=0&limit=60` | Paged shared GIFs with contributor labels. `member` is optional; maximum page size is 100. |
+| POST | `/:id/invites` | Owner creates a code valid for 24 hours and one new member; replaces the previous code. No request body needed. |
+| DELETE | `/:id/invites` | Owner revokes the current invitation. |
+| DELETE | `/:id/members/:memberId` | Owner removes another member and their shared collection. |
+| DELETE | `/:id/membership` | A member leaves and removes their shared collection. An owner must delete the team instead. |
+| DELETE | `/:id` | Owner deletes the team and all its shared collections. |
+| DELETE | `/account` | Remove the caller from every team, delete their owned teams and shared collections. |
+
+The client may choose `auto` (synchronize all supported favorites), `manual` (only the selected favorites), or `off` per team. The server receives only the selected snapshot; it cannot read Discord favorites itself. `off` must provide `gifs: []` and removes the current collection. Snapshots preserve `url`, preview `src`, `width`, `height`, optional `title`, and `format` (`1` image, `2` video). The server adds a stable `id` based on the normalized URL and deduplicates within each contributor's snapshot. The same GIF can still appear under several contributors.
+
+Limits are 10 teams per account, 25 members per team, 1,000 GIFs per member and a 2 MiB JSON request body. The service caps total teams at 1,000 to bound its metadata index within the deployed memory budget; existing teams remain available at capacity. A separate 120 requests/minute/IP limit cannot be evaded by rotating account credentials, and only four JSON writes may be read/queued at once. Transient pressure returns `429` with `Retry-After`. Names are bounded; send URLs must be public HTTPS URLs without credentials, IP literals or local-only hostnames. The API never downloads GIFs or proxies user-supplied URLs. Previews are limited to Tenor's media hosts, Giphy, Discord's CDN/media hosts and `i.imgur.com`; another valid GIF link is retained with an empty preview, for the client to render as a placeholder. Never include an invitation code, GIF URL or credential in logs.
+
+GIF team data lives under `DATA_DIR/gif-teams/teams`. Metadata and immutable collection generations are written atomically before updating the in-memory membership index. The single service process serializes operations so a removed member cannot write with an outdated permission check. Startup indexes metadata only, and page reads load just the collection generations needed for the requested page. Corrupt metadata returns `503` without replacing it. Invitations are persisted as hashes, not raw codes; the code is returned only when created. Obsolete generations are removed on replacement and during startup recovery. The service directory must be owned by a single running API instance; do not run multiple writers against the same filesystem.
+
+Only the live shared links, labels and membership records remain until a user stops sharing, leaves, is removed, or deletes their GIF teams account. Server backups can retain deleted data for the existing 14-day retention period and now contain these readable shared links alongside encrypted Cloud backup payloads; keep the backup directory private. `DELETE /v1/cloud/account` also erases any GIF teams using that exact credential. The plugin uses a domain-separated GIF credential, so its separate **Delete my GIF teams data** action calls `/v1/cloud/gif-teams/account`; deleting an unrelated Cloud credential does not identify or revoke derived credentials automatically. GIF-only accounts do not inflate the public encrypted-backup statistics.
 
 ## Optional community join
 

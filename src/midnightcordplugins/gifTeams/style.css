@@ -1,0 +1,629 @@
+.vc-gif-teams {
+    width: min(960px, calc(100vw - 32px));
+    max-width: none;
+    color: var(--text-normal);
+}
+
+.vc-gif-teams-header {
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+}
+
+.vc-gif-teams-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 20px;
+}
+
+.vc-gif-teams-header p {
+    margin: 5px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.vc-gif-teams-body {
+    padding: 0 24px 24px !important;
+}
+
+.vc-gif-teams-layout {
+    display: grid;
+    grid-template-columns: 208px minmax(0, 1fr);
+    gap: 24px;
+    min-height: 440px;
+}
+
+.vc-gif-teams-sidebar {
+    padding-right: 20px;
+    border-right: 1px solid var(--background-modifier-accent);
+    min-width: 0;
+}
+
+.vc-gif-teams-sidebar-title,
+.vc-gif-teams-team-heading,
+.vc-gif-teams-pagination,
+.vc-gif-teams-selection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.vc-gif-teams-sidebar-title > strong {
+    font-size: 13px;
+}
+
+.vc-gif-teams-sidebar-title > button {
+    font-size: 11px;
+    padding: 4px 7px;
+}
+
+.vc-gif-teams-list {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+}
+
+.vc-gif-teams-list button {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-normal);
+    text-align: left;
+    cursor: pointer;
+}
+
+.vc-gif-teams-account button {
+    white-space: normal;
+}
+
+.vc-gif-teams-tabs button {
+    color: var(--text-muted);
+    padding: 9px 0;
+    background: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vc-gif-teams-consent input {
+    margin-top: 2px !important;
+}
+
+.vc-gif-teams-selection-header > label {
+    flex: 1;
+}
+
+.vc-gif-teams-list button:hover {
+    background: var(--background-modifier-hover);
+}
+
+.vc-gif-teams-list button[aria-current="true"] {
+    background: var(--background-modifier-selected);
+}
+
+.vc-gif-teams-list strong {
+    display: block;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
+.vc-gif-teams-list small {
+    display: block;
+    margin-top: 5px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.vc-gif-teams-forms details {
+    border-top: 1px solid var(--background-modifier-accent);
+    padding: 12px 0;
+}
+
+.vc-gif-teams-forms summary {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.vc-gif-teams-forms form {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.vc-gif-teams-forms p, .vc-gif-teams-account p {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.vc-gif-teams-account {
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams-account summary {
+    cursor: pointer;
+}
+
+.vc-gif-teams-account p {
+    margin: 10px 0;
+}
+
+.vc-gif-teams-main {
+    min-width: 0;
+}
+
+.vc-gif-teams-team-heading {
+    margin-bottom: 12px;
+}
+
+.vc-gif-teams-team-heading h3 {
+    font-size: 18px;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.vc-gif-teams-team-heading > span {
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.vc-gif-teams-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 1px solid var(--background-modifier-accent);
+    margin-bottom: 18px;
+}
+
+
+.vc-gif-teams-tabs button[aria-pressed="true"] {
+    color: var(--text-normal);
+    border-bottom-color: var(--brand-500);
+}
+
+.vc-gif-teams label:not(.vc-gif-teams-tile) {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.vc-gif-teams input:not([type="checkbox"], [type="radio"]), .vc-gif-teams select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 5px;
+    padding: 9px 10px;
+    color: var(--text-normal);
+    background: var(--input-background, var(--background-tertiary));
+    font: inherit;
+    font-weight: 400;
+}
+
+.vc-gif-teams input[type="checkbox"], .vc-gif-teams input[type="radio"] {
+    accent-color: var(--brand-500);
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.vc-gif-teams :is(button, input, select, summary):focus-visible {
+    outline: 2px solid var(--brand-500);
+    outline-offset: 3px;
+}
+
+.vc-gif-teams button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.vc-gif-teams-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.7fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.vc-gif-teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.vc-gif-teams-tile {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-width: 0;
+    color: var(--text-normal);
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 7px;
+    padding: 0 0 8px;
+    overflow: hidden;
+    text-align: left;
+    cursor: pointer;
+}
+
+.vc-gif-teams-tile:hover {
+    border-color: var(--brand-500);
+}
+
+.vc-gif-teams-preview {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 110px;
+    background: var(--background-tertiary);
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.vc-gif-teams-preview :is(img, video) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vc-gif-teams-placeholder {
+    flex-direction: column;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.vc-gif-teams-video-label {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: white;
+    background: rgb(0 0 0 / 75%);
+    pointer-events: none;
+}
+
+.vc-gif-teams-tile-title {
+    display: block;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-size: 12px;
+    padding: 8px 8px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vc-gif-teams-tile small {
+    color: var(--text-muted);
+    font-size: 10px;
+    padding: 4px 8px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vc-gif-teams-pagination {
+    margin: 12px 0;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams-pagination > div {
+    display: flex;
+    gap: 8px;
+}
+
+.vc-gif-teams-muted {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.vc-gif-teams-main > .vc-gif-teams-muted {
+    margin: 14px 0 0;
+}
+
+.vc-gif-teams-empty {
+    display: flex;
+    min-height: 240px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    color: var(--text-muted);
+    padding: 16px;
+}
+
+.vc-gif-teams-empty h3, .vc-gif-teams-empty p {
+    margin: 0;
+}
+
+.vc-gif-teams-empty span {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.vc-gif-teams-onboarding {
+    max-width: 520px;
+    margin: 20px auto;
+    padding: 24px 0;
+    text-align: center;
+}
+
+.vc-gif-teams-onboarding > svg {
+    color: var(--brand-500);
+}
+
+.vc-gif-teams-onboarding h3 {
+    margin: 16px 0 12px;
+    font-size: 21px;
+}
+
+.vc-gif-teams-onboarding p {
+    margin: 14px 0 22px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams-onboarding > .vc-gif-teams-muted {
+    font-size: 12px;
+}
+
+.vc-gif-teams-sharing h3, .vc-gif-teams-invite h3 {
+    margin: 0 0 9px;
+    font-size: 16px;
+}
+
+.vc-gif-teams-sharing > p, .vc-gif-teams-invite > p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+}
+
+.vc-gif-teams-modes {
+    border: 0;
+    padding: 0;
+    margin: 18px 0;
+    display: grid;
+    gap: 14px;
+}
+
+.vc-gif-teams-modes legend {
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams .vc-gif-teams-modes label {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.vc-gif-teams-modes strong {
+    display: block;
+    font-size: 13px;
+}
+
+.vc-gif-teams-modes small {
+    display: block;
+    font-size: 12px;
+    margin-top: 4px;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams .vc-gif-teams-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    margin: 18px 0;
+}
+
+.vc-gif-teams-selection-header {
+    margin: 20px 0 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams-selection-header > span {
+    white-space: nowrap;
+}
+
+.vc-gif-teams-selection .vc-gif-teams-tile > input {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1;
+    background: var(--background-primary);
+    outline: 2px solid var(--background-primary);
+    border-radius: 3px;
+}
+
+.vc-gif-teams-selected {
+    border-color: var(--brand-500);
+    box-shadow: inset 0 0 0 1px var(--brand-500);
+}
+
+.vc-gif-teams-sharing > .vc-gif-teams-privacy {
+    font-size: 11px;
+    margin: 18px 0 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--background-modifier-accent);
+}
+
+.vc-gif-teams-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    font-size: 12px;
+}
+
+.vc-gif-teams-invite {
+    border-bottom: 1px solid var(--background-modifier-accent);
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+}
+
+.vc-gif-teams-invite > small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 7px;
+}
+
+.vc-gif-teams-members {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.vc-gif-teams-members li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--background-modifier-accent);
+}
+
+.vc-gif-teams-member-mark {
+    color: var(--text-muted);
+}
+
+.vc-gif-teams-members li > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.vc-gif-teams-members strong {
+    display: block;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.vc-gif-teams-members small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+.vc-gif-teams-danger-zone {
+    margin-top: 20px;
+}
+
+.vc-gif-teams-error {
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--status-danger);
+    border-radius: 6px;
+    color: var(--text-danger);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.vc-gif-teams-confirm {
+    padding: 28px 8px;
+}
+
+.vc-gif-teams-confirm p {
+    max-width: 580px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.vc-gif-teams-picker-shortcut {
+    flex: 0 0 auto;
+    margin-left: 8px;
+}
+
+.vc-gif-teams-settings p {
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+@media (width <= 650px) {
+    .vc-gif-teams {
+        width: calc(100vw - 20px);
+    }
+
+    .vc-gif-teams-header {
+        padding: 16px;
+    }
+
+    .vc-gif-teams-body {
+        padding: 0 16px 16px !important;
+    }
+
+    .vc-gif-teams-layout {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .vc-gif-teams-sidebar {
+        padding: 0 0 14px;
+        border-right: 0;
+        border-bottom: 1px solid var(--background-modifier-accent);
+    }
+
+    .vc-gif-teams-list {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .vc-gif-teams-list li {
+        flex: 1 1 140px;
+    }
+
+    .vc-gif-teams-account {
+        margin-top: 10px;
+    }
+
+    .vc-gif-teams-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .vc-gif-teams-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vc-gif-teams-tabs {
+        gap: 14px;
+    }
+}

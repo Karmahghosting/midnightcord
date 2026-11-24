@@ -5,6 +5,8 @@ import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/p
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createGifTeams } from "./gif-teams.mjs";
+
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DATA_DIR = join(ROOT, "data");
 const VALID_KEYS = new Set(["settings", "quickCss"]);
@@ -304,6 +306,7 @@ async function fetchWithTimeout(fetchImpl, input, init = {}) {
 }
 
 export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DATA_DIR, env = process.env, fetchImpl = fetch, now = Date.now } = {}) {
+    const gifTeams = createGifTeams({ dataDir, now, writeAtomic, readBody, send, jsonError, isAllowedOrigin, clientAddress });
     const communityFlows = new Map();
     const communityTickets = new Map();
     const communityAttempts = new Map();
@@ -573,7 +576,7 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
         }
 
         if (url.pathname === "/v1/cloud/health" && (request.method === "GET" || request.method === "HEAD")) {
-            send(request, response, 200, { ok: true, service: "midnightcord-cloud", schema: 1 });
+            send(request, response, 200, { ok: true, service: "midnightcord-cloud", schema: 1, capabilities: ["gif-teams-v1"] });
             return;
         }
 
@@ -620,6 +623,8 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
         const paths = accountPaths(dataDir, auth.accountId);
 
         try {
+            if (await gifTeams.handle(request, response, url, auth.accountId)) return;
+
             if (url.pathname === "/v1/cloud/community" && (request.method === "GET" || request.method === "HEAD")) {
                 send(request, response, 200, communityStatus(communityOAuthConfig(env), await readManifest(paths)));
                 return;
@@ -843,6 +848,7 @@ export function createCloudServer({ dataDir = process.env.DATA_DIR || DEFAULT_DA
                 cancelAccountAttempts(auth.accountId);
                 await withAccountLock(auth.accountId, async () => {
                     cancelAccountAttempts(auth.accountId);
+                    await gifTeams.eraseAccount(auth.accountId);
                     await rm(paths.directory, { recursive: true, force: true });
                     response.writeHead(204, baseHeaders(request));
                     response.end();

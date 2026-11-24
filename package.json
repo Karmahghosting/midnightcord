@@ -1,7 +1,7 @@
 {
     "name": "midnightcord",
     "private": "true",
-    "version": "1.30.2",
+    "version": "1.31.0",
     "desktopName": "midnightcord.desktop",
     "description": "A fast cross-platform Discord client mod with native voice",
     "main": "dist/js/main.js",
@@ -86,6 +86,7 @@
         "test:privacy-shield": "node scripts/testPrivacyShield.mjs",
         "test:ocr-asar": "node scripts/testLocalOcrAsar.mjs",
         "test:webpack-runtime": "node scripts/testWebpackRuntime.mjs",
+        "test:gif-teams": "node scripts/testGifTeams.mjs && node scripts/testGifTeamsFavorites.mjs && node scripts/testGifTeamsIntegration.mjs && node --test services/cloud-api/test/*.test.mjs",
         "package:standalone": "corepack enable --install-directory node_modules/.bin && corepack pnpm buildStandalone && corepack pnpm buildDesktop && electron-builder --config electron-builder.standalone.cjs --linux dir"
     },
     "dependencies": {

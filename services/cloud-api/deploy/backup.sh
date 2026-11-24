@@ -9,6 +9,10 @@ archive="$backup_dir/midnightcord-cloud-$stamp.tar.gz"
 temporary="$backup_dir/.$stamp.tar.gz.tmp"
 
 mkdir -p "$data_dir/accounts" "$backup_dir"
-tar -C "$data_dir" -czf "$temporary" accounts
+set -- accounts
+if [ -d "$data_dir/gif-teams" ]; then
+    set -- "$@" gif-teams
+fi
+tar -C "$data_dir" -czf "$temporary" "$@"
 mv "$temporary" "$archive"
 find "$backup_dir" -maxdepth 1 -type f -name 'midnightcord-cloud-*.tar.gz' -mtime +13 -delete
