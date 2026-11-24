@@ -13,6 +13,10 @@ import { transformSync } from "esbuild";
 
 const source = readFileSync(new URL("../src/midnightcordplugins/gifTeams/favorites.ts", import.meta.url), "utf8");
 const code = transformSync(source, { loader: "ts", format: "cjs" }).code;
+const previewCode = transformSync(readFileSync(new URL("../src/midnightcordplugins/gifTeams/preview.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
+const previewModule = { exports: {} };
+runInNewContext(previewCode, { module: previewModule, exports: previewModule.exports, URL });
+const previewApi = previewModule.exports;
 const clone = value => JSON.parse(JSON.stringify(value));
 function deferred() {
     let resolve;
@@ -83,6 +87,7 @@ function fixture({ delayedStores = false } = {}) {
         { typeName: "discord_protos.discord_users.v1.FavoriteGIF", create: fields => ({ format: 0, src: "", width: 0, height: 0, order: 0, ...fields }) }
     ];
     const dependencies = {
+        "./preview": previewApi,
         "@utils/discord": { insertTextIntoChatInputBox: text => state.drafts.push(text) },
         "@webpack": { onceReady: ready.promise, findLazy: predicate => nativeProtos.find(predicate), findByPropsLazy: () => ({ INFREQUENT_USER_ACTION: 0 }) }, "@webpack/common": common
     };
@@ -115,8 +120,64 @@ test("native favorite normalization preserves GIFs and videos, order and safe me
     assert.equal(Object.hasOwn(favorites[0], "order"), false);
 });
 
+const twitterGif = "https://gif.fxtwitter.com/tweet_video/HQoRP4IbwAAzfCG.webp";
+test("old fxtwitter favorites recover their direct preview and image format without changing their saved native entry", () => {
+    const { api } = fixture();
+    const old = { [twitterGif]: { src: "", format: 2, width: 320, height: 180, order: 3 } };
+    const before = clone(old);
+    const [normalized] = api.normalizeFavorites(old);
+    assert.equal(normalized.url, twitterGif);
+    assert.equal(normalized.src, twitterGif);
+    assert.equal(normalized.format, 1);
+    assert.deepEqual(old, before, "Read normalization must not silently rewrite personal favorites");
+});
+
+test("known media extensions override obsolete formats while opaque previews preserve their native format", () => {
+    for (const extension of ["gif", "webp", "avif", "png", "jpg", "jpeg"]) {
+        const src = `https://media.tenor.com/media/image.${extension.toUpperCase()}?download=clip.mp4#fragment`;
+        assert.deepEqual(clone(previewApi.resolveGifPreview({ url: "https://tenor.com/view/item", src, format: 2 })), { src: src.replace("#fragment", ""), format: 1 });
+    }
+    for (const extension of ["mp4", "webm"]) {
+        const src = `https://media.tenor.com/media/video.${extension}?v=1`;
+        assert.deepEqual(clone(previewApi.resolveGifPreview({ url: "https://tenor.com/view/item", src, format: 1 })), { src, format: 2 });
+    }
+    const opaque = "https://media.tenor.com/opaque?filename=video.mp4";
+    assert.equal(previewApi.resolveGifPreview({ url: "https://tenor.com/view/item", src: opaque, format: 2 }).format, 2);
+    assert.equal(previewApi.resolveGifPreview({ url: "https://tenor.com/view/item", src: opaque, format: 1 }).format, 1);
+});
+
+test("implicit previews require a direct media URL on an exact approved host", () => {
+    assert.deepEqual(clone(previewApi.resolveGifPreview({ url: twitterGif, src: "", format: 2 })), { src: twitterGif, format: 1 });
+    for (const url of [
+        "https://tenor.com/view/a", "https://tenor.com/view/a.gif", "https://giphy.com/gifs/page",
+        "https://gif.fxtwitter.com/opaque", "https://gif.fxtwitter.com/page?file=image.webp",
+        "https://gif.fxtwitter.com.evil.example.net/a.webp", "https://sub.gif.fxtwitter.com/a.webp",
+        "https://images.fxtwitter.com/a.webp", "https://fxtwitter.com/a.webp", "https://arbitrary.example.net/a.gif"
+    ]) assert.equal(previewApi.resolveGifPreview({ url, src: "", format: 2 }), null, url);
+    assert.equal(previewApi.resolveGifPreview({ url: "https://tenor.com/view/a", src: "https://arbitrary.example.net/a.gif", format: 1 }), null);
+});
+
 const sharedGif = name => ({ url: `https://tenor.com/view/${name}`, src: `https://media.tenor.com/${name}/tenor.gif`, format: 1, width: 320, height: 240 });
 const importFor = (f, gifs, signal = new AbortController().signal) => f.api.importSharedFavorites(gifs, f.state.user.id, signal);
+
+test("native import accepts old fxtwitter snapshots and persists corrected image or video formats", async () => {
+    const f = fixture();
+    f.state.loaded = true;
+    const webp = { url: twitterGif, src: "", format: 2, width: 320, height: 180 };
+    const jpeg = { ...sharedGif("jpeg"), src: "https://cdn.discordapp.com/attachments/reaction.jpeg", format: 2 };
+    const mp4 = { ...sharedGif("mp4"), src: "https://media.tenor.com/reaction.mp4", format: 1 };
+    const result = clone(await importFor(f, [webp, jpeg, mp4]));
+    assert.deepEqual(result.addedUrls, [twitterGif, jpeg.url, mp4.url]);
+    assert.deepEqual(result.skippedUrls, []);
+    const saved = f.state.snapshot.favoriteGifs.gifs;
+    assert.equal(saved[twitterGif].src, twitterGif);
+    assert.equal(saved[twitterGif].format, 1);
+    assert.equal(saved[jpeg.url].format, 1);
+    assert.equal(saved[mp4.url].format, 2);
+    const original = clone(saved[twitterGif]);
+    await importFor(f, [{ ...webp, src: "https://media.tenor.com/different.mp4" }]);
+    assert.deepEqual(saved[twitterGif], original, "Already owned native favorites remain untouched");
+});
 
 test("shared GIF imports use one native update and preserve every existing entry and its order", async () => {
     const f = fixture();

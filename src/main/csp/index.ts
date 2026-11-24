@@ -41,6 +41,7 @@ export const CspPolicies: PolicyMap = {
     "i.ibb.co": ImageSrc,
     "i.pinimg.com": ImageSrc,
     "*.tenor.com": ImageSrc,
+    "https://gif.fxtwitter.com": ["img-src", "media-src"],
     "files.catbox.moe": ImageAndCssSrc,
 
     "cdn.discordapp.com": ImageAndCssSrc,

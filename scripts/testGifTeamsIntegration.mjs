@@ -20,6 +20,7 @@ const controllerCode = transformSync(await readFile(new URL("../src/midnightcord
 const serviceCode = transformSync(await readFile(new URL("../src/midnightcordplugins/gifTeams/service.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const cryptoCode = transformSync(await readFile(new URL("../src/api/SettingsSync/cloudCrypto.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const favoritesCode = transformSync(await readFile(new URL("../src/midnightcordplugins/gifTeams/favorites.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
+const previewCode = transformSync(await readFile(new URL("../src/midnightcordplugins/gifTeams/preview.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const importsCode = transformSync(await readFile(new URL("../src/midnightcordplugins/gifTeams/imports.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -37,6 +38,7 @@ function evaluate(code, dependencies, extras = {}) {
 
 const cloudCrypto = evaluate(cryptoCode, {});
 const favoritesApi = evaluate(favoritesCode, {
+    "./preview": evaluate(previewCode, {}),
     "@utils/discord": { insertTextIntoChatInputBox: () => { throw Error("No draft is modified in HTTP integration tests"); } },
     "@webpack": { onceReady: Promise.resolve(), findLazy: () => ({}), findByPropsLazy: () => ({}) },
     "@webpack/common": {}

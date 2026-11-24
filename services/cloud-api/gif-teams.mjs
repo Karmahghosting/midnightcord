@@ -12,7 +12,7 @@ const MAX_TOTAL_TEAMS = 1000;
 const MAX_PENDING_WRITES = 4;
 const INVITE_TTL = 24 * 60 * 60_000;
 const LIMITS = Object.freeze({ maxTeams: 10, maxMembers: 25, maxGifs: 1000 });
-const PREVIEW_HOSTS = new Set(["media.tenor.com", "c.tenor.com", "giphy.com", "cdn.discordapp.com", "media.discordapp.net", "i.imgur.com"]);
+const PREVIEW_HOSTS = new Set(["media.tenor.com", "c.tenor.com", "giphy.com", "cdn.discordapp.com", "media.discordapp.net", "i.imgur.com", "gif.fxtwitter.com"]);
 
 class GifTeamsError extends Error {
     constructor(status, code, message, headers = {}) {
@@ -54,6 +54,23 @@ function previewUrl(value) {
     return PREVIEW_HOSTS.has(host) || host.endsWith(".giphy.com") ? url : "";
 }
 
+function mediaFormat(url) {
+    if (!url) return null;
+    const path = new URL(url).pathname;
+    if (/\.(?:gif|webp|avif|png|jpe?g)$/i.test(path)) return 1;
+    if (/\.(?:mp4|webm)$/i.test(path)) return 2;
+    return null;
+}
+
+function gifPreview(item) {
+    let src = previewUrl(item.src);
+    if (!src) {
+        const fallback = previewUrl(item.url);
+        if (mediaFormat(fallback) !== null) src = fallback;
+    }
+    return { src, format: mediaFormat(src) ?? (item.format === 2 ? 2 : 1) };
+}
+
 function gifsFromInput(input) {
     if (!Array.isArray(input) || input.length > LIMITS.maxGifs)
         fail(400, "invalid_gifs", `Une collection peut contenir au maximum ${LIMITS.maxGifs} GIF.`);
@@ -67,7 +84,7 @@ function gifsFromInput(input) {
         seen.add(url);
         const dimension = value => typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 16384 ? Math.round(value) : 0;
         const title = typeof item.title === "string" ? item.title.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 120) : "";
-        gifs.push({ id: hash(url), url, src: previewUrl(item.src), width: dimension(item.width), height: dimension(item.height), title, format: item.format === 2 ? 2 : 1 });
+        gifs.push({ id: hash(url), url, ...gifPreview(item), width: dimension(item.width), height: dimension(item.height), title });
     }
     return gifs;
 }
@@ -223,7 +240,9 @@ export function createGifTeams({ dataDir, now, writeAtomic, readBody, send, json
         if (!member.file) return [];
         const gifs = JSON.parse(await readFile(join(teamDirectory(team.id), member.file), "utf8"));
         if (!Array.isArray(gifs) || gifs.length !== member.gifCount) throw new Error("Invalid GIF collection");
-        return gifs;
+        // Old snapshots may have discarded a now-supported preview or retained a
+        // stale media format. Repair their response without changing sharing consent.
+        return gifs.map(gif => ({ ...gif, ...gifPreview(gif) }));
     }
 
     async function removeMember(team, accountId) {

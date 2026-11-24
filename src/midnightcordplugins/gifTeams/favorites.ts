@@ -8,9 +8,10 @@ import { insertTextIntoChatInputBox } from "@utils/discord";
 import { findByPropsLazy, findLazy, onceReady } from "@webpack";
 import { UserSettingsActionCreators, UserSettingsProtoStore, UserStore } from "@webpack/common";
 
+import { publicGifUrl, resolveGifPreview } from "./preview";
 import type { GifInput } from "./types";
 
-const PREVIEW_HOSTS = new Set(["media.tenor.com", "c.tenor.com", "giphy.com", "cdn.discordapp.com", "media.discordapp.net", "i.imgur.com"]);
+export { publicGifUrl } from "./preview";
 const FavoriteGifsProto = findLazy(module => module.typeName === "discord_protos.discord_users.v1.FavoriteGIFs");
 const FavoriteGifProto = findLazy(module => module.typeName === "discord_protos.discord_users.v1.FavoriteGIF");
 const UserSettingsDelay = findByPropsLazy("INFREQUENT_USER_ACTION");
@@ -26,28 +27,6 @@ export interface SharedFavoritesImport {
     skipped: { url: string; reason: "invalid" | "unsupported_preview" | "capacity" | "batch_limit" | "order_limit" | "unconfirmed"; }[];
 }
 
-function safePreview(value: unknown): string | null {
-    const url = publicGifUrl(value);
-    const host = url ? new URL(url).hostname.toLowerCase() : "";
-    return url && (PREVIEW_HOSTS.has(host) || host.endsWith(".giphy.com")) ? url : null;
-}
-
-export function publicGifUrl(value: unknown): string | null {
-    if (typeof value !== "string" || !value || value.length > 2048) return null;
-    try {
-        const url = new URL(value);
-        const host = url.hostname.toLowerCase().replace(/\.$/, "");
-        if (url.protocol !== "https:" || url.username || url.password || url.port
-            || !host.includes(".") || /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host) || host.startsWith("[")
-            || /(?:^|\.)(?:localhost|local|internal|test|invalid|example|onion)$/.test(host)
-            || host.endsWith(".home.arpa")) return null;
-        url.hash = "";
-        return url.href;
-    } catch {
-        return null;
-    }
-}
-
 /** The map also contains FavouriteAnything files (format 0), which are not GIFs. */
 export function normalizeFavorites(value: unknown): GifInput[] {
     if (!value || typeof value !== "object" || Array.isArray(value)) return [];
@@ -59,10 +38,10 @@ export function normalizeFavorites(value: unknown): GifInput[] {
             const url = publicGifUrl(key);
             if (!url || seen.has(url)) return [];
             seen.add(url);
-            const src = safePreview(entry.src) ?? "";
+            const preview = resolveGifPreview({ url, src: entry.src, format: entry.format });
             const dimension = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n > 0 && n <= 16384 ? Math.round(n) : 0;
             const title = typeof entry.title === "string" ? entry.title.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 120) : "";
-            return [{ url, src, format: entry.format, width: dimension(entry.width), height: dimension(entry.height), title }];
+            return [{ url, src: preview?.src ?? "", format: preview?.format ?? entry.format, width: dimension(entry.width), height: dimension(entry.height), title }];
         });
 }
 
@@ -124,15 +103,15 @@ export async function importSharedFavorites(gifs: GifInput[], userId: string, si
             if (seen.has(url)) continue;
             seen.add(url);
             if (existing.has(url)) { result.existingUrls.push(url); continue; }
-            const src = safePreview(input.src);
-            if (!src) { skip(url, "unsupported_preview"); continue; }
+            const preview = resolveGifPreview({ ...input, url });
+            if (!preview) { skip(url, "unsupported_preview"); continue; }
             const dimension = (value: number) => Number.isFinite(value) && value >= 1 && value <= 16384;
             if (![1, 2].includes(input.format ?? 1) || !dimension(input.width) || !dimension(input.height)) { skip(url, "invalid"); continue; }
             if (result.addedUrls.length >= MAX_IMPORT_BATCH) { skip(url, "batch_limit"); continue; }
             if (!Number.isSafeInteger(order) || order >= MAX_NATIVE_ORDER) { skip(url, "order_limit"); continue; }
             const favorite = FavoriteGifProto.create({
-                format: /\.(webp|avif|gif)(\?|$)/i.test(src) ? 1 : input.format ?? 1,
-                src, width: Math.round(input.width), height: Math.round(input.height), order: order + 1
+                format: preview.format,
+                src: preview.src, width: Math.round(input.width), height: Math.round(input.height), order: order + 1
             });
             const candidate = { ...values, gifs: { ...values.gifs, [url]: favorite }, hideTooltip: values.hideTooltip || count + 1 > 2 };
             if (FavoriteGifsProto.toBinary(candidate).length > MAX_NATIVE_FAVORITES_BYTES) { skip(url, "capacity"); continue; }

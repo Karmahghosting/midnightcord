@@ -24,6 +24,7 @@ function evaluate(code, dependencies) {
 }
 const cloudCrypto = evaluate(compile("../src/api/SettingsSync/cloudCrypto.ts"), {});
 const favorites = evaluate(compile("../src/midnightcordplugins/gifTeams/favorites.ts"), {
+    "./preview": evaluate(compile("../src/midnightcordplugins/gifTeams/preview.ts"), {}),
     "@utils/discord": { insertTextIntoChatInputBox() { throw Error("No chat writes are allowed"); } },
     "@webpack": { onceReady: Promise.resolve(), findLazy: () => ({}), findByPropsLazy: () => ({}) },
     "@webpack/common": { UserStore: { getCurrentUser: () => null } }
@@ -76,6 +77,21 @@ test("provenance is reserved before import, persisted as hashes and survives res
     assert.deepEqual(copy(again.freshUrls), [], "An ambiguous previous import is not treated as a new personal favorite");
     await restarted.confirm(account, [], [bravo.url], again.freshUrls);
     assert.deepEqual(copy(await restarted.filterAutomatic(account, [alpha, bravo])), []);
+});
+
+test("an old unsupported preview remains retryable after the resolver is fixed", async () => {
+    const f = fixture();
+    const recovered = { url: "https://gif.fxtwitter.com/tweet_video/HQoRP4IbwAAzfCG.webp", src: "", format: 2, width: 320, height: 180 };
+    const originallySkipped = await f.store.prepare(account, [recovered], []);
+    // The previous adapter reported unsupported_preview, so there was no added
+    // or existing native URL to acknowledge. A restart must retain that fact.
+    await f.store.confirm(account, [], [], originallySkipped.freshUrls);
+    assert(Object.values(f.state.storage.get(key(account)).entries).every(entry => entry.seen === false));
+    const retry = await f.create().prepare(account, [recovered], []);
+    assert.deepEqual(copy(retry.gifs), [recovered]);
+    assert.deepEqual(copy(retry.freshUrls), []);
+    await f.store.confirm(account, [recovered.url], [], retry.freshUrls);
+    assert.deepEqual(copy((await f.create().prepare(account, [recovered], [])).gifs), [], "Once imported, a subsequent user removal remains respected");
 });
 
 test("favorites owned before a team import stay eligible for automatic sharing", async () => {

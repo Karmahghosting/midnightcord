@@ -36,7 +36,7 @@ Le gestionnaire permet aussi de détacher un ancien lien local, par exemple apr�
 
 Le propriétaire génère un code dans **Membres**. Il est valable 24 heures, utilisable une fois et révocable. Générer un nouveau code invalide le précédent. Le propriétaire peut retirer des membres ou supprimer la team. Un membre peut la quitter. Ces opérations retirent aussi les GIF partagés de la personne concernée.
 
-Une team accepte 25 membres ; un utilisateur peut rejoindre 10 teams et partager jusqu'à 1 000 GIF par team. Les aperçus proviennent de Tenor, Giphy, Discord ou Imgur. Les autres liens HTTPS publics peuvent être partagés sans aperçu.
+Une team accepte 25 membres ; un utilisateur peut rejoindre 10 teams et partager jusqu'à 1 000 GIF par team. Les aperçus proviennent de Tenor, Giphy, Discord, Imgur ou du service GIF de FxTwitter. Les images animées (dont WebP) et les vidéos utilisent le lecteur adapté à leur format. Les autres liens HTTPS publics peuvent être partagés sans aperçu.
 
 ## Plusieurs appareils et confidentialité
 

@@ -1,7 +1,7 @@
 {
     "name": "midnightcord",
     "private": "true",
-    "version": "1.32.0",
+    "version": "1.32.1",
     "desktopName": "midnightcord.desktop",
     "description": "A fast cross-platform Discord client mod with native voice",
     "main": "dist/js/main.js",
@@ -87,7 +87,7 @@
         "test:ocr-asar": "node scripts/testLocalOcrAsar.mjs",
         "test:webpack-runtime": "node scripts/testWebpackRuntime.mjs",
         "test:updater": "node scripts/testUpdater.mjs",
-        "test:gif-teams": "node scripts/testGifTeams.mjs && node scripts/testGifTeamsFavorites.mjs && node scripts/testGifFolders.mjs && node scripts/testGifImports.mjs && node scripts/testGifTeamsPicker.mjs && node scripts/testGifTeamsIntegration.mjs && node --test services/cloud-api/test/*.test.mjs",
+        "test:gif-teams": "node scripts/testGifTeams.mjs && node scripts/testGifTeamsFavorites.mjs && node scripts/testGifPreviewCsp.mjs && node scripts/testGifFolders.mjs && node scripts/testGifImports.mjs && node scripts/testGifTeamsPicker.mjs && node scripts/testGifTeamsIntegration.mjs && node --test services/cloud-api/test/*.test.mjs",
         "package:standalone": "corepack enable --install-directory node_modules/.bin && corepack pnpm buildStandalone && corepack pnpm buildDesktop && electron-builder --config electron-builder.standalone.cjs --linux dir"
     },
     "dependencies": {

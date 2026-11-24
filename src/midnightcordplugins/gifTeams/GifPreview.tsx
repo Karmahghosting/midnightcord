@@ -5,8 +5,9 @@
  */
 
 import { ImageIcon } from "@components/Icons";
-import { React, useEffect, useState } from "@webpack/common";
+import { React, useState } from "@webpack/common";
 
+import { resolveGifPreview } from "./preview";
 import type { GifInput } from "./types";
 
 export function gifLabel(gif: GifInput): string {
@@ -20,16 +21,24 @@ export function gifLabel(gif: GifInput): string {
     }
 }
 
-export function GifPreview({ gif }: { gif: GifInput; }) {
+function UnavailablePreview() {
+    return <span className="vc-gif-teams-preview vc-gif-teams-placeholder"><ImageIcon /><span>Aperçu indisponible</span></span>;
+}
+
+function PreviewMedia({ src, format }: { src: string; format: 1 | 2; }) {
     const [failed, setFailed] = useState(false);
-    useEffect(() => setFailed(false), [gif.src]);
-    if (!gif.src || failed) return <span className="vc-gif-teams-preview vc-gif-teams-placeholder"><ImageIcon /><span>Aperçu indisponible</span></span>;
+    if (failed) return <UnavailablePreview />;
     return <span className="vc-gif-teams-preview">
-        {gif.format === 2
-            ? <video src={gif.src} muted loop playsInline preload="none" onError={() => setFailed(true)} aria-hidden="true" />
-            : <img src={gif.src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}
-        {gif.format === 2 && <span className="vc-gif-teams-video-label">GIF vidéo</span>}
+        {format === 2
+            ? <video src={src} muted loop playsInline preload="metadata" onError={() => setFailed(true)} aria-hidden="true" />
+            : <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}
+        {format === 2 && <span className="vc-gif-teams-video-label">GIF vidéo</span>}
     </span>;
+}
+
+export function GifPreview({ gif }: { gif: GifInput; }) {
+    const preview = resolveGifPreview(gif);
+    return preview ? <PreviewMedia key={`${preview.src}:${preview.format}`} {...preview} /> : <UnavailablePreview />;
 }
 
 export function playPreview(target: HTMLElement) {

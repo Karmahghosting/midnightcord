@@ -30,7 +30,9 @@ function evaluate(code, dependencies) {
     return module.exports;
 }
 const cloudCrypto = evaluate(compile(new URL("../src/api/SettingsSync/cloudCrypto.ts", import.meta.url)), {});
+const previewApi = evaluate(compile(new URL("preview.ts", directory)), {});
 const favoritesApi = evaluate(compile(new URL("favorites.ts", directory)), {
+    "./preview": previewApi,
     "@utils/discord": {}, "@webpack": { onceReady: Promise.resolve(), findLazy: () => ({}), findByPropsLazy: () => ({}) }, "@webpack/common": {}
 });
 const folderApi = evaluate(compile(new URL("folders.ts", directory)), {

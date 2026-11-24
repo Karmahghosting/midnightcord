@@ -238,6 +238,71 @@ test("HTTPS URLs are normalized, unsafe hosts rejected and unknown preview provi
     assert.equal(f.networkRequests(), 0);
 });
 
+test("media previews use their actual extension and only recover direct URLs from allowed hosts", async t => {
+    const f = await fixture(t);
+    const owner = token();
+    const team = await f.create(owner);
+    const cases = [
+        ...["gif", "webp", "avif", "png", "jpg", "jpeg"].map(extension => ({
+            url: `https://gif.fxtwitter.com/tweet_video/example.${extension}`, src: "", format: 2, expectedFormat: 1
+        })),
+        ...["mp4", "webm"].map(extension => ({
+            url: `https://media.tenor.com/example/clip.${extension}`, src: "", format: 1, expectedFormat: 2
+        })),
+        { url: "https://tenor.com/view/stale-video", src: "https://media.tenor.com/a/CLIP.WEBP?format=mp4", format: 2, expectedFormat: 1 },
+        { url: "https://tenor.com/view/stale-image", src: "https://media.tenor.com/a/clip.mp4?format=webp", format: 1, expectedFormat: 2 },
+        { url: "https://tenor.com/view/opaque", src: "https://media.tenor.com/opaque", format: 2, expectedFormat: 2 },
+        { url: "https://gif.fxtwitter.com/tweet_video/recover.webp", src: "https://tracking.net/pixel.gif", format: 2, expectedFormat: 1, fallback: true },
+        ...[
+            "https://gif.fxtwitter.com.evil.net/clip.webp", "https://other.fxtwitter.com/clip.webp",
+            "https://arbitrary.net/clip.gif", "https://tenor.com/view/clip.gif",
+            "https://media.tenor.com/view/clip", "https://gif.fxtwitter.com/?file=clip.webp"
+        ].map(url => ({ url, src: "", format: 2, expectedFormat: 2, blocked: true })),
+        { url: "https://tenor.com/view/unsafe-src", src: "https://user:pass@gif.fxtwitter.com/clip.webp", format: 1, expectedFormat: 1, blocked: true }
+    ];
+    const state = await f.share(owner, team.id, cases.map((item, i) => ({ ...gif(`case-${i}`), ...item })));
+    for (const [i, item] of cases.entries()) {
+        assert.equal(state.gifs[i].src, item.blocked ? "" : item.fallback ? item.url : item.src || item.url, item.url);
+        assert.equal(state.gifs[i].format, item.expectedFormat, item.url);
+    }
+    assert.equal(f.networkRequests(), 0);
+});
+
+test("existing snapshots recover supported previews on reads without changing files, revisions or membership", async t => {
+    const f = await fixture(t);
+    const owner = token(), member = token();
+    const team = await f.create(owner);
+    await f.join(member, (await f.invite(owner, team.id)).code);
+    const initial = await f.share(owner, team.id, [
+        { ...gif("fx"), url: "https://gif.fxtwitter.com/tweet_video/HQoRP4IbwAAzfCG.webp", src: "" },
+        { ...gif("tenor"), src: "https://media.tenor.com/tenor/image.webp" },
+        { ...gif("page"), src: "" }
+    ]);
+    const metadataPath = join(f.teamPath(team.id), "team.json");
+    const metadataBefore = await readFile(metadataPath, "utf8");
+    const metadata = JSON.parse(metadataBefore);
+    const file = join(f.teamPath(team.id), metadata.members[0].file);
+    const oldSnapshot = initial.gifs.map((item, i) => ({ ...item, src: i === 1 ? item.src : "", format: 2 }));
+    const bytesBefore = `${JSON.stringify(oldSnapshot)}\n`;
+    await writeFile(file, bytesBefore);
+    await f.restart();
+    const own = await f.json(owner, `/${team.id}/sharing`, "GET");
+    const shared = await f.json(member, `/${team.id}/gifs`, "GET");
+    assert.equal(own.revision, 1);
+    assert.equal(own.mode, "manual");
+    assert.equal(own.gifs[0].src, oldSnapshot[0].url);
+    assert.equal(own.gifs[0].format, 1);
+    assert.equal(own.gifs[1].src, oldSnapshot[1].src);
+    assert.equal(own.gifs[1].format, 1);
+    assert.equal(own.gifs[2].src, "", "A Tenor HTML page is never used as preview");
+    assert.deepEqual(shared.items.map(({ memberId, displayName, ...item }) => item), own.gifs);
+    assert.deepEqual(own.gifs.map(item => item.id), oldSnapshot.map(item => item.id));
+    assert.equal(await readFile(file, "utf8"), bytesBefore, "Read repair does not rewrite an owner's snapshot");
+    assert.equal(await readFile(metadataPath, "utf8"), metadataBefore, "Consent, revisions and memberships are unchanged");
+    assert.equal((await f.request(token(), `/${team.id}/gifs`)).status, 404);
+    assert.equal(f.networkRequests(), 0);
+});
+
 test("invalid modes, large collections, page bounds and method errors leave existing data untouched", async t => {
     const f = await fixture(t);
     const owner = token();
