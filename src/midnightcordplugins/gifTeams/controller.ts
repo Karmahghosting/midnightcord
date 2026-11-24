@@ -23,6 +23,11 @@ interface Session extends Identity {
     abort: AbortController;
     request: ReturnType<typeof createTeamsApi>;
 }
+interface OperationOptions {
+    background?: boolean;
+    onError?: (error: unknown) => void;
+    onSuccess?: () => void;
+}
 
 const initial = (): TeamsSnapshot => ({
     connected: false, loading: false, busy: false, error: null,
@@ -45,6 +50,8 @@ export function createGifTeamsController(dependencies: Dependencies) {
     let queue = Promise.resolve();
     let refreshPending = false;
     let debounce: ReturnType<typeof setTimeout> | undefined;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let retryAttempt = 0;
     let interval: ReturnType<typeof setInterval> | undefined;
     let unsubscribeFavorites: (() => void) | undefined;
     let unsubscribeUser: (() => void) | undefined;
@@ -60,6 +67,9 @@ export function createGifTeamsController(dependencies: Dependencies) {
         session = null;
         shares.clear();
         clearTimeout(debounce);
+        clearTimeout(retryTimer);
+        retryTimer = undefined;
+        retryAttempt = 0;
         publish(initial());
     }
 
@@ -95,7 +105,7 @@ export function createGifTeamsController(dependencies: Dependencies) {
             assertCurrent(current);
             if (identity?.authorization !== current.authorization || identity?.userId !== current.userId) {
                 reset();
-                void refresh();
+                void refreshInBackground();
                 throw new DOMException("Identité remplacée", "AbortError");
             }
         }
@@ -106,17 +116,18 @@ export function createGifTeamsController(dependencies: Dependencies) {
         return data;
     }
 
-    function perform(operation: (current: Session) => Promise<void>, create = false) {
+    function perform(operation: (current: Session) => Promise<void>, create = false, options: OperationOptions = {}) {
         const requestedGeneration = generation;
         const next = queue.then(async () => {
             if (!active || requestedGeneration !== generation) return;
-            publish({ busy: true, error: null });
+            if (!options.background) publish({ busy: true, error: null });
             let current: Session | null = null;
             try {
                 current = await connect(create);
                 if (!current) return;
-                publish({ busy: true });
+                if (!options.background) publish({ busy: true });
                 await operation(current);
+                options.onSuccess?.();
             } catch (error) {
                 const cancelled = typeof error === "object" && error !== null && "name" in error && error.name === "AbortError"
                     && (!current || current !== session || current.abort.signal.aborted || dependencies.currentUserId() !== current.userId);
@@ -124,9 +135,10 @@ export function createGifTeamsController(dependencies: Dependencies) {
                     const clear = error instanceof TeamsError && (error.status === 404 || error.status === 401)
                         ? { team: null, page: null, sharing: null, invite: null } : {};
                     publish({ ...clear, error: error instanceof Error ? error.message : "Connexion au service impossible." });
+                    options.onError?.(error);
                 }
             } finally {
-                if (active && (!current || current === session)) publish({ busy: false, loading: false });
+                if (active && (!current || current === session)) publish({ ...(!options.background ? { busy: false } : {}), loading: false });
             }
         });
         queue = next.catch(() => undefined);
@@ -208,17 +220,50 @@ export function createGifTeamsController(dependencies: Dependencies) {
         if (state.team) await detail(current, state.team.id);
     }
 
-    function refresh() {
+    function scheduleRetry(error: unknown) {
+        if (!(error instanceof TeamsError) || !(error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500)) return;
+        const exponential = Math.min(60_000, 5_000 * 2 ** Math.min(retryAttempt++, 4));
+        const advertised = typeof error.retryAfterMs === "number" && Number.isFinite(error.retryAfterMs) ? error.retryAfterMs : 0;
+        const delay = Math.min(120_000, Math.max(exponential, advertised));
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(() => {
+            retryTimer = undefined;
+            void refreshInBackground();
+        }, delay);
+    }
+
+    function runRefresh(manual: boolean) {
         if (!active || refreshPending) return queue;
         const requestedGeneration = generation;
         refreshPending = true;
-        publish({ loading: !state.connected });
-        return perform(refreshSession).finally(() => {
+        let failure: unknown;
+        publish({ loading: !state.connected, ...(manual ? { error: null } : {}) });
+        return perform(refreshSession, false, {
+            background: true,
+            onError: error => { failure = error; },
+            onSuccess: () => {
+                retryAttempt = 0;
+                publish({ error: null });
+            }
+        }).finally(() => {
             refreshPending = false;
             // A user switch can happen while the previous request is settling.
             // Refresh the new session immediately rather than waiting for a timer.
-            if (active && requestedGeneration !== generation && !session) void refresh();
+            if (!active) return;
+            if (requestedGeneration !== generation && !session) void refreshInBackground();
+            else if (session && failure) scheduleRetry(failure);
         });
+    }
+
+    function refreshInBackground() {
+        if (retryTimer !== undefined) return queue;
+        return runRefresh(false);
+    }
+
+    function refresh() {
+        clearTimeout(retryTimer);
+        retryTimer = undefined;
+        return runRefresh(true);
     }
 
     function withTeam(operation: (current: Session, id: string, sharing: Sharing | null) => Promise<void>) {
@@ -236,16 +281,21 @@ export function createGifTeamsController(dependencies: Dependencies) {
         start() {
             if (active) return;
             active = true;
+            let observedUserId = dependencies.currentUserId();
             unsubscribeFavorites = dependencies.subscribeFavorites(() => {
+                if (!active || retryTimer !== undefined) return;
                 clearTimeout(debounce);
-                debounce = setTimeout(() => void refresh(), 1_000);
+                debounce = setTimeout(() => { debounce = undefined; void refreshInBackground(); }, 1_000);
             });
             unsubscribeUser = dependencies.subscribeUser(() => {
-                if (session && dependencies.currentUserId() !== session.userId) reset();
-                void refresh();
+                const userId = dependencies.currentUserId();
+                if (userId === observedUserId) return;
+                observedUserId = userId;
+                reset();
+                void refreshInBackground();
             });
-            interval = setInterval(() => void refresh(), 60_000);
-            void refresh();
+            interval = setInterval(() => void refreshInBackground(), 60_000);
+            void refreshInBackground();
         },
         stop() {
             active = false;

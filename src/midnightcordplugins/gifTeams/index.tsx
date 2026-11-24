@@ -9,7 +9,7 @@ import "./style.css";
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { GifIcon } from "@components/Icons";
+import { ImageIcon } from "@components/Icons";
 import { closeModal, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { React } from "@webpack/common";
@@ -29,7 +29,7 @@ export function openGifTeams() {
 }
 
 const TeamsButton: ChatBarButtonFactory = ({ isAnyChat, disabled }) => isAnyChat && !disabled
-    ? <ChatBarButton tooltip="Teams GIF" onClick={openGifTeams}><GifIcon /></ChatBarButton>
+    ? <ChatBarButton tooltip="Teams GIF" onClick={openGifTeams}><ImageIcon /></ChatBarButton>
     : null;
 
 export default definePlugin({
@@ -40,7 +40,7 @@ export default definePlugin({
     searchTerms: ["gif", "team", "favoris", "partage", "groupe"],
     enabledByDefault: false,
     dependencies: ["ChatInputButtonAPI"],
-    chatBarButton: { icon: GifIcon, render: TeamsButton },
+    chatBarButton: { icon: ImageIcon, render: TeamsButton },
     settingsAboutComponent: () => <div className="vc-gif-teams-settings"><p>Créez des teams privées et choisissez, pour chacune, les favoris que vous partagez. Le bouton Teams GIF est aussi disponible à côté de la zone de message.</p><Button disabled={!active} onClick={openGifTeams}>Ouvrir mes teams GIF</Button></div>,
     toolboxActions: { "Teams GIF": openGifTeams },
     patches: [{
@@ -51,7 +51,7 @@ export default definePlugin({
         }
     }],
     renderPickerHeader(original: ReactNode) {
-        return <>{original}<ErrorBoundary noop><Button size="small" variant="secondary" className="vc-gif-teams-picker-shortcut" onClick={openGifTeams}><GifIcon width={16} height={16} />Teams</Button></ErrorBoundary></>;
+        return <>{original}<ErrorBoundary noop><Button size="small" variant="secondary" className="vc-gif-teams-picker-shortcut" onClick={openGifTeams}><ImageIcon width={16} height={16} />Teams</Button></ErrorBoundary></>;
     },
     start() { active = true; gifTeams.start(); },
     stop() {

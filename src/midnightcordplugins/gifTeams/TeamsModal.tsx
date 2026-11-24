@@ -6,7 +6,7 @@
 
 import { Button } from "@components/Button";
 import { Heading } from "@components/Heading";
-import { CopyIcon, GifIcon, OwnerCrownIcon, PlusIcon, UserIcon } from "@components/Icons";
+import { CopyIcon, ImageIcon, OwnerCrownIcon, PlusIcon, UserIcon } from "@components/Icons";
 import { copyToClipboard } from "@utils/clipboard";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize } from "@utils/modal";
 import { React, useEffect, useState } from "@webpack/common";
@@ -36,7 +36,7 @@ function gifLabel(gif: GifInput): string {
 function GifPreview({ gif }: { gif: GifInput; }) {
     const [failed, setFailed] = useState(false);
     useEffect(() => setFailed(false), [gif.src]);
-    if (!gif.src || failed) return <span className="vc-gif-teams-preview vc-gif-teams-placeholder"><GifIcon /><span>Aperçu indisponible</span></span>;
+    if (!gif.src || failed) return <span className="vc-gif-teams-preview vc-gif-teams-placeholder"><ImageIcon /><span>Aperçu indisponible</span></span>;
     return <span className="vc-gif-teams-preview">
         {gif.format === 2
             ? <video src={gif.src} muted loop playsInline preload="none" onError={() => setFailed(true)} aria-hidden="true" />
@@ -99,7 +99,7 @@ function SharedGifs({ snapshot, onInsert }: { snapshot: TeamsSnapshot; onInsert:
             </select></label>
         </div>
         {loading && <p role="status" className="vc-gif-teams-muted">Chargement des GIF…</p>}
-        {!loading && !items.length && <div className="vc-gif-teams-empty"><GifIcon width={32} height={32} /><p>{needle ? "Aucun résultat sur cette page." : "Aucun GIF partagé pour le moment."}</p><span>{needle ? "Essayez une autre recherche ou une autre page." : "Chaque membre choisit son mode dans « Mon partage »."}</span></div>}
+        {!loading && !items.length && <div className="vc-gif-teams-empty"><ImageIcon width={32} height={32} /><p>{needle ? "Aucun résultat sur cette page." : "Aucun GIF partagé pour le moment."}</p><span>{needle ? "Essayez une autre recherche ou une autre page." : "Chaque membre choisit son mode dans « Mon partage »."}</span></div>}
         <div className="vc-gif-teams-grid">
             {items.map(gif => <button type="button" className="vc-gif-teams-tile" key={`${gif.memberId}:${gif.id}`} disabled={busy || loading}
                 aria-label={`Ajouter au brouillon : ${gifLabel(gif)}, partagé par ${gif.displayName}`} title={gifLabel(gif)}
@@ -227,19 +227,18 @@ export default function TeamsModal(props: ModalProps) {
     const [localError, setLocalError] = useState("");
     const { connected, loading, busy, error, teams, team, sharing, viewerId } = snapshot;
     useEffect(() => { setView("gifs"); setConfirmation(null); setLocalError(""); }, [team?.id, viewerId]);
-    useEffect(() => { if (connected) void gifTeams.refresh(); }, [connected]);
     function insert(url: string) {
         try { insertGif(url); props.onClose(); } catch { setLocalError("Impossible d’ajouter ce GIF au brouillon. Réessayez depuis une conversation ouverte."); }
     }
     return <ModalRoot {...props} size={ModalSize.LARGE} className="vc-gif-teams" aria-labelledby="vc-gif-teams-title">
-        <ModalHeader className="vc-gif-teams-header"><div><Heading tag="h2" id="vc-gif-teams-title"><GifIcon width={24} height={24} />Teams GIF</Heading><p>Vos favoris, entre vous.</p></div><ModalCloseButton onClick={props.onClose} /></ModalHeader>
+        <ModalHeader className="vc-gif-teams-header"><div><Heading tag="h2" id="vc-gif-teams-title"><ImageIcon width={24} height={24} />Teams GIF</Heading><p>Vos favoris, entre vous.</p></div><ModalCloseButton onClick={props.onClose} /></ModalHeader>
         <ModalContent className="vc-gif-teams-body">
             {(error || localError) && <div className="vc-gif-teams-error" role="alert">{localError || error}</div>}
             {confirmation ? <div className="vc-gif-teams-confirm" role="alertdialog" aria-labelledby="vc-gif-teams-confirm-title" aria-describedby="vc-gif-teams-confirm-description"><Heading tag="h3" id="vc-gif-teams-confirm-title">{confirmation.title}</Heading><p id="vc-gif-teams-confirm-description">{confirmation.description}</p><div className="vc-gif-teams-actions"><Button variant="secondary" autoFocus disabled={busy} onClick={() => setConfirmation(null)}>Annuler</Button><Button variant="dangerPrimary" disabled={busy} onClick={() => {
                 if (busy) return;
                 void confirmation.action().then(() => { if (!gifTeams.getSnapshot().error) setConfirmation(null); });
             }}>{busy ? "En cours…" : confirmation.label}</Button></div></div>
-                : !connected ? <div className="vc-gif-teams-onboarding"><GifIcon width={40} height={40} /><Heading tag="h3">Un espace pour vos GIF favoris</Heading><p>Créez une team privée ou rejoignez vos proches avec un code. Pour chaque team, partagez tous vos favoris automatiquement, une sélection, ou rien du tout.</p><Button disabled={loading || busy} onClick={() => void gifTeams.initializeConnection()}>{loading || busy ? "Connexion…" : "Activer mes teams"}</Button><p className="vc-gif-teams-muted">Votre identité Cloud permet de retrouver vos teams. Cette activation ne lance pas de sauvegarde. Sur un autre appareil, restaurez votre clé Cloud dans les réglages Midnightcord.</p></div>
+                : !connected ? <div className="vc-gif-teams-onboarding"><ImageIcon width={40} height={40} /><Heading tag="h3">Un espace pour vos GIF favoris</Heading><p>Créez une team privée ou rejoignez vos proches avec un code. Pour chaque team, partagez tous vos favoris automatiquement, une sélection, ou rien du tout.</p><Button className="vc-gif-teams-activate" disabled={loading || busy} onClick={() => void gifTeams.initializeConnection()}>{loading || busy ? "Connexion…" : "Activer mes teams"}</Button><p className="vc-gif-teams-muted">Votre identité Cloud permet de retrouver vos teams. Cette activation ne lance pas de sauvegarde. Sur un autre appareil, restaurez votre clé Cloud dans les réglages Midnightcord.</p></div>
                     : <div className="vc-gif-teams-layout">
                         <aside className="vc-gif-teams-sidebar" aria-label="Mes teams"><div className="vc-gif-teams-sidebar-title"><strong>Mes teams</strong><Button size="small" variant="secondary" disabled={busy || loading} onClick={() => void gifTeams.refresh()}>Actualiser</Button></div>
                             {loading && !teams.length && <p role="status">Chargement…</p>}

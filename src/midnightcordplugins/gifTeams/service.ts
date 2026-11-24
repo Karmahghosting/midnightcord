@@ -10,7 +10,7 @@ import { CLOUD_API_BASE } from "@api/SettingsSync/cloudSetup";
 export const API_PATH = "/v1/cloud/gif-teams";
 
 export class TeamsError extends Error {
-    constructor(public status: number, public code: string, message: string) {
+    constructor(public status: number, public code: string, message: string, public retryAfterMs?: number) {
         super(message);
     }
 }
@@ -48,23 +48,30 @@ export function createTeamsApi(authorization: string, sessionSignal: AbortSignal
             if (response.status === 204) return undefined as T;
             const text = await response.text();
             if (text.length > 4 * 1024 * 1024) throw new Error("Réponse du serveur trop volumineuse.");
+            const retryAfter = response.headers.get("Retry-After");
+            const retrySeconds = retryAfter === null ? NaN : Number(retryAfter);
+            const retryDelay = Number.isFinite(retrySeconds) ? retrySeconds * 1_000 : Date.parse(retryAfter ?? "") - Date.now();
+            const retryAfterMs = Number.isFinite(retryDelay) ? Math.min(120_000, Math.max(1_000, retryDelay)) : undefined;
+            if (response.status === 429)
+                throw new TeamsError(429, "rate_limited", "Trop de demandes. Patiente un instant avant de réessayer.", retryAfterMs ?? 60_000);
             let data: any;
             try { data = JSON.parse(text); } catch {
-                throw new TeamsError(response.status, "unavailable", "Le service de teams est momentanément indisponible.");
+                throw new TeamsError(response.status, "unavailable", "Le service de teams est momentanément indisponible.", retryAfterMs);
             }
             if (!response.ok) {
                 const message = response.status === 409
                     ? "Le partage a changé sur un autre appareil. Actualise avant de réessayer."
                     : response.status === 404 ? "Cette team ou cette invitation n’est plus accessible."
-                        : response.status === 429 ? "Trop de demandes. Réessaie dans une minute."
-                            : response.status === 401 ? "La connexion à ton espace GIF a expiré."
-                                : data?.message || "Impossible de terminer cette opération.";
-                throw new TeamsError(response.status, String(data?.error ?? "request_failed"), message);
+                        : response.status === 401 ? "La connexion à ton espace GIF a expiré."
+                            : data?.message || "Impossible de terminer cette opération.";
+                throw new TeamsError(response.status, String(data?.error ?? "request_failed"), message, retryAfterMs);
             }
             return data as T;
         } catch (error) {
             if (timedOut && !sessionSignal.aborted)
                 throw new TeamsError(408, "request_timeout", "Le serveur n’a pas confirmé l’opération à temps. Actualise pour vérifier son état avant de réessayer.");
+            if (error instanceof TypeError && !sessionSignal.aborted)
+                throw new TeamsError(0, "network_unavailable", "Connexion à l’API impossible. Tes saisies sont conservées ; réessaie dans un instant.");
             throw error;
         } finally {
             clearTimeout(timeout);

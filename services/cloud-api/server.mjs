@@ -41,7 +41,7 @@ function baseHeaders(request) {
         "X-Content-Type-Options": "nosniff",
         ...(isAllowedOrigin(origin) ? {
             "Access-Control-Allow-Origin": origin,
-            "Access-Control-Expose-Headers": "ETag, X-Midnightcord-Checksum, X-Midnightcord-Version",
+            "Access-Control-Expose-Headers": "ETag, X-Midnightcord-Checksum, X-Midnightcord-Version, Retry-After",
             Vary: "Origin"
         } : {})
     };

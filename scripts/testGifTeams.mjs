@@ -46,7 +46,7 @@ function timers() {
 function evaluate(code, dependencies, extras = {}) {
     const module = { exports: {} };
     runInNewContext(code, {
-        module, exports: module.exports, Error, DOMException, AbortController, URL, URLSearchParams,
+        module, exports: module.exports, Error, TypeError, DOMException, AbortController, URL, URLSearchParams,
         TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, crypto: webcrypto, btoa, atob,
         require(name) { assert(Object.hasOwn(dependencies, name), `Unexpected dependency ${name}`); return dependencies[name]; },
         ...extras
@@ -56,7 +56,7 @@ function evaluate(code, dependencies, extras = {}) {
 
 const cloudCrypto = evaluate(cryptoCode, {});
 
-function serviceFixture(fetchImplementation = async () => ({ ok: true, status: 200, text: async () => "{}" })) {
+function serviceFixture(fetchImplementation = async () => ({ ok: true, status: 200, headers: new Headers(), text: async () => "{}" })) {
     const clock = timers();
     const calls = [];
     const service = evaluate(serviceCode, {
@@ -276,6 +276,100 @@ test("bursts of favorite-store changes debounce into one refresh", async () => {
     assert.equal(f.clock.intervals.size, 0);
     assert.equal(f.state.favoriteListeners.size, 0);
     assert.equal(f.state.userListeners.size, 0);
+});
+
+test("updates to other Discord users never refresh the active account or interrupt typing", async () => {
+    const f = fixture();
+    await f.start();
+    const requests = f.state.calls.length;
+    const identities = f.state.identityCalls.length;
+    const snapshots = [];
+    const unsubscribe = f.controller.subscribe(() => snapshots.push(f.controller.getSnapshot()));
+    for (let i = 0; i < 50; i++) { f.notifyUser(); await tick(); }
+    assert.equal(f.state.calls.length, requests);
+    assert.equal(f.state.identityCalls.length, identities);
+    assert.equal(snapshots.length, 0, "Unrelated UserStore changes must not toggle errors, busy state or connected state");
+    unsubscribe();
+    f.controller.stop();
+});
+
+test("failed background refreshes keep the form usable and back off instead of flashing the error", async () => {
+    const f = fixture();
+    f.state.requestError = () => new f.service.TeamsError(0, "network_unavailable", "Connexion impossible");
+    await f.start();
+    const snapshots = [];
+    const unsubscribe = f.controller.subscribe(() => snapshots.push(f.controller.getSnapshot()));
+    assert.equal(f.state.calls.length, 1);
+    assert.equal([...f.clock.timeouts.values()][0].ms, 5_000);
+    for (let i = 0; i < 30; i++) { f.notifyUser(); f.notifyFavorites(); }
+    for (const { callback } of f.clock.intervals.values()) callback();
+    await tick();
+    assert.equal(f.state.calls.length, 1, "Store events and periodic refreshes must respect the pending backoff");
+    assert.equal(f.clock.timeouts.size, 1);
+    for (const delay of [10_000, 20_000, 40_000, 60_000, 60_000]) {
+        f.clock.fireTimeouts();
+        await tick();
+        assert.equal([...f.clock.timeouts.values()][0].ms, delay);
+    }
+    assert(snapshots.every(snapshot => snapshot.connected && !snapshot.busy && !snapshot.loading));
+    assert(snapshots.every(snapshot => snapshot.error === "Connexion impossible"), "An automatic retry must not erase the error before it succeeds");
+    f.state.requestError = null;
+    f.clock.fireTimeouts();
+    await tick();
+    assert.equal(f.controller.getSnapshot().error, null);
+    assert.equal(f.clock.timeouts.size, 0);
+    unsubscribe();
+    f.controller.stop();
+});
+
+test("server retry delays are respected while an explicit refresh can retry immediately", async () => {
+    const f = fixture();
+    f.state.requestError = () => new f.service.TeamsError(429, "rate_limited", "Patientez", 90_000);
+    await f.start();
+    assert.equal([...f.clock.timeouts.values()][0].ms, 90_000);
+    const requests = f.state.calls.length;
+    f.state.requestError = null;
+    await f.controller.refresh();
+    assert.equal(f.state.calls.length, requests + 1);
+    assert.equal(f.clock.timeouts.size, 0);
+    assert.equal(f.controller.getSnapshot().error, null);
+    assert.equal(f.controller.getSnapshot().busy, false);
+    f.controller.stop();
+});
+
+test("switching accounts during backoff aborts the old identity and immediately loads the new account", async () => {
+    const f = fixture();
+    f.state.requestError = () => new f.service.TeamsError(503, "unavailable", "Service indisponible");
+    await f.start();
+    const oldSession = f.state.sessions[0];
+    assert.equal(f.clock.timeouts.size, 1);
+    f.state.userId = "1395048695501688953";
+    f.state.token = "account-b";
+    f.state.requestError = null;
+    f.notifyUser();
+    await tick();
+    assert.equal(oldSession.signal.aborted, true);
+    assert.equal(f.state.calls.at(-1).token, "account-b");
+    assert.equal(f.clock.timeouts.size, 0);
+    assert.equal(f.controller.getSnapshot().error, null);
+    assert.equal(f.controller.getSnapshot().connected, true);
+    f.controller.stop();
+});
+
+test("stopping the plugin cancels scheduled network retries", async () => {
+    const f = fixture();
+    f.state.requestError = () => new f.service.TeamsError(408, "request_timeout", "Délai dépassé");
+    await f.start();
+    const requests = f.state.calls.length;
+    assert.equal(f.clock.timeouts.size, 1);
+    f.controller.stop();
+    assert.equal(f.clock.timeouts.size, 0);
+    assert.equal(f.clock.intervals.size, 0);
+    f.clock.fireTimeouts();
+    f.notifyUser();
+    f.notifyFavorites();
+    await tick();
+    assert.equal(f.state.calls.length, requests);
 });
 
 test("a concurrent sharing conflict is surfaced without retrying or replacing the newer collection", async () => {
@@ -565,9 +659,39 @@ test("API handles bodyless deletion and reports server errors without leaking re
     const f = serviceFixture(async () => response);
     const api = f.service.createTeamsApi("credential", new AbortController().signal);
     assert.equal(await api("/team-one", "DELETE"), undefined);
-    response = { ok: false, status: 409, text: async () => JSON.stringify({ error: "conflict", message: "backend implementation detail" }) };
+    response = { ok: false, status: 409, headers: new Headers(), text: async () => JSON.stringify({ error: "conflict", message: "backend implementation detail" }) };
     await assert.rejects(api(), error => error instanceof f.service.TeamsError && error.status === 409 && !error.message.includes("backend implementation detail"));
-    response = { ok: false, status: 503, text: async () => "<html>upstream unavailable</html>" };
+    response = { ok: false, status: 503, headers: new Headers(), text: async () => "<html>upstream unavailable</html>" };
     await assert.rejects(api(), error => error instanceof f.service.TeamsError && !error.message.includes("<html>"));
+    assert.equal(f.clock.timeouts.size, 0);
+});
+
+test("a proxy HTML rate-limit response is readable and retains its retry delay", async () => {
+    const f = serviceFixture(async () => ({ ok: false, status: 429, headers: new Headers({ "Retry-After": "45" }), text: async () => "<html>429 Too Many Requests nginx</html>" }));
+    const api = f.service.createTeamsApi("credential", new AbortController().signal);
+    await assert.rejects(api(), error => error instanceof f.service.TeamsError
+        && error.status === 429 && error.code === "rate_limited" && error.retryAfterMs === 45_000
+        && !error.message.includes("<html>") && !error.message.includes("nginx"));
+    assert.equal(f.clock.timeouts.size, 0);
+});
+
+test("Retry-After dates and numeric values are bounded, with a safe default for malformed values", async () => {
+    for (const [value, minimum, maximum] of [
+        ["999999", 120_000, 120_000], ["0", 1_000, 1_000], ["-30", 1_000, 1_000],
+        [new Date(Date.now() + 30_000).toUTCString(), 28_000, 30_000],
+        ["invalid", 60_000, 60_000]
+    ]) {
+        const f = serviceFixture(async () => ({ ok: false, status: 429, headers: new Headers({ "Retry-After": value }), text: async () => "" }));
+        await assert.rejects(f.service.createTeamsApi("credential", new AbortController().signal)(), error =>
+            error.status === 429 && error.retryAfterMs >= minimum && error.retryAfterMs <= maximum);
+        assert.equal(f.clock.timeouts.size, 0);
+    }
+});
+
+test("fetch transport failures become stable actionable errors without losing cancellation semantics", async () => {
+    const f = serviceFixture(async () => { throw new TypeError("Failed to fetch"); });
+    await assert.rejects(f.service.createTeamsApi("credential", new AbortController().signal)(), error =>
+        error instanceof f.service.TeamsError && error.status === 0 && error.code === "network_unavailable"
+        && !error.message.includes("Failed to fetch") && error.message.includes("saisies"));
     assert.equal(f.clock.timeouts.size, 0);
 });

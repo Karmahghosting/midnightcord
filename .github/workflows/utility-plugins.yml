@@ -71,6 +71,9 @@ jobs:
       - name: Test private GIF teams and sharing
         run: pnpm test:gif-teams
 
+      - name: Test updater confirmations and failures
+        run: pnpm test:updater
+
       - name: Test utility plugins and offline OCR
         run: pnpm test:utilities
 

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test test/server.test.mjs test/gif-teams.test.mjs"
+    "test": "node --test test/*.test.mjs"
   },
   "engines": {
     "node": ">=18"

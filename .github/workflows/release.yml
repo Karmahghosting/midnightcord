@@ -58,6 +58,9 @@ jobs:
       - name: Test private GIF teams and sharing
         run: pnpm test:gif-teams
 
+      - name: Test updater confirmations and failures
+        run: pnpm test:updater
+
       - name: Test Spotify playback synchronization
         run: pnpm test:spotify
 

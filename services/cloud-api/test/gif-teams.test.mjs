@@ -339,10 +339,28 @@ test("oversized JSON is rejected without altering the previous collection", asyn
 
 test("rotating credentials cannot bypass the per-IP GIF team rate limit", async t => {
     const f = await fixture(t);
+    const browser = { Origin: "https://discord.com" };
+    const preflightHeaders = { ...browser, "Access-Control-Request-Method": "PUT", "Access-Control-Request-Headers": "authorization, content-type, x-midnightcord-client" };
+    for (let index = 0; index < 125; index++) {
+        const preflight = await f.request(null, "/example/sharing", "OPTIONS", undefined, preflightHeaders);
+        assert.equal(preflight.status, 204);
+        assert.equal(preflight.headers.get("access-control-allow-origin"), browser.Origin);
+        assert.match(preflight.headers.get("access-control-allow-headers"), /\bX-Midnightcord-Client\b/);
+        assert.match(preflight.headers.get("access-control-allow-methods"), /\bPUT\b/);
+    }
     for (let index = 0; index < 120; index++) assert.equal((await f.request(token())).status, 200);
-    const limited = await f.request(token());
+    const limited = await f.request(token(), "", "GET", undefined, browser);
     assert.equal(limited.status, 429);
     assert.equal(limited.headers.get("retry-after"), "60");
+    assert.equal(limited.headers.get("access-control-allow-origin"), browser.Origin);
+    assert.match(limited.headers.get("access-control-expose-headers"), /\bRetry-After\b/);
+    assert.equal(limited.headers.get("cache-control"), "no-store");
+    assert.equal((await limited.json()).error, "rate_limited");
+    assert.equal((await f.request(null, "", "OPTIONS", undefined, preflightHeaders)).status, 204, "Exhausted request budgets must not reject preflights");
+    const denied = await f.request(null, "", "OPTIONS", undefined, { ...preflightHeaders, Origin: "https://discord.com.evil.example" });
+    assert.equal(denied.status, 403);
+    assert.equal(denied.headers.get("access-control-allow-origin"), null);
+    assert.equal(denied.headers.get("access-control-expose-headers"), null);
     assert.equal((await f.request(null, "/v1/cloud/health")).status, 200, "The GIF limit does not block ordinary Cloud health");
     f.advance(60_000);
     assert.equal((await f.request(token())).status, 200);

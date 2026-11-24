@@ -367,14 +367,23 @@
 }
 
 .vc-gif-teams-onboarding {
-    max-width: 520px;
-    margin: 20px auto;
-    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 480px;
+    margin: 16px auto;
+    padding: 20px 0;
     text-align: center;
 }
 
 .vc-gif-teams-onboarding > svg {
-    color: var(--brand-500);
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams-activate {
+    min-width: 176px;
+    margin: 0 auto;
 }
 
 .vc-gif-teams-onboarding h3 {

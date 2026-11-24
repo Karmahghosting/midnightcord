@@ -17,7 +17,7 @@ import { Span } from "@components/Span";
 import { Margins } from "@utils/margins";
 import { relaunch } from "@utils/native";
 import { changes, checkForUpdates, isOutdated as updateAvailable, rebuild, update, UpdateLogger } from "@utils/updater";
-import { React, Toasts, useEffect, useRef, useState } from "@webpack/common";
+import { React, useEffect, useRef, useState } from "@webpack/common";
 
 declare const VERSION: string;
 
@@ -50,12 +50,6 @@ function UpdaterTab() {
 
             setOutdated(false);
             setReadyToRestart(true);
-            Toasts.show({
-                message: "Midnightcord is ready to restart.",
-                id: Toasts.genId(),
-                type: Toasts.Type.SUCCESS,
-                options: { position: Toasts.Position.BOTTOM }
-            });
         } catch (updateError: any) {
             UpdateLogger.error("Update preparation failed", updateError);
             setError("Update failed: " + cleanError(updateError));
@@ -76,13 +70,6 @@ function UpdaterTab() {
 
             if (hasUpdate) {
                 await prepareUpdate();
-            } else {
-                Toasts.show({
-                    message: t("You are already on the latest version!"),
-                    id: Toasts.genId(),
-                    type: Toasts.Type.SUCCESS,
-                    options: { position: Toasts.Position.BOTTOM }
-                });
             }
         } catch (checkError: any) {
             UpdateLogger.error("Update check failed", checkError);
