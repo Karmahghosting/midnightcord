@@ -1,7 +1,7 @@
 {
     "name": "midnightcord",
     "private": "true",
-    "version": "1.31.2",
+    "version": "1.32.0",
     "desktopName": "midnightcord.desktop",
     "description": "A fast cross-platform Discord client mod with native voice",
     "main": "dist/js/main.js",
@@ -68,7 +68,7 @@
         "test:linux-installer": "node scripts/testLinuxInstaller.mjs",
         "test:linux-installer-package": "node scripts/testLinuxInstallerPackage.mjs",
         "test:midnightcord-ai": "node scripts/testMidnightcordAI.mjs",
-        "test:privacy": "node scripts/testPrivacy.mjs",
+        "test:privacy": "node scripts/testPrivacy.mjs && node scripts/testOfflineGifPrivacy.mjs",
         "test:utilities": "node scripts/testUtilityPlugins.mjs",
         "test:images": "node scripts/testImageOptimizer.mjs",
         "test:spotify": "node scripts/testSpotifySync.mjs",
@@ -87,7 +87,7 @@
         "test:ocr-asar": "node scripts/testLocalOcrAsar.mjs",
         "test:webpack-runtime": "node scripts/testWebpackRuntime.mjs",
         "test:updater": "node scripts/testUpdater.mjs",
-        "test:gif-teams": "node scripts/testGifTeams.mjs && node scripts/testGifTeamsFavorites.mjs && node scripts/testGifTeamsIntegration.mjs && node --test services/cloud-api/test/*.test.mjs",
+        "test:gif-teams": "node scripts/testGifTeams.mjs && node scripts/testGifTeamsFavorites.mjs && node scripts/testGifFolders.mjs && node scripts/testGifImports.mjs && node scripts/testGifTeamsPicker.mjs && node scripts/testGifTeamsIntegration.mjs && node --test services/cloud-api/test/*.test.mjs",
         "package:standalone": "corepack enable --install-directory node_modules/.bin && corepack pnpm buildStandalone && corepack pnpm buildDesktop && electron-builder --config electron-builder.standalone.cjs --linux dir"
     },
     "dependencies": {

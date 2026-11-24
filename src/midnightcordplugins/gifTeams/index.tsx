@@ -16,14 +16,25 @@ import { React } from "@webpack/common";
 import type { ReactNode } from "react";
 
 import { gifTeams } from "./controller";
+import FoldersModal from "./FoldersModal";
+import { PickerTools, renderFolderContent } from "./picker";
+import { settings } from "./settings";
 import TeamsModal from "./TeamsModal";
 
 let active = false;
 let modalKey: string | undefined;
+let foldersModalKey: string | undefined;
+
+export function openGifFolders() {
+    if (!active || foldersModalKey) return;
+    foldersModalKey = openModal(props => <ErrorBoundary><FoldersModal {...props} /></ErrorBoundary>, {
+        onCloseCallback: () => { foldersModalKey = undefined; }
+    });
+}
 
 export function openGifTeams() {
     if (!active || modalKey) return;
-    modalKey = openModal(props => <ErrorBoundary><TeamsModal {...props} /></ErrorBoundary>, {
+    modalKey = openModal(props => <ErrorBoundary><TeamsModal {...props} onFolders={openGifFolders} /></ErrorBoundary>, {
         onCloseCallback: () => { modalKey = undefined; }
     });
 }
@@ -34,30 +45,37 @@ const TeamsButton: ChatBarButtonFactory = ({ isAnyChat, disabled }) => isAnyChat
 
 export default definePlugin({
     name: "GifTeams",
-    description: "Partagez vos GIF favoris avec vos teams : tous automatiquement, ou seulement votre sélection.",
+    description: "Recevez les GIF de vos teams dans vos favoris Discord et partagez tous vos GIF, un dossier ou une sélection.",
     authors: [{ name: "Midnightcord", id: 0n }],
     tags: ["Media", "Chat"],
-    searchTerms: ["gif", "team", "favoris", "partage", "groupe"],
+    searchTerms: ["gif", "team", "favoris", "partage", "groupe", "dossier", "folder"],
     enabledByDefault: false,
     dependencies: ["ChatInputButtonAPI"],
+    settings,
     chatBarButton: { icon: ImageIcon, render: TeamsButton },
-    settingsAboutComponent: () => <div className="vc-gif-teams-settings"><p>Créez des teams privées et choisissez, pour chacune, les favoris que vous partagez. Le bouton Teams GIF est aussi disponible à côté de la zone de message.</p><Button disabled={!active} onClick={openGifTeams}>Ouvrir mes teams GIF</Button></div>,
-    toolboxActions: { "Teams GIF": openGifTeams },
+    settingsAboutComponent: () => <div className="vc-gif-teams-settings"><p>Organisez vos favoris dans des dossiers sur cet appareil. Pour chaque team, partagez tous vos favoris, un dossier ou une sélection. Les dossiers sont aussi accessibles dans le sélecteur de GIF.</p><div className="vc-gif-teams-actions"><Button disabled={!active} onClick={openGifFolders}>Mes dossiers de GIF</Button><Button disabled={!active} onClick={openGifTeams}>Ouvrir mes teams GIF</Button></div></div>,
+    toolboxActions: { "Teams GIF": openGifTeams, "Dossiers de GIF": openGifFolders },
     patches: [{
         find: "renderHeaderContent()",
-        replacement: {
+        replacement: [{
             match: "this.renderHeaderContent()",
-            replace: "$self.renderPickerHeader(this.renderHeaderContent())"
-        }
+            replace: "$self.renderPickerHeader(this,this.renderHeaderContent())"
+        }, {
+            match: "this.renderContent()",
+            replace: "$self.renderPickerContent(this,this.renderContent())"
+        }]
     }],
-    renderPickerHeader(original: ReactNode) {
-        return <>{original}<ErrorBoundary noop><Button size="small" variant="secondary" className="vc-gif-teams-picker-shortcut" onClick={openGifTeams}><ImageIcon width={16} height={16} />Teams</Button></ErrorBoundary></>;
+    renderPickerHeader(picker, original: ReactNode) {
+        return <>{original}<ErrorBoundary noop><PickerTools picker={picker} onFolders={openGifFolders} /></ErrorBoundary></>;
     },
+    renderPickerContent: renderFolderContent,
     start() { active = true; gifTeams.start(); },
     stop() {
         active = false;
         gifTeams.stop();
         if (modalKey) closeModal(modalKey);
+        if (foldersModalKey) closeModal(foldersModalKey);
         modalKey = undefined;
+        foldersModalKey = undefined;
     }
 });

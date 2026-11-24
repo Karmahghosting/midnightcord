@@ -20,6 +20,7 @@ const controllerCode = transformSync(await readFile(new URL("../src/midnightcord
 const serviceCode = transformSync(await readFile(new URL("../src/midnightcordplugins/gifTeams/service.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const cryptoCode = transformSync(await readFile(new URL("../src/api/SettingsSync/cloudCrypto.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const favoritesCode = transformSync(await readFile(new URL("../src/midnightcordplugins/gifTeams/favorites.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
+const importsCode = transformSync(await readFile(new URL("../src/midnightcordplugins/gifTeams/imports.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const clone = value => JSON.parse(JSON.stringify(value));
 
 function evaluate(code, dependencies, extras = {}) {
@@ -37,8 +38,11 @@ function evaluate(code, dependencies, extras = {}) {
 const cloudCrypto = evaluate(cryptoCode, {});
 const favoritesApi = evaluate(favoritesCode, {
     "@utils/discord": { insertTextIntoChatInputBox: () => { throw Error("No draft is modified in HTTP integration tests"); } },
-    "@webpack": { onceReady: Promise.resolve() },
+    "@webpack": { onceReady: Promise.resolve(), findLazy: () => ({}), findByPropsLazy: () => ({}) },
     "@webpack/common": {}
+});
+const importsApi = evaluate(importsCode, {
+    "@api/DataStore": {}, "@api/SettingsSync/cloudCrypto": cloudCrypto, "./favorites": favoritesApi
 });
 const gif = name => ({ url: `https://tenor.com/view/${name}`, src: `https://media.tenor.com/${name}/tenor.gif`, width: 320, height: 240, format: 1, title: name });
 
@@ -63,18 +67,40 @@ async function integration(t) {
     const exported = evaluate(controllerCode, {
         "@api/SettingsSync/cloudSetup": { createCloudIdentity: () => { throw Error("No real Cloud identity may be created"); }, getCloudKey: () => null },
         "./favorites": { getCurrentUser: () => null, loadFavorites: () => [], subscribeFavorites: () => () => {}, subscribeUser: () => () => {} },
-        "./service": service
+        "./service": service, "./folders": {}, "./imports": importsApi,
+        "./settings": { settings: { store: { autoAddSharedFavorites: true } }, subscribeImportSettings: () => () => {} }
     });
 
-    async function client(id, displayName, favorites) {
+    async function client(id, displayName, favorites, receive = false) {
         const key = cloudCrypto.createCloudKey();
         const authorization = await service.deriveTeamsAuthorization(key, id);
-        const state = { id, displayName, favorites };
+        const state = { id, displayName, favorites, nativeCalls: [] };
+        const storage = new Map();
+        const imports = importsApi.createGifImportStore({
+            currentUserId: () => state.id,
+            read: async key => storage.get(key),
+            write: async (key, value) => storage.set(key, clone(value))
+        });
         const controller = exported.createGifTeamsController({
             identity: async () => ({ userId: state.id, displayName: state.displayName, authorization }),
             currentUserId: () => state.id,
             favorites: async () => clone(state.favorites),
             subscribeFavorites: () => () => {}, subscribeUser: () => () => {},
+            imports: receive ? {
+                store: imports, enabled: () => true, subscribe: () => () => {},
+                async add(gifs, userId, signal) {
+                    assert.equal(userId, state.id);
+                    assert.equal(signal.aborted, false);
+                    state.nativeCalls.push(clone(gifs));
+                    const addedUrls = [];
+                    const existingUrls = [];
+                    for (const item of gifs) {
+                        if (state.favorites.some(gif => gif.url === item.url)) existingUrls.push(item.url);
+                        else { state.favorites.push(clone(item)); addedUrls.push(item.url); }
+                    }
+                    return { addedUrls, existingUrls, skippedUrls: [], skipped: [] };
+                }
+            } : undefined,
             api: service.createTeamsApi
         });
         clients.push(controller);
@@ -208,5 +234,51 @@ test("native favorite normalization and server canonicalization converge without
     for (let index = 0; index < 3; index++) await owner.controller.refresh();
     assert.equal(owner.controller.getSnapshot().error, null);
     assert.equal(f.calls.filter(call => call.method === "PUT").length, before, "Canonicalized values must not oscillate between client and server");
+    assert.equal(f.externalCalls(), 0);
+});
+
+test("real HTTP sharing feeds native favorites once and preserves local provenance and removals", async t => {
+    const f = await integration(t);
+    const owner = await f.client("1337883355840118887", "Owner", [gif("shared-one"), gif("shared-two")]);
+    const guest = await f.client("1395048695501688953", "Guest", [gif("personally-favorited")], true);
+    const waitForImports = async count => {
+        const deadline = Date.now() + 5_000;
+        while (Date.now() < deadline) {
+            const snapshot = guest.controller.getSnapshot();
+            if (snapshot.importedCount >= count && !snapshot.importing) return;
+            assert.equal(snapshot.importError, null);
+            await new Promise(resolve => setTimeout(resolve, 20));
+        }
+        assert.fail(`Expected ${count} confirmed native additions`);
+    };
+    await owner.controller.createTeam("Native favorites");
+    await owner.controller.setSharing("auto");
+    await owner.controller.createInvite();
+    await guest.controller.joinTeam(owner.controller.getSnapshot().invite.code);
+    const guestId = guest.controller.getSnapshot().viewerId;
+    await guest.controller.setSharing("auto");
+    await waitForImports(2);
+    assert.deepEqual(guest.state.favorites.map(item => item.url).sort(), [gif("personally-favorited").url, gif("shared-one").url, gif("shared-two").url].sort());
+    assert(guest.state.nativeCalls.flat().every(item => item.memberId !== guestId && item.url !== gif("personally-favorited").url));
+    await guest.controller.refresh();
+    assert.deepEqual(clone(guest.controller.getSnapshot().sharing.gifs.map(item => item.url)), [gif("personally-favorited").url]);
+    const nativeCalls = guest.state.nativeCalls.length;
+    await guest.controller.refresh();
+    assert.equal(guest.state.nativeCalls.length, nativeCalls);
+
+    guest.state.favorites = guest.state.favorites.filter(item => item.url !== gif("shared-one").url);
+    owner.state.favorites.push(gif("shared-three"));
+    await owner.controller.refresh();
+    await guest.controller.refresh();
+    await waitForImports(3);
+    assert(!guest.state.favorites.some(item => item.url === gif("shared-one").url), "Removing an imported favorite is remembered after the remote collection changes");
+    assert(guest.state.favorites.some(item => item.url === gif("shared-three").url));
+    await guest.controller.refresh();
+    await owner.controller.loadPage(guestId);
+    assert.deepEqual(clone(owner.controller.getSnapshot().page.items.map(item => item.url)), [gif("personally-favorited").url]);
+    await owner.controller.removeMember(guestId);
+    await guest.controller.refresh();
+    assert.equal(guest.controller.getSnapshot().teams.length, 0);
+    assert(guest.state.favorites.some(item => item.url === gif("shared-two").url), "Membership removal does not delete native favorites");
     assert.equal(f.externalCalls(), 0);
 });

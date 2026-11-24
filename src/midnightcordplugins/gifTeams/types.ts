@@ -78,8 +78,12 @@ export interface TeamsSnapshot {
     team: TeamDetail | null;
     page: GifPage | null;
     sharing: Sharing | null;
+    folderBinding: { folderId: string; paused: string | null; } | null;
     favorites: GifInput[];
     favoritesReady: boolean;
+    importing: boolean;
+    importedCount: number;
+    importError: string | null;
     filterMember: string | undefined;
     invite: Invite | null;
 }

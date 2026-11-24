@@ -59,6 +59,19 @@ function isSafeObject(obj: any) {
     return true;
 }
 
+function stripLocalGifFolderBindings(entries: any): any {
+    if (!Array.isArray(entries)) return entries;
+    return entries.map(entry => {
+        if (!Array.isArray(entry)) return entry;
+        const [key, value] = entry;
+        if (typeof key !== "string" || !/^midnightcord-gif-folders-v1:\d{17,20}$/.test(key)
+            || !value || typeof value !== "object" || Array.isArray(value) || value.version !== 1 || !Array.isArray(value.folders)) return entry;
+        // Folder contents can be restored. The consent to follow a folder for a
+        // team belongs to this device and must be granted again after import.
+        return [key, { ...value, bindings: [] }];
+    });
+}
+
 export async function importSettings(data: string, type: BackupType = "all", cloud = false) {
     try {
         var parsed = JSON.parse(data);
@@ -71,6 +84,8 @@ export async function importSettings(data: string, type: BackupType = "all", clo
 
     if (parsed.settings && typeof parsed.settings === "object") delete parsed.settings.cloudOnboarding;
     if (cloud && parsed.settings && typeof parsed.settings === "object") delete parsed.settings.cloud;
+    if ((type === "all" || type === "datastore") && parsed.dataStore)
+        parsed.dataStore = stripLocalGifFolderBindings(parsed.dataStore);
 
     switch (type) {
         case "all": {
@@ -165,7 +180,7 @@ export async function exportSettings({ syncDataStore = true, type = "all", minif
     if (syncDataStore) {
         try {
             const rawEntries = await DataStore.entries();
-            dataStore = rawEntries.filter(([key]) => typeof key !== "string" || !SENSITIVE_DATASTORE_KEYS.has(key));
+            dataStore = stripLocalGifFolderBindings(rawEntries.filter(([key]) => typeof key !== "string" || !SENSITIVE_DATASTORE_KEYS.has(key)));
         } catch (err) {
             logger.error("Failed to read DataStore entries:", err);
 

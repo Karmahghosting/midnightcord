@@ -6,14 +6,17 @@
 
 import { Button } from "@components/Button";
 import { Heading } from "@components/Heading";
-import { CopyIcon, ImageIcon, OwnerCrownIcon, PlusIcon, UserIcon } from "@components/Icons";
+import { CopyIcon, FolderIcon, ImageIcon, OwnerCrownIcon, PlusIcon, UserIcon } from "@components/Icons";
 import { copyToClipboard } from "@utils/clipboard";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize } from "@utils/modal";
 import { React, useEffect, useState } from "@webpack/common";
 
 import { gifTeams } from "./controller";
 import { insertGif } from "./favorites";
-import type { GifInput, Sharing, SharingMode, TeamsSnapshot } from "./types";
+import { useFoldersSnapshot } from "./FoldersModal";
+import { gifLabel, GifPreview, pausePreview, playPreview } from "./GifPreview";
+import { settings } from "./settings";
+import type { Sharing, SharingMode, TeamsSnapshot } from "./types";
 
 type View = "gifs" | "sharing" | "members";
 interface Confirmation { title: string; description: string; label: string; action: () => Promise<void>; }
@@ -21,36 +24,6 @@ interface Confirmation { title: string; description: string; label: string; acti
 export function useTeamsSnapshot(): TeamsSnapshot {
     return React.useSyncExternalStore(gifTeams.subscribe, gifTeams.getSnapshot);
 }
-
-function gifLabel(gif: GifInput): string {
-    if (gif.title) return gif.title;
-    try {
-        const url = new URL(gif.url);
-        return decodeURIComponent(url.pathname.split("/").filter(Boolean).at(-1) || url.hostname)
-            .replace(/[-_]/g, " ").replace(/\.(gif|mp4|webm|webp)$/i, "");
-    } catch {
-        return "GIF";
-    }
-}
-
-function GifPreview({ gif }: { gif: GifInput; }) {
-    const [failed, setFailed] = useState(false);
-    useEffect(() => setFailed(false), [gif.src]);
-    if (!gif.src || failed) return <span className="vc-gif-teams-preview vc-gif-teams-placeholder"><ImageIcon /><span>Aperçu indisponible</span></span>;
-    return <span className="vc-gif-teams-preview">
-        {gif.format === 2
-            ? <video src={gif.src} muted loop playsInline preload="none" onError={() => setFailed(true)} aria-hidden="true" />
-            : <img src={gif.src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}
-        {gif.format === 2 && <span className="vc-gif-teams-video-label">GIF vidéo</span>}
-    </span>;
-}
-
-function playPreview(target: HTMLElement) {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    void target.querySelector("video")?.play().catch(() => { });
-}
-
-function pausePreview(target: HTMLElement) { target.querySelector("video")?.pause(); }
 
 function TeamForms({ busy }: { busy: boolean; }) {
     const [name, setName] = useState("");
@@ -85,6 +58,7 @@ function TeamForms({ busy }: { busy: boolean; }) {
 }
 
 function SharedGifs({ snapshot, onInsert }: { snapshot: TeamsSnapshot; onInsert: (url: string) => void; }) {
+    const { autoAddSharedFavorites } = settings.use(["autoAddSharedFavorites"]);
     const [query, setQuery] = useState("");
     const { page, team, filterMember, busy, loading } = snapshot;
     useEffect(() => setQuery(""), [team?.id, page?.offset, filterMember]);
@@ -114,12 +88,15 @@ function SharedGifs({ snapshot, onInsert }: { snapshot: TeamsSnapshot; onInsert:
             <div><Button variant="secondary" size="small" disabled={busy || loading || page.offset === 0} onClick={() => void gifTeams.loadPage(filterMember, Math.max(0, page.offset - 60))}>Précédent</Button>
                 <Button variant="secondary" size="small" disabled={busy || loading || page.nextOffset === null} onClick={() => { if (page.nextOffset !== null) void gifTeams.loadPage(filterMember, page.nextOffset); }}>Suivant</Button></div>
         </div>}
-        <p className="vc-gif-teams-muted">Un clic ajoute le GIF au brouillon. Aucun message n’est envoyé automatiquement.</p>
+        <p className="vc-gif-teams-muted">{autoAddSharedFavorites ? "Les GIF partagés sont ajoutés à vos favoris Discord pendant la synchronisation. " : "L’ajout automatique à vos favoris Discord est désactivé. "}Un clic ici ajoute le GIF au brouillon. Aucun message n’est envoyé automatiquement.</p>
     </>;
 }
 
-function SharingEditor({ snapshot, sharing }: { snapshot: TeamsSnapshot; sharing: Sharing; }) {
-    const [mode, setMode] = useState<SharingMode>(sharing.mode);
+function SharingEditor({ snapshot, sharing, onFolders }: { snapshot: TeamsSnapshot; sharing: Sharing; onFolders?: () => void; }) {
+    const foldersSnapshot = useFoldersSnapshot();
+    const { folderBinding } = snapshot;
+    const [mode, setMode] = useState<SharingMode | "folder">(folderBinding ? "folder" : sharing.mode);
+    const [folderId, setFolderId] = useState(folderBinding?.folderId ?? "");
     const [selected, setSelected] = useState(() => new Set(sharing.gifs.map(gif => gif.url)));
     const [confirmed, setConfirmed] = useState(sharing.mode === "auto");
     const [editingRevision, setEditingRevision] = useState(sharing.revision);
@@ -130,23 +107,30 @@ function SharingEditor({ snapshot, sharing }: { snapshot: TeamsSnapshot; sharing
     const { favorites, favoritesReady, busy, loading } = snapshot;
     useEffect(() => {
         if (dirty) return;
-        setMode(sharing.mode);
+        setMode(folderBinding ? "folder" : sharing.mode);
+        setFolderId(folderBinding?.folderId ?? "");
         setSelected(new Set(sharing.gifs.map(gif => gif.url)));
         setConfirmed(sharing.mode === "auto");
         setEditingRevision(sharing.revision);
-    }, [sharing.revision, dirty]);
+    }, [sharing.revision, folderBinding?.folderId, folderBinding?.paused, dirty]);
     const filtered = favorites.filter(gif => `${gifLabel(gif)} ${gif.url}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
     const selectedCount = favorites.filter(gif => selected.has(gif.url)).length;
     const conflict = dirty && editingRevision !== sharing.revision;
-    const canSave = dirty && !conflict && !busy && !loading && (mode === "off" || favoritesReady) && (mode !== "auto" || confirmed);
+    const folder = foldersSnapshot.folders.find(item => item.id === folderId);
+    const folderCount = folder ? favorites.filter(gif => folder.urls.includes(gif.url)).length : 0;
+    const canSave = (dirty || mode === "folder" && !!folderBinding?.paused) && !conflict && !busy && !loading
+        && (mode === "off" || favoritesReady) && (mode !== "auto" || confirmed)
+        && (mode !== "folder" || foldersSnapshot.ready && !!folder);
     async function save() {
         if (!canSave) return;
-        await gifTeams.setSharing(mode, mode === "manual" ? [...selected] : undefined, editingRevision);
+        if (mode === "folder") await gifTeams.setSharingFolder(folderId, editingRevision);
+        else await gifTeams.setSharing(mode, mode === "manual" ? [...selected] : undefined, editingRevision);
         if (!gifTeams.getSnapshot().error) { setDirty(false); setSaved(true); }
     }
-    function chooseMode(next: SharingMode) {
+    function chooseMode(next: SharingMode | "folder") {
         setMode(next); setDirty(true); setSaved(false);
         if (next === "auto" && sharing.mode !== "auto") setConfirmed(false);
+        if (next === "folder" && !folderId) setFolderId(foldersSnapshot.folders[0]?.id ?? "");
     }
     return <div className="vc-gif-teams-sharing">
         <Heading tag="h3">Ce que cette team peut voir</Heading>
@@ -154,11 +138,20 @@ function SharingEditor({ snapshot, sharing }: { snapshot: TeamsSnapshot; sharing
         {conflict && <div className="vc-gif-teams-error" role="alert"><p>Ce partage a changé depuis un autre appareil. Rechargez la sélection avant de la modifier.</p><Button variant="secondary" size="small" onClick={() => { setDirty(false); setSaved(false); }}>Recharger la sélection</Button></div>}
         <fieldset className="vc-gif-teams-modes" disabled={busy || loading}>
             <legend>Mode de partage</legend>
-            <label><input type="radio" name="gif-team-sharing-mode" value="auto" checked={mode === "auto"} onChange={() => chooseMode("auto")} /><span><strong>Tous mes favoris</strong><small>Les ajouts et retraits suivent vos favoris Discord.</small></span></label>
+            <label><input type="radio" name="gif-team-sharing-mode" value="auto" checked={mode === "auto"} onChange={() => chooseMode("auto")} /><span><strong>Tous mes favoris</strong><small>Vos favoris Discord, sauf les GIF importés des teams sur cet appareil.</small></span></label>
             <label><input type="radio" name="gif-team-sharing-mode" value="manual" checked={mode === "manual"} onChange={() => chooseMode("manual")} /><span><strong>Ma sélection</strong><small>Seuls les GIF cochés sont partagés.</small></span></label>
+            <label><input type="radio" name="gif-team-sharing-mode" value="folder" checked={mode === "folder"} onChange={() => chooseMode("folder")} /><span><strong>Un dossier</strong><small>Seuls les favoris rangés dans ce dossier sont partagés.</small></span></label>
             <label><input type="radio" name="gif-team-sharing-mode" value="off" checked={mode === "off"} onChange={() => chooseMode("off")} /><span><strong>Ne rien partager</strong><small>Vos GIF sont retirés de cette team.</small></span></label>
         </fieldset>
-        {mode === "auto" && <label className="vc-gif-teams-consent"><input type="checkbox" checked={confirmed} disabled={busy || loading} onChange={event => { setConfirmed(event.target.checked); setDirty(true); setSaved(false); }} />Je partage tous mes GIF favoris avec cette team, y compris ceux que j’ajouterai ensuite.</label>}
+        {mode === "folder" && <div className="vc-gif-teams-folder-sharing">
+            {folderBinding?.paused && <div className="vc-gif-teams-error" role="alert"><strong>Partage du dossier en pause.</strong> {folderBinding.paused} Vérifiez le dossier puis enregistrez pour reprendre.</div>}
+            <label>Dossier partagé<select value={folderId} disabled={busy || loading || !foldersSnapshot.ready} onChange={event => { setFolderId(event.target.value); setDirty(true); setSaved(false); }}><option value="">Choisir un dossier</option>{foldersSnapshot.folders.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+            {!foldersSnapshot.folders.length && <p>Créez un dossier et rangez-y vos favoris avant d’autoriser le partage.</p>}
+            {folder && <p>{folderCount} GIF actuellement dans ce dossier. Les futurs ajouts et retraits seront aussi partagés avec cette team lorsque Midnightcord est ouvert sur cet appareil.</p>}
+            <p>Les dossiers et leur lien avec les teams restent sur cet appareil. Sur un autre appareil, ce partage apparaît comme une sélection manuelle.</p>
+            {onFolders && <Button type="button" size="small" variant="secondary" onClick={onFolders}><FolderIcon width={16} height={16} />Gérer mes dossiers</Button>}
+        </div>}
+        {mode === "auto" && <label className="vc-gif-teams-consent"><input type="checkbox" checked={confirmed} disabled={busy || loading} onChange={event => { setConfirmed(event.target.checked); setDirty(true); setSaved(false); }} />Je partage mes GIF favoris avec cette team, y compris mes futurs ajouts. Les GIF reçus des teams sur cet appareil sont exclus de ce partage automatique.</label>}
         {mode === "manual" && <>
             <div className="vc-gif-teams-selection-header"><label>Mes favoris<input type="search" value={query} placeholder="Rechercher un favori…" onChange={event => { setQuery(event.target.value); setVisibleCount(48); }} /></label><span>{selectedCount} sélectionné{selectedCount > 1 ? "s" : ""}</span></div>
             {!favoritesReady && <p role="status">Chargement de vos favoris Discord…</p>}
@@ -176,7 +169,7 @@ function SharingEditor({ snapshot, sharing }: { snapshot: TeamsSnapshot; sharing
             </div>
             {filtered.length > visibleCount && <Button variant="secondary" size="small" onClick={() => setVisibleCount(count => count + 48)}>Afficher les suivants</Button>}
         </>}
-        {mode === "auto" && <p className="vc-gif-teams-muted">{favoritesReady ? `${favorites.length} GIF favoris disponibles. La synchronisation s’effectue lorsque Midnightcord est ouvert et connecté.` : "Chargement de vos favoris Discord…"}</p>}
+        {mode === "auto" && <p className="vc-gif-teams-muted">{favoritesReady ? `${favorites.length} GIF présents dans vos favoris Discord, avant exclusion des imports locaux. La synchronisation s’effectue lorsque Midnightcord est ouvert et connecté.` : "Chargement de vos favoris Discord…"}</p>}
         <p className="vc-gif-teams-privacy">Les liens et aperçus partagés sont stockés par l’API et visibles par les membres de la team. Ils ne sont pas chiffrés comme vos sauvegardes Cloud.</p>
         <div className="vc-gif-teams-actions"><Button disabled={!canSave} onClick={() => void save()}>{busy ? "Enregistrement…" : "Enregistrer mon partage"}</Button>{saved && <span role="status">Partage enregistré.</span>}{dirty && !saved && <span className="vc-gif-teams-muted">Modifications non enregistrées</span>}</div>
     </div>;
@@ -220,8 +213,10 @@ function Members({ snapshot, ask }: { snapshot: TeamsSnapshot; ask: (confirmatio
     </>;
 }
 
-export default function TeamsModal(props: ModalProps) {
+export default function TeamsModal(props: ModalProps & { onFolders?: () => void; }) {
+    const { onFolders, ...modalProps } = props;
     const snapshot = useTeamsSnapshot();
+    const { autoAddSharedFavorites } = settings.use(["autoAddSharedFavorites"]);
     const [view, setView] = useState<View>("gifs");
     const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
     const [localError, setLocalError] = useState("");
@@ -230,26 +225,27 @@ export default function TeamsModal(props: ModalProps) {
     function insert(url: string) {
         try { insertGif(url); props.onClose(); } catch { setLocalError("Impossible d’ajouter ce GIF au brouillon. Réessayez depuis une conversation ouverte."); }
     }
-    return <ModalRoot {...props} size={ModalSize.LARGE} className="vc-gif-teams" aria-labelledby="vc-gif-teams-title">
-        <ModalHeader className="vc-gif-teams-header"><div><Heading tag="h2" id="vc-gif-teams-title"><ImageIcon width={24} height={24} />Teams GIF</Heading><p>Vos favoris, entre vous.</p></div><ModalCloseButton onClick={props.onClose} /></ModalHeader>
+    return <ModalRoot {...modalProps} size={ModalSize.LARGE} className="vc-gif-teams" aria-labelledby="vc-gif-teams-title">
+        <ModalHeader className="vc-gif-teams-header"><div><Heading tag="h2" id="vc-gif-teams-title"><ImageIcon width={24} height={24} />Teams GIF</Heading><p>Vos favoris, entre vous.</p></div><div className="vc-gif-teams-header-actions">{onFolders && <Button size="small" variant="secondary" onClick={onFolders}><FolderIcon width={16} height={16} />Dossiers</Button>}<ModalCloseButton onClick={props.onClose} /></div></ModalHeader>
         <ModalContent className="vc-gif-teams-body">
             {(error || localError) && <div className="vc-gif-teams-error" role="alert">{localError || error}</div>}
             {confirmation ? <div className="vc-gif-teams-confirm" role="alertdialog" aria-labelledby="vc-gif-teams-confirm-title" aria-describedby="vc-gif-teams-confirm-description"><Heading tag="h3" id="vc-gif-teams-confirm-title">{confirmation.title}</Heading><p id="vc-gif-teams-confirm-description">{confirmation.description}</p><div className="vc-gif-teams-actions"><Button variant="secondary" autoFocus disabled={busy} onClick={() => setConfirmation(null)}>Annuler</Button><Button variant="dangerPrimary" disabled={busy} onClick={() => {
                 if (busy) return;
                 void confirmation.action().then(() => { if (!gifTeams.getSnapshot().error) setConfirmation(null); });
             }}>{busy ? "En cours…" : confirmation.label}</Button></div></div>
-                : !connected ? <div className="vc-gif-teams-onboarding"><ImageIcon width={40} height={40} /><Heading tag="h3">Un espace pour vos GIF favoris</Heading><p>Créez une team privée ou rejoignez vos proches avec un code. Pour chaque team, partagez tous vos favoris automatiquement, une sélection, ou rien du tout.</p><Button className="vc-gif-teams-activate" disabled={loading || busy} onClick={() => void gifTeams.initializeConnection()}>{loading || busy ? "Connexion…" : "Activer mes teams"}</Button><p className="vc-gif-teams-muted">Votre identité Cloud permet de retrouver vos teams. Cette activation ne lance pas de sauvegarde. Sur un autre appareil, restaurez votre clé Cloud dans les réglages Midnightcord.</p></div>
+                : !connected ? <div className="vc-gif-teams-onboarding"><ImageIcon width={40} height={40} /><Heading tag="h3">Un espace pour vos GIF favoris</Heading><p>Créez une team privée ou rejoignez vos proches avec un code. Pour chaque team, partagez tous vos favoris, un dossier, une sélection, ou rien du tout.</p><p className="vc-gif-teams-muted">{autoAddSharedFavorites ? "Les GIF reçus des teams rejoignent automatiquement vos favoris Discord. Vous pouvez désactiver cet ajout dans les préférences de Teams GIF." : "L’ajout des GIF reçus aux favoris Discord est désactivé. Vous pouvez l’activer dans les préférences de Teams GIF."}</p><Button className="vc-gif-teams-activate" disabled={loading || busy} onClick={() => void gifTeams.initializeConnection()}>{loading || busy ? "Connexion…" : "Activer mes teams"}</Button><p className="vc-gif-teams-muted">Votre identité Cloud permet de retrouver vos teams. Cette activation ne lance pas de sauvegarde. Sur un autre appareil, restaurez votre clé Cloud dans les réglages Midnightcord.</p></div>
                     : <div className="vc-gif-teams-layout">
                         <aside className="vc-gif-teams-sidebar" aria-label="Mes teams"><div className="vc-gif-teams-sidebar-title"><strong>Mes teams</strong><Button size="small" variant="secondary" disabled={busy || loading} onClick={() => void gifTeams.refresh()}>Actualiser</Button></div>
                             {loading && !teams.length && <p role="status">Chargement…</p>}
                             <ul className="vc-gif-teams-list">{teams.map(item => <li key={item.id}><button type="button" disabled={busy || loading} aria-current={item.id === team?.id ? "true" : undefined} onClick={() => void gifTeams.selectTeam(item.id)}><strong>{item.name}</strong><small>{item.memberCount} membre{item.memberCount > 1 ? "s" : ""} · {item.gifCount} GIF</small></button></li>)}</ul>
                             <TeamForms busy={busy || loading} />
+                            <div className="vc-gif-teams-import-settings"><label><input type="checkbox" checked={autoAddSharedFavorites} onChange={event => { settings.store.autoAddSharedFavorites = event.target.checked; }} /><span>Ajouter les GIF des teams à mes favoris Discord</span></label><p>Retrouvez-les directement dans le sélecteur de GIF habituel.</p><details><summary>À propos de l’import</summary><p>Sur cet appareil, les GIF importés ne sont pas repartagés automatiquement. Vous pouvez les choisir explicitement dans une sélection ou un dossier.</p><p>Cette protection est locale. Sur un autre appareil, « Tous mes favoris » peut repartager les GIF synchronisés par Discord, car leur origine importée n’y est pas mémorisée.</p><p>Désactiver cette option arrête les prochains ajouts. Les GIF déjà ajoutés restent dans vos favoris.</p></details>{snapshot.importing && <p role="status">Ajout des GIF à vos favoris…</p>}{!snapshot.importing && snapshot.importedCount > 0 && <p role="status">{snapshot.importedCount} GIF ajouté{snapshot.importedCount > 1 ? "s" : ""} pendant cette session.</p>}{snapshot.importError && <p role="alert" className="vc-gif-teams-import-error">{snapshot.importError}</p>}</div>
                             <details className="vc-gif-teams-account"><summary>Mon espace GIF</summary><p>Supprimer cet espace efface vos partages, vos adhésions et les teams dont vous êtes propriétaire. Vos sauvegardes Cloud ne sont pas supprimées.</p><Button size="small" variant="dangerSecondary" disabled={busy || loading} onClick={() => setConfirmation({ title: "Supprimer votre espace GIF ?", description: "Vos teams, vos adhésions et tous vos GIF partagés seront supprimés. Les favoris Discord et les sauvegardes Cloud sont conservés.", label: "Supprimer mon espace GIF", action: () => gifTeams.deleteAccount() })}>Supprimer mon espace GIF</Button></details>
                         </aside>
                         <main className="vc-gif-teams-main" aria-busy={loading}>
                             {team ? <><div className="vc-gif-teams-team-heading"><Heading tag="h3">{team.name}</Heading><span>{team.memberCount} membre{team.memberCount > 1 ? "s" : ""}</span></div><div className="vc-gif-teams-tabs" role="group" aria-label="Sections de la team">{([["gifs", "GIF partagés"], ["sharing", "Mon partage"], ["members", "Membres"]] as const).map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => setView(id)}>{label}</button>)}</div>
                                 {view === "gifs" && <SharedGifs snapshot={snapshot} onInsert={insert} />}
-                                {view === "sharing" && (sharing ? <SharingEditor key={team.id} snapshot={snapshot} sharing={sharing} /> : <p role="status">Chargement de votre partage…</p>)}
+                                {view === "sharing" && (sharing ? <SharingEditor key={team.id} snapshot={snapshot} sharing={sharing} onFolders={onFolders} /> : <p role="status">Chargement de votre partage…</p>)}
                                 {view === "members" && <Members snapshot={snapshot} ask={setConfirmation} />}
                             </> : <div className="vc-gif-teams-empty"><UserIcon width={34} height={34} /><Heading tag="h3">Votre prochaine team commence ici</Heading><p>Créez une team ou utilisez un code d’invitation dans le panneau à côté.</p></div>}
                         </main>

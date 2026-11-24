@@ -15,6 +15,8 @@ import { transformSync } from "esbuild";
 const directory = new URL("../src/midnightcordplugins/gifTeams/", import.meta.url);
 const controllerCode = transformSync(readFileSync(new URL("controller.ts", directory), "utf8"), { loader: "ts", format: "cjs" }).code;
 const serviceCode = transformSync(readFileSync(new URL("service.ts", directory), "utf8"), { loader: "ts", format: "cjs" }).code;
+const foldersCode = transformSync(readFileSync(new URL("folders.ts", directory), "utf8"), { loader: "ts", format: "cjs" }).code;
+const importsCode = transformSync(readFileSync(new URL("imports.ts", directory), "utf8"), { loader: "ts", format: "cjs" }).code;
 const cryptoCode = transformSync(readFileSync(new URL("../src/api/SettingsSync/cloudCrypto.ts", import.meta.url), "utf8"), { loader: "ts", format: "cjs" }).code;
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 const tick = async () => { for (let index = 0; index < 40; index++) await Promise.resolve(); };
@@ -80,26 +82,55 @@ function team(id = "team-one", mode = "off", gifs = []) {
     return { id, name: id, ownerId: "member-me", revision: 0, mode, gifs: clone(gifs), other: [] };
 }
 
-function fixture(initialTeams = [team()], favorites = [alpha, bravo]) {
+function fixture(initialTeams = [team()], favorites = [alpha, bravo], withFolders = false, withImports = false) {
     const clock = timers();
     const { service } = serviceFixture();
     const state = {
         userId: "1337883355840118887", token: "account-a", displayName: "Alice", connected: true,
         teams: new Map(initialTeams.map(item => [item.id, item])), favorites: clone(favorites), calls: [],
-        sessions: [], identityCalls: [], loadCalls: 0, favoriteListeners: new Set(), userListeners: new Set(), imports: 0
+        sessions: [], identityCalls: [], loadCalls: 0, favoriteListeners: new Set(), userListeners: new Set(), imports: 0,
+        nativeCalls: [], importEnabled: true, importListeners: new Set()
     };
     const emptyFavoriteModule = {
         getCurrentUser: () => { state.imports++; return null; },
         loadFavorites: () => { state.imports++; throw Error("Singleton must remain idle"); },
-        subscribeFavorites: () => { state.imports++; }, subscribeUser: () => { state.imports++; }
+        subscribeFavorites: () => { state.imports++; }, subscribeUser: () => { state.imports++; },
+        publicGifUrl: url => typeof url === "string" && url.startsWith("https://") ? url : null
     };
+    const folderApi = evaluate(foldersCode, {
+        "@api/DataStore": {}, "@api/SettingsSync/cloudCrypto": cloudCrypto, "./favorites": emptyFavoriteModule
+    }, clock);
+    const storage = new Map();
+    const importApi = evaluate(importsCode, {
+        "@api/DataStore": {}, "@api/SettingsSync/cloudCrypto": cloudCrypto, "./favorites": emptyFavoriteModule
+    });
+    const imports = importApi.createGifImportStore({
+        currentUserId: () => state.userId,
+        read: async key => clone(storage.get(key)),
+        write: async (key, value) => {
+            await state.importStorageHold?.();
+            if (state.importStorageError) throw state.importStorageError;
+            storage.set(key, clone(value));
+        }
+    });
+    let folderId = 0;
+    const folders = folderApi.createGifFolderStore({
+        currentUserId: () => state.userId,
+        favorites: async () => { if (state.favoritesError) throw state.favoritesError; return clone(state.favorites); },
+        subscribeFavorites(callback) { state.favoriteListeners.add(callback); return () => state.favoriteListeners.delete(callback); },
+        subscribeUser(callback) { state.userListeners.add(callback); return () => state.userListeners.delete(callback); },
+        read: async key => clone(storage.get(key)),
+        write: async (key, value) => { await state.storageHold?.(); storage.set(key, clone(value)); },
+        newId: () => `folder-${++folderId}`
+    });
     const exported = evaluate(controllerCode, {
         "@api/SettingsSync/cloudSetup": { createCloudIdentity: () => { state.imports++; }, getCloudKey: () => { state.imports++; } },
-        "./favorites": emptyFavoriteModule, "./service": service
+        "./favorites": emptyFavoriteModule, "./service": service, "./folders": folderApi,
+        "./imports": importApi, "./settings": { settings: { store: { autoAddSharedFavorites: true } }, subscribeImportSettings: () => () => {} }
     }, clock);
     const summary = item => ({
         id: item.id, name: item.name, role: "owner", memberCount: 1 + item.other.length,
-        gifCount: item.gifs.length, updatedAt: "2026-11-24T12:00:00.000Z", mode: item.mode, sharingRevision: item.revision
+        gifCount: item.gifs.length + (item.received?.length ?? 0), updatedAt: item.updatedAt ?? "2026-11-24T12:00:00.000Z", mode: item.mode, sharingRevision: item.revision
     });
     const ownSharing = item => ({ mode: item.mode, gifs: item.gifs.map((item, i) => ({ id: `gif-${i}`, ...item })), revision: item.revision });
     const detail = item => ({ ...summary(item), ownerId: item.ownerId, members: [
@@ -107,8 +138,29 @@ function fixture(initialTeams = [team()], favorites = [alpha, bravo]) {
         ...item.other
     ] });
     const controller = exported.createGifTeamsController({
+        folders: withFolders ? folders : undefined,
+        imports: withImports ? {
+            store: imports,
+            enabled: () => state.importEnabled,
+            subscribe(listener) { state.importListeners.add(listener); return () => state.importListeners.delete(listener); },
+            async add(gifs, userId, signal) {
+                state.nativeCalls.push({ gifs: clone(gifs), userId, signal });
+                await state.nativeHold?.();
+                if (signal.aborted || state.userId !== userId) throw new DOMException("Import cancelled", "AbortError");
+                if (state.nativeError) throw state.nativeError;
+                const addedUrls = [];
+                const existingUrls = [];
+                for (const gif of gifs) {
+                    if (state.favorites.some(item => item.url === gif.url)) existingUrls.push(gif.url);
+                    else { state.favorites.push(clone(gif)); addedUrls.push(gif.url); }
+                }
+                for (const listener of state.favoriteListeners) listener();
+                return { addedUrls, existingUrls, skippedUrls: [], skipped: [] };
+            }
+        } : undefined,
         async identity(create) {
             state.identityCalls.push(create);
+            await state.identityHold?.(create);
             if (create) state.connected = true;
             return state.connected && state.userId ? { userId: state.userId, displayName: state.displayName, authorization: state.token } : null;
         },
@@ -151,8 +203,10 @@ function fixture(initialTeams = [team()], favorites = [alpha, bravo]) {
                 if (action === "gifs") {
                     const params = new URLSearchParams(query);
                     const offset = Number(params.get("offset"));
-                    const items = current.gifs.map((item, i) => ({ id: `gif-${i}`, ...item, memberId: "member-me", displayName: state.displayName }));
-                    return { items: items.slice(offset, offset + 60), total: items.length, offset, nextOffset: offset + 60 < items.length ? offset + 60 : null };
+                    const limit = Number(params.get("limit")) || 60;
+                    const items = [...current.gifs.map((item, i) => ({ id: `gif-${i}`, ...item, memberId: "member-me", displayName: state.displayName })), ...(current.received ?? [])];
+                    const result = { items: items.slice(offset, offset + limit), total: items.length, offset, nextOffset: offset + limit < items.length ? offset + limit : null };
+                    return state.pageTransform?.(result, call) ?? result;
                 }
                 if (action === "invites" && method === "POST") return { code: "private-single-use-code", expiresAt: "2026-11-25T12:00:00.000Z" };
                 if (action === "invites" && method === "DELETE") return;
@@ -162,9 +216,30 @@ function fixture(initialTeams = [team()], favorites = [alpha, bravo]) {
         }
     });
     return {
-        state, controller, clock, service,
+        state, controller, clock, service, folders, folderApi, storage, imports,
         writes: () => state.calls.filter(call => call.method !== "GET"),
         async start() { controller.start(); await controller.refresh(); await tick(); },
+        async nextImport() {
+            const pending = [...clock.timeouts.entries()].find(([, timer]) => timer.ms === 750);
+            if (!pending) return false;
+            const done = deferred();
+            let began = false;
+            const unsubscribe = controller.subscribe(() => {
+                if (controller.getSnapshot().importing) began = true;
+                else if (began) done.resolve();
+            });
+            clock.timeouts.delete(pending[0]);
+            pending[1].callback();
+            await done.promise;
+            unsubscribe();
+            await tick();
+            return true;
+        },
+        async drainImports() {
+            for (let pass = 0; pass < 20; pass++) if (!await this.nextImport()) return;
+            throw Error("Imports failed to settle within bounded passes");
+        },
+        toggleImports(enabled) { state.importEnabled = enabled; for (const listener of state.importListeners) listener(); },
         notifyFavorites() { for (const listener of state.favoriteListeners) listener(); },
         notifyUser() { for (const listener of state.userListeners) listener(); }
     };
@@ -175,6 +250,429 @@ test("loading controller code creates no identity, subscriptions or network requ
     assert.equal(f.state.imports, 0);
     assert.equal(f.state.calls.length, 0);
     assert.equal(f.clock.intervals.size, 0);
+});
+
+function receivingTeam(gifs, id = "team-one", own = []) {
+    const item = team(id, own.length ? "auto" : "off", own);
+    item.other = [{ id: "member-other", displayName: "Other", role: "member", mode: "manual", gifCount: gifs.length }];
+    item.received = gifs.map((gif, index) => ({ ...gif, id: `other-${index}`, memberId: "member-other", displayName: "Other" }));
+    return item;
+}
+
+test("shared GIFs arrive in native favorites in bounded pages without importing the viewer's own shares", async () => {
+    const incoming = Array.from({ length: 245 }, (_, index) => gif(`received-${index}`));
+    const f = fixture([receivingTeam(incoming, "team-one", [alpha])], [alpha], false, true);
+    await f.start();
+    assert.equal(f.state.nativeCalls.length, 0, "Receiving runs in background after the ordinary refresh");
+    await f.nextImport();
+    assert.equal(f.state.calls.filter(call => call.path.includes("limit=100")).length, 2);
+    assert(f.controller.getSnapshot().importedCount < incoming.length);
+    await f.drainImports();
+    assert.equal(f.state.favorites.length, 246);
+    assert.equal(f.controller.getSnapshot().importedCount, 245);
+    assert(f.state.nativeCalls.every(call => call.gifs.length <= 100 && call.gifs.every(gif => gif.url !== alpha.url)));
+    const requestCount = f.state.calls.length;
+    f.clock.fireTimeouts();
+    await tick();
+    assert.equal(f.state.calls.length, requestCount, "Native import events must not start a redundant API refresh");
+    await f.controller.refresh();
+    assert.equal(await f.nextImport(), false, "Completed unchanged scans remain cached");
+    f.controller.stop();
+});
+
+test("received GIFs are deduplicated across teams and a user-unfavorited GIF is never automatically re-added", async () => {
+    const f = fixture([receivingTeam([alpha, bravo]), receivingTeam([bravo], "second")], [alpha], false, true);
+    await f.start();
+    await f.drainImports();
+    assert.deepEqual(f.state.favorites.map(gif => gif.url), [alpha.url, bravo.url]);
+    assert.equal(f.controller.getSnapshot().importedCount, 1);
+    f.state.favorites = [alpha];
+    for (const item of f.state.teams.values()) item.updatedAt = "2026-11-24T13:00:00.000Z";
+    await f.controller.refresh();
+    await f.drainImports();
+    assert.deepEqual(f.state.favorites.map(gif => gif.url), [alpha.url]);
+    assert.equal(f.state.nativeCalls.length, 1);
+    f.controller.stop();
+});
+
+test("native imports stay out of automatic sharing on this device but explicit manual and folder selections can share them", async () => {
+    const f = fixture([receivingTeam([bravo], "team-one", [alpha])], [alpha], true, true);
+    await f.start();
+    await f.drainImports();
+    await f.controller.refresh();
+    assert.deepEqual(f.state.teams.get("team-one").gifs.map(gif => gif.url), [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharing("auto");
+    assert.deepEqual(f.writes().at(-1).body.gifs.map(gif => gif.url), [alpha.url]);
+    await f.controller.setSharing("manual", [bravo.url]);
+    assert.deepEqual(f.writes().at(-1).body.gifs.map(gif => gif.url), [bravo.url]);
+    await f.folders.refresh();
+    const folder = await f.folders.create("Repartagés", [bravo.url]);
+    await f.controller.setSharingFolder(folder);
+    assert.deepEqual(f.writes().at(-1).body.gifs.map(gif => gif.url), [bravo.url]);
+    f.controller.stop();
+});
+
+test("generic native import failures stay visible without a retry loop or disabled forms", async () => {
+    const f = fixture([receivingTeam([bravo])], [alpha], false, true);
+    await f.start();
+    f.state.nativeError = Error("Native settings unavailable");
+    await f.nextImport();
+    assert.equal(f.state.nativeCalls.length, 1);
+    assert.equal(await f.nextImport(), false);
+    const snapshot = f.controller.getSnapshot();
+    assert.equal(snapshot.importError, "Native settings unavailable");
+    assert.equal(snapshot.busy, false);
+    assert.equal(snapshot.loading, false);
+    assert.equal(snapshot.error, null);
+    for (let i = 0; i < 20; i++) { f.notifyFavorites(); f.notifyUser(); }
+    f.clock.fireTimeouts();
+    await tick();
+    assert.equal(f.state.nativeCalls.length, 1);
+    assert.equal(f.controller.getSnapshot().importError, "Native settings unavailable");
+    f.state.nativeError = null;
+    await f.controller.refresh();
+    await f.drainImports();
+    assert.equal(f.controller.getSnapshot().importError, null);
+    assert(f.state.favorites.some(gif => gif.url === bravo.url));
+    f.controller.stop();
+});
+
+test("failed durable provenance prevents native writes and does not silently retry", async () => {
+    const f = fixture([receivingTeam([bravo])], [alpha], false, true);
+    await f.start();
+    f.state.importStorageError = Error("Storage is full");
+    await f.nextImport();
+    assert.equal(f.state.nativeCalls.length, 0);
+    assert.equal(f.controller.getSnapshot().importError, "Storage is full");
+    assert.equal(await f.nextImport(), false);
+    assert.deepEqual(f.state.favorites.map(gif => gif.url), [alpha.url]);
+    f.controller.stop();
+});
+
+test("switching off auto-import cancels an already queued native update", async () => {
+    const f = fixture([receivingTeam([bravo])], [alpha], false, true);
+    await f.start();
+    const arrived = deferred();
+    const hold = deferred();
+    f.state.nativeHold = () => { arrived.resolve(); return hold.promise; };
+    const pass = f.nextImport();
+    await arrived.promise;
+    f.toggleImports(false);
+    hold.resolve();
+    await pass;
+    await tick();
+    assert.deepEqual(f.state.favorites.map(gif => gif.url), [alpha.url]);
+    assert.equal(f.state.nativeCalls[0].signal.aborted, true);
+    assert.equal(await f.nextImport(), false);
+    f.state.nativeHold = null;
+    f.toggleImports(true);
+    await f.controller.refresh();
+    await f.drainImports();
+    assert(f.state.favorites.some(gif => gif.url === bravo.url));
+    f.controller.stop();
+});
+
+test("an account change aborts pending native imports before they touch the new account", async () => {
+    const f = fixture([receivingTeam([bravo])], [alpha], false, true);
+    await f.start();
+    const arrived = deferred();
+    const hold = deferred();
+    f.state.nativeHold = () => { arrived.resolve(); return hold.promise; };
+    const pass = f.nextImport();
+    await arrived.promise;
+    f.state.userId = "1395048695501688953";
+    f.state.token = "account-b";
+    f.state.favorites = [charlie];
+    f.notifyUser();
+    hold.resolve();
+    await pass;
+    await f.controller.refresh();
+    assert.deepEqual(f.state.favorites.map(gif => gif.url), [charlie.url]);
+    assert.equal(f.state.nativeCalls[0].signal.aborted, true);
+    f.controller.stop();
+});
+
+test("membership revocation stops incoming scans without removing previously imported native favorites", async () => {
+    const f = fixture([receivingTeam([bravo])], [alpha], false, true);
+    await f.start();
+    await f.drainImports();
+    f.state.teams.get("team-one").updatedAt = "2026-11-24T14:00:00.000Z";
+    await f.controller.refresh();
+    f.state.requestError = call => call.path.includes("limit=100") ? new f.service.TeamsError(404, "not_found", "Not a member") : null;
+    await f.drainImports();
+    assert.equal(f.controller.getSnapshot().teams.length, 0);
+    assert.deepEqual(f.state.favorites.map(gif => gif.url), [alpha.url, bravo.url]);
+    f.controller.stop();
+});
+
+test("invalid non-progressing incoming pagination stops rather than requesting the same page forever", async () => {
+    const f = fixture([receivingTeam([bravo])], [alpha], false, true);
+    f.state.pageTransform = result => ({ ...result, nextOffset: 0 });
+    await f.start();
+    await f.nextImport();
+    assert.match(f.controller.getSnapshot().importError, /pagination/);
+    assert.equal(f.state.nativeCalls.length, 0);
+    assert.equal(await f.nextImport(), false);
+    f.controller.stop();
+});
+
+async function folderFixture(initialTeams = [team()], favorites = [alpha, bravo, charlie]) {
+    const f = fixture(initialTeams, favorites, true);
+    await f.start();
+    await f.folders.refresh();
+    return f;
+}
+
+test("local folders work before Cloud activation and never publish themselves", async () => {
+    const f = fixture([team()], [alpha, bravo], true);
+    f.state.connected = false;
+    await f.start();
+    await f.folders.refresh();
+    const id = await f.folders.create("Réactions", [alpha.url]);
+    await f.folders.update(id, { name: "Amis", urls: [bravo.url] });
+    f.clock.fireTimeouts();
+    await tick();
+    assert.deepEqual(clone(f.folders.getSnapshot().folders), [{ id, name: "Amis", urls: [bravo.url] }]);
+    assert.equal(f.state.calls.length, 0);
+    assert.equal(f.state.identityCalls.includes(true), false);
+    f.controller.stop();
+});
+
+test("a team follows only its selected folder, including later additions and removals", async () => {
+    const f = await folderFixture();
+    const selected = await f.folders.create("Team", [alpha.url]);
+    await f.folders.create("Privé", [charlie.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(selected);
+    assert.deepEqual(f.writes().at(-1).body.gifs.map(gif => gif.url), [alpha.url]);
+    assert.equal(f.writes().at(-1).body.mode, "manual");
+    assert.deepEqual(clone(f.controller.getSnapshot().folderBinding), { folderId: selected, paused: null });
+    await f.folders.setUrls(selected, [bravo.url]);
+    f.clock.fireTimeouts();
+    await f.controller.refresh();
+    assert.deepEqual(f.writes().at(-1).body.gifs.map(gif => gif.url), [bravo.url]);
+    const count = f.writes().length;
+    await f.controller.refresh();
+    assert.equal(f.writes().length, count, "Saving the updated binding must not start another upload");
+    assert.equal(f.folders.getSnapshot().bindings[0].revision, f.state.teams.get("team-one").revision);
+    f.controller.stop();
+});
+
+test("each team can follow a different folder without including unselected favorites", async () => {
+    const f = await folderFixture([team("one"), team("two")]);
+    const first = await f.folders.create("Un", [alpha.url]);
+    const second = await f.folders.create("Deux", [bravo.url]);
+    await f.controller.selectTeam("one");
+    await f.controller.setSharingFolder(first);
+    await f.controller.selectTeam("two");
+    await f.controller.setSharingFolder(second);
+    await f.folders.setUrls(first, [charlie.url]);
+    await f.controller.refresh();
+    assert.deepEqual(f.state.teams.get("one").gifs.map(gif => gif.url), [charlie.url]);
+    assert.deepEqual(f.state.teams.get("two").gifs.map(gif => gif.url), [bravo.url]);
+    f.controller.stop();
+});
+
+test("unfavorited folder entries disappear from sharing, but unavailable favorites never erase it", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Team", [alpha.url, bravo.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    const count = f.writes().length;
+    f.state.favoritesError = Error("Favoris en cours de chargement");
+    await f.controller.refresh();
+    assert.equal(f.writes().length, count);
+    assert.deepEqual(f.state.teams.get("team-one").gifs.map(gif => gif.url), [alpha.url, bravo.url]);
+    f.state.favoritesError = null;
+    f.state.favorites = [bravo, charlie];
+    await f.controller.refresh();
+    assert.deepEqual(f.state.teams.get("team-one").gifs.map(gif => gif.url), [bravo.url]);
+    f.controller.stop();
+});
+
+test("any remote revision change pauses a folder even when the remote GIFs are unchanged", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Team", [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    const count = f.writes().length;
+    f.state.teams.get("team-one").revision++;
+    f.state.favorites = [bravo];
+    await f.controller.refresh();
+    assert.equal(f.writes().length, count);
+    assert(f.controller.getSnapshot().folderBinding.paused);
+    assert.deepEqual(f.state.teams.get("team-one").gifs.map(gif => gif.url), [alpha.url]);
+    await f.controller.refresh();
+    assert.equal(f.writes().length, count, "A paused folder must not fall through to ordinary manual synchronization");
+    f.controller.stop();
+});
+
+test("a conflicting folder upload pauses its binding and preserves the other device's changes", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Team", [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    await f.folders.setUrls(id, [bravo.url]);
+    f.state.requestError = call => call.method === "PUT" ? new f.service.TeamsError(409, "conflict", "Autre appareil") : null;
+    await f.controller.refresh();
+    assert(f.folders.getSnapshot().bindings[0].paused);
+    assert.deepEqual(f.state.teams.get("team-one").gifs.map(gif => gif.url), [alpha.url]);
+    const count = f.writes().length;
+    f.state.requestError = null;
+    await f.controller.refresh();
+    assert.equal(f.writes().length, count);
+    f.controller.stop();
+});
+
+test("folder edits during an upload are followed by one more refresh", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Team", [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    await f.folders.setUrls(id, [bravo.url]);
+    const pending = deferred();
+    const arrived = deferred();
+    f.state.requestHold = call => { if (call.method === "PUT") { arrived.resolve(); return pending.promise; } };
+    const refresh = f.controller.refresh();
+    await arrived.promise;
+    await f.folders.setUrls(id, [charlie.url]);
+    f.clock.fireTimeouts();
+    pending.resolve();
+    await refresh;
+    f.state.requestHold = null;
+    assert([...f.clock.timeouts.values()].some(timer => timer.ms === 1000));
+    f.clock.fireTimeouts();
+    await f.controller.refresh();
+    assert.deepEqual(f.state.teams.get("team-one").gifs.map(gif => gif.url), [charlie.url]);
+    f.controller.stop();
+});
+
+test("detaching during an in-flight upload cannot resurrect the folder binding", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Team", [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    await f.folders.setUrls(id, [bravo.url]);
+    const pending = deferred();
+    const arrived = deferred();
+    f.state.requestHold = call => { if (call.method === "PUT") { arrived.resolve(); return pending.promise; } };
+    const refresh = f.controller.refresh();
+    await arrived.promise;
+    const binding = f.folders.getSnapshot().bindings[0];
+    await f.folders.detachBinding(binding.teamId, binding.scope);
+    pending.resolve();
+    await refresh;
+    assert.equal(f.folders.getSnapshot().bindings.length, 0);
+    assert.equal(f.controller.getSnapshot().folderBinding, null);
+    f.controller.stop();
+});
+
+test("disabling folder sharing clears the server before allowing deletion, and recreating its name stays unbound", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Amis", [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    await assert.rejects(f.folders.remove(id), /Désactive d’abord/);
+    await f.controller.setSharing("off");
+    assert.equal(f.state.teams.get("team-one").gifs.length, 0);
+    assert.equal(f.folders.getSnapshot().bindings.length, 0);
+    await f.folders.remove(id);
+    const replacement = await f.folders.create("Amis", [bravo.url]);
+    assert.notEqual(replacement, id);
+    const count = f.writes().length;
+    await f.controller.refresh();
+    assert.equal(f.writes().length, count);
+    f.controller.stop();
+});
+
+test("changing the Cloud key never reuses the previous identity's folder binding", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Team", [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    await f.folders.setUrls(id, [bravo.url]);
+    const count = f.writes().length;
+    f.state.token = "new-cloud-identity";
+    await f.controller.refresh();
+    await f.controller.selectTeam("team-one");
+    assert.equal(f.writes().length, count);
+    assert.equal(f.controller.getSnapshot().folderBinding, null);
+    const old = f.folders.getSnapshot().bindings[0];
+    await f.folders.detachBinding(old.teamId, old.scope);
+    await f.folders.remove(id);
+    assert.equal(f.folders.getSnapshot().folders.length, 0, "Old identity bindings remain explicitly detachable");
+    f.controller.stop();
+});
+
+test("a missing persisted folder pauses safely instead of uploading an empty collection", async () => {
+    const f = fixture([team("team-one", "manual", [alpha])], [alpha, bravo], true);
+    const scope = await f.folderApi.folderIdentityScope(f.state.token);
+    f.storage.set(`midnightcord-gif-folders-v1:${f.state.userId}`, {
+        version: 1, folders: [], bindings: [{ teamId: "team-one", teamName: "Team", folderId: "missing", scope, revision: 0, paused: null }]
+    });
+    await f.start();
+    await f.controller.selectTeam("team-one");
+    assert.equal(f.writes().length, 0);
+    assert.match(f.controller.getSnapshot().folderBinding.paused, /n’existe plus/);
+    f.controller.stop();
+});
+
+test("restored folders without local consent bindings never publish until explicitly selected", async () => {
+    const f = fixture([team("team-one", "manual", [alpha])], [alpha, bravo], true);
+    f.storage.set(`midnightcord-gif-folders-v1:${f.state.userId}`, {
+        version: 1, folders: [{ id: "restored", name: "Restauré", urls: [bravo.url] }], bindings: []
+    });
+    await f.start();
+    assert.equal(f.writes().length, 0);
+    await f.controller.selectTeam("team-one");
+    assert.equal(f.controller.getSnapshot().folderBinding, null);
+    await f.controller.setSharingFolder("restored");
+    assert.deepEqual(f.writes().at(-1).body.gifs.map(gif => gif.url), [bravo.url]);
+    f.controller.stop();
+});
+
+test("detaching while a folder upload verifies identity cancels it before the HTTP write", async () => {
+    const f = await folderFixture();
+    const id = await f.folders.create("Team", [alpha.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(id);
+    await f.folders.setUrls(id, [bravo.url]);
+    const count = f.writes().length;
+    const pending = deferred();
+    const arrived = deferred();
+    f.state.favoritesHold = () => {
+        f.state.identityHold = () => { arrived.resolve(); return pending.promise; };
+    };
+    const refresh = f.controller.refresh();
+    await arrived.promise;
+    const binding = f.folders.getSnapshot().bindings[0];
+    await f.folders.detachBinding(binding.teamId, binding.scope);
+    pending.resolve();
+    await refresh;
+    assert.equal(f.writes().length, count);
+    assert.equal(f.folders.getSnapshot().bindings.length, 0);
+    f.controller.stop();
+});
+
+test("a newer local detach wins over an explicit folder replacement already in flight", async () => {
+    const f = await folderFixture();
+    const first = await f.folders.create("Ancien", [alpha.url]);
+    const next = await f.folders.create("Nouveau", [bravo.url]);
+    await f.controller.selectTeam("team-one");
+    await f.controller.setSharingFolder(first);
+    const pending = deferred();
+    const arrived = deferred();
+    f.state.requestHold = call => { if (call.method === "PUT") { arrived.resolve(); return pending.promise; } };
+    const replace = f.controller.setSharingFolder(next);
+    await arrived.promise;
+    const binding = f.folders.getSnapshot().bindings[0];
+    await f.folders.detachBinding(binding.teamId, binding.scope);
+    pending.resolve();
+    await replace;
+    assert.equal(f.folders.getSnapshot().bindings.length, 0);
+    assert.equal(f.controller.getSnapshot().folderBinding, null);
+    f.controller.stop();
 });
 
 test("unlinked users remain idle until the explicit connection action", async () => {

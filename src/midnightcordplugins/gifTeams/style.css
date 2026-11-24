@@ -78,6 +78,12 @@
     cursor: pointer;
 }
 
+.vc-gif-folders-list button {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
 .vc-gif-teams-account button {
     white-space: normal;
 }
@@ -153,6 +159,33 @@
     color: var(--text-muted);
 }
 
+.vc-gif-teams-import-settings {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--background-modifier-accent);
+}
+
+.vc-gif-teams-import-settings p {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 10px 0 0;
+}
+
+.vc-gif-teams-import-settings .vc-gif-teams-import-error {
+    color: var(--text-danger);
+}
+
+.vc-gif-teams-import-settings details {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.vc-gif-teams-import-settings summary {
+    cursor: pointer;
+}
+
 .vc-gif-teams-account summary {
     cursor: pointer;
 }
@@ -200,6 +233,13 @@
     gap: 6px;
     font-size: 12px;
     font-weight: 500;
+}
+
+.vc-gif-teams .vc-gif-teams-import-settings > label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
 }
 
 .vc-gif-teams input:not([type="checkbox"], [type="radio"]), .vc-gif-teams select {
@@ -584,6 +624,118 @@
 .vc-gif-teams-settings p {
     margin-bottom: 12px;
     line-height: 1.5;
+}
+
+.vc-gif-teams-header-actions,
+.vc-gif-teams-picker-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vc-gif-teams-picker-tools {
+    min-width: 0;
+    padding-left: 6px;
+    flex-shrink: 0;
+}
+
+.vc-gif-teams-picker-folder {
+    min-width: 100px;
+    max-width: 150px;
+    padding: 6px 8px;
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 5px;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    font: inherit;
+    font-size: 12px;
+}
+
+.vc-gif-teams select,
+.vc-gif-teams-picker-folder {
+    color-scheme: dark;
+}
+
+.theme-light .vc-gif-teams select,
+.theme-light .vc-gif-teams-picker-folder {
+    color-scheme: light;
+}
+
+:is(.vc-gif-teams select, .vc-gif-teams-picker-folder) :is(option, optgroup) {
+    color: var(--text-normal);
+    background-color: var(--background-secondary);
+}
+
+.vc-gif-teams-folder-sharing {
+    border-left: 2px solid var(--background-modifier-accent);
+    padding-left: 14px;
+    margin-bottom: 16px;
+}
+
+.vc-gif-teams-folder-sharing p,
+.vc-gif-folders-intro,
+.vc-gif-folders-confirm p {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.vc-gif-folders-intro {
+    margin: 0 0 20px;
+    max-width: 680px;
+}
+
+.vc-gif-folders-list svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.vc-gif-folders-list span {
+    min-width: 0;
+}
+
+.vc-gif-folders-editor {
+    padding-bottom: 8px;
+}
+
+.vc-gif-folders-selection {
+    max-height: 340px;
+    overflow: auto;
+    padding: 3px;
+}
+
+.vc-gif-folders-actions {
+    border-top: 1px solid var(--background-modifier-accent);
+    padding-top: 14px;
+}
+
+.vc-gif-folders-confirm h3 {
+    margin: 0 0 10px;
+    font-size: 17px;
+}
+
+.vc-gif-folders-links ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.vc-gif-folders-links li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--background-modifier-accent);
+    font-size: 12px;
+}
+
+.vc-gif-folders-links small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 4px;
 }
 
 @media (width <= 650px) {

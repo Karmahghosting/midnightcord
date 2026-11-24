@@ -20,12 +20,27 @@ function deferred() {
     return { promise, resolve };
 }
 
+// Discord's current FavoriteGIF protobuf: enum format, string src, uint32
+// width/height/order. FavoriteGIFs stores map entries and hideTooltip.
+function protobufSize(values) {
+    const varint = n => { let size = 1; while (n >= 128) { size++; n = Math.floor(n / 128); } return size; };
+    const string = value => { const bytes = Buffer.byteLength(value); return varint(bytes) + bytes; };
+    let size = values.hideTooltip ? 2 : 0;
+    for (const [url, gif] of Object.entries(values.gifs)) {
+        let item = gif.src ? 1 + string(gif.src) : 0;
+        for (const key of ["format", "width", "height", "order"]) if (gif[key]) item += 1 + varint(gif[key]);
+        const entry = 1 + string(url) + 1 + varint(item) + item;
+        size += 1 + varint(entry) + entry;
+    }
+    return size;
+}
+
 function fixture({ delayedStores = false } = {}) {
     const ready = deferred();
     const state = {
         user: { id: "1337883355840118887", username: "account", globalName: "Display name" },
         loaded: false, typeChecks: [], loadCalls: 0, reads: 0, drafts: [], snapshot: {},
-        favoriteListeners: new Set(), userListeners: new Set()
+        favoriteListeners: new Set(), userListeners: new Set(), updates: [], commits: 0, binarySizes: []
     };
     const store = {
         hasLoaded(type) { state.typeChecks.push(type); return state.loaded; },
@@ -43,16 +58,36 @@ function fixture({ delayedStores = false } = {}) {
             state.loadCalls++;
             await state.hold?.();
             if (state.loadError) throw state.loadError;
+        }, getCurrentValue: () => state.snapshot, async updateAsync(section, callback, seconds) {
+            state.updates.push({ section, seconds });
+            await state.updateHold?.();
+            const values = clone(state.snapshot.favoriteGifs ?? { gifs: {}, hideTooltip: false });
+            const accepted = callback(values) !== false;
+            if (state.updateError) throw state.updateError;
+            if (accepted && !state.ignoreCommit) {
+                state.snapshot.favoriteGifs = values;
+                state.commits++;
+                for (const listener of state.favoriteListeners) listener();
+            }
+            state.afterCommit?.();
         } } },
         UserSettingsProtoStore: delayedStores ? undefined : store,
         UserStore: delayedStores ? undefined : users
     };
+    const nativeProtos = [
+        { typeName: "discord_protos.discord_users.v1.FavoriteGIFs", toBinary: values => {
+            const length = protobufSize(values);
+            state.binarySizes.push(length);
+            return { length };
+        } },
+        { typeName: "discord_protos.discord_users.v1.FavoriteGIF", create: fields => ({ format: 0, src: "", width: 0, height: 0, order: 0, ...fields }) }
+    ];
     const dependencies = {
         "@utils/discord": { insertTextIntoChatInputBox: text => state.drafts.push(text) },
-        "@webpack": { onceReady: ready.promise }, "@webpack/common": common
+        "@webpack": { onceReady: ready.promise, findLazy: predicate => nativeProtos.find(predicate), findByPropsLazy: () => ({ INFREQUENT_USER_ACTION: 0 }) }, "@webpack/common": common
     };
     const module = { exports: {} };
-    runInNewContext(code, { module, exports: module.exports, Error, URL,
+    runInNewContext(code, { module, exports: module.exports, Error, URL, DOMException,
         require(name) { assert(Object.hasOwn(dependencies, name), name); return dependencies[name]; }
     });
     return {
@@ -78,6 +113,134 @@ test("native favorite normalization preserves GIFs and videos, order and safe me
     assert.equal(favorites[1].width, 320);
     assert.equal(favorites[1].title, "old title");
     assert.equal(Object.hasOwn(favorites[0], "order"), false);
+});
+
+const sharedGif = name => ({ url: `https://tenor.com/view/${name}`, src: `https://media.tenor.com/${name}/tenor.gif`, format: 1, width: 320, height: 240 });
+const importFor = (f, gifs, signal = new AbortController().signal) => f.api.importSharedFavorites(gifs, f.state.user.id, signal);
+
+test("shared GIF imports use one native update and preserve every existing entry and its order", async () => {
+    const f = fixture();
+    f.state.loaded = true;
+    const existing = { format: 1, src: "https://media.tenor.com/existing/tenor.gif", width: 100, height: 80, order: 7, extensionMetadata: { retain: true } };
+    const file = { format: 0, src: "https://cdn.discordapp.com/attachments/file#favourite-anything", width: 100, height: 80, order: 12, custom: "leave alone" };
+    f.state.snapshot = { favoriteGifs: { gifs: { "https://tenor.com/view/existing": clone(existing), "https://cdn.discordapp.com/attachments/file": clone(file) }, hideTooltip: false, untouched: "keep" } };
+    const result = clone(await importFor(f, [sharedGif("first"), sharedGif("existing"), sharedGif("second"), { ...sharedGif("first"), url: "https://tenor.com/view/first#duplicate" }]));
+    assert.deepEqual(result.addedUrls, [sharedGif("first").url, sharedGif("second").url]);
+    assert.deepEqual(result.existingUrls, [sharedGif("existing").url]);
+    assert.deepEqual(result.skippedUrls, []);
+    assert.deepEqual(f.state.updates, [{ section: "favoriteGifs", seconds: 0 }]);
+    assert.equal(f.state.commits, 1);
+    const saved = f.state.snapshot.favoriteGifs;
+    assert.deepEqual(saved.gifs["https://tenor.com/view/existing"], existing);
+    assert.deepEqual(saved.gifs["https://cdn.discordapp.com/attachments/file"], file);
+    assert.equal(saved.gifs[sharedGif("first").url].order, 13);
+    assert.equal(saved.gifs[sharedGif("second").url].order, 14);
+    assert.equal(saved.hideTooltip, true);
+    assert.equal(saved.untouched, "keep");
+});
+
+test("unsafe or unsupported shared previews never enter native favorites", async () => {
+    const f = fixture();
+    f.state.loaded = true;
+    const result = clone(await importFor(f, [
+        { ...sharedGif("unsafe"), url: "https://127.0.0.1/private" },
+        { ...sharedGif("unknown"), src: "https://tracking.example.com/a.gif" },
+        { ...sharedGif("missing"), src: "" },
+        { ...sharedGif("file"), format: 0 },
+        { ...sharedGif("broken"), width: 0 },
+        { ...sharedGif("large"), height: 1e20 },
+        { ...sharedGif("video"), src: "https://media.tenor.com/video/tenor.mp4", format: 2 }
+    ]));
+    assert.deepEqual(result.addedUrls, [sharedGif("video").url]);
+    assert.equal(result.skipped.length, 6);
+    assert.equal(result.skipped.filter(item => item.reason === "unsupported_preview").length, 2);
+    assert.equal(f.state.snapshot.favoriteGifs.gifs[sharedGif("video").url].format, 2);
+    assert.equal(Object.keys(f.state.snapshot.favoriteGifs.gifs).length, 1);
+});
+
+test("native capacity rejects overflowing entries while preserving existing favorites and accepting smaller ones", async () => {
+    const f = fixture();
+    f.state.loaded = true;
+    const legacyUrl = "https://cdn.discordapp.com/attachments/legacy";
+    const legacy = { format: 0, src: "x".repeat(762_400), width: 0, height: 0, order: 9 };
+    f.state.snapshot = { favoriteGifs: { gifs: { [legacyUrl]: legacy }, hideTooltip: false } };
+    const big = { ...sharedGif("too-large"), src: "https://media.tenor.com/" + "x".repeat(900) + ".gif" };
+    const result = clone(await importFor(f, [big, sharedGif("fits")]));
+    assert.deepEqual(result.addedUrls, [sharedGif("fits").url]);
+    assert.deepEqual(result.skipped, [{ url: big.url, reason: "capacity" }]);
+    assert(f.state.binarySizes.some(size => size > 762_880));
+    assert(protobufSize(f.state.snapshot.favoriteGifs) <= 762_880);
+    assert.deepEqual(f.state.snapshot.favoriteGifs.gifs[legacyUrl], legacy);
+});
+
+test("batch and uint32 order bounds never renumber or replace old favorites", async () => {
+    const f = fixture();
+    f.state.loaded = true;
+    const inputs = Array.from({ length: 103 }, (_, index) => sharedGif(`batch-${index}`));
+    const first = clone(await importFor(f, inputs));
+    assert.equal(first.addedUrls.length, 100);
+    assert.equal(first.skipped.filter(item => item.reason === "batch_limit").length, 3);
+    const second = clone(await importFor(f, inputs));
+    assert.equal(second.existingUrls.length, 100);
+    assert.equal(second.addedUrls.length, 3);
+    f.state.snapshot.favoriteGifs.gifs[inputs[0].url].order = 0xffffffff;
+    const saturated = clone(await importFor(f, [sharedGif("no-order-space")]));
+    assert.deepEqual(saturated.skipped, [{ url: sharedGif("no-order-space").url, reason: "order_limit" }]);
+    assert.equal(f.state.snapshot.favoriteGifs.gifs[inputs[0].url].order, 0xffffffff);
+    assert.equal(f.state.commits, 2);
+});
+
+test("native imports fail closed for unloaded or malformed favorite settings", async () => {
+    const f = fixture();
+    await assert.rejects(importFor(f, [sharedGif("first")]), /chargement/);
+    assert.equal(f.state.updates.length, 0);
+    f.state.loaded = true;
+    f.state.snapshot = { favoriteGifs: { gifs: [] } };
+    await assert.rejects(importFor(f, [sharedGif("first")]), /format/);
+    assert.equal(f.state.commits, 0);
+});
+
+test("account changes and cancellation are checked again inside Discord's asynchronous mutator", async () => {
+    for (const stage of ["initial-load", "native-update"]) {
+        for (const change of ["user", "abort"]) {
+            const f = fixture();
+            f.state.loaded = true;
+            const gate = deferred();
+            if (stage === "initial-load") f.state.hold = () => gate.promise;
+            else f.state.updateHold = () => gate.promise;
+            const abort = new AbortController();
+            const pending = importFor(f, [sharedGif("must-not-save")], abort.signal);
+            for (let i = 0; i < 10; i++) await Promise.resolve();
+            if (change === "user") f.state.user = { id: "1395048695501688953", username: "other" };
+            else abort.abort();
+            gate.resolve();
+            await assert.rejects(pending, { name: "AbortError" });
+            assert.equal(f.state.commits, 0, `${change} during ${stage}`);
+            assert.deepEqual(f.state.snapshot, {});
+        }
+    }
+});
+
+test("native imports merge at mutation time and acknowledge only the committed account snapshot", async () => {
+    const f = fixture();
+    f.state.loaded = true;
+    const gate = deferred();
+    f.state.updateHold = () => gate.promise;
+    const pending = importFor(f, [sharedGif("shared")]);
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    const addedByUser = { ...sharedGif("personal"), order: 33 };
+    f.state.snapshot.favoriteGifs = { gifs: { [addedByUser.url]: addedByUser }, hideTooltip: false };
+    gate.resolve();
+    assert.deepEqual(clone((await pending).addedUrls), [sharedGif("shared").url]);
+    assert.deepEqual(f.state.snapshot.favoriteGifs.gifs[addedByUser.url], addedByUser);
+    assert.equal(f.state.snapshot.favoriteGifs.gifs[sharedGif("shared").url].order, 34);
+
+    f.state.ignoreCommit = true;
+    const unconfirmed = clone(await importFor(f, [sharedGif("ignored")]));
+    assert.deepEqual(unconfirmed.addedUrls, []);
+    assert.deepEqual(unconfirmed.skipped, [{ url: sharedGif("ignored").url, reason: "unconfirmed" }]);
+    f.state.afterCommit = () => { f.state.user = { id: "1395048695501688953", username: "other" }; };
+    await assert.rejects(importFor(f, [sharedGif("late-user-change")]), { name: "AbortError" });
 });
 
 test("missing or unsupported previews do not discard a valid favorite or load third-party preview hosts", () => {
